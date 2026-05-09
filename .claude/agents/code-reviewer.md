@@ -2,6 +2,7 @@
 name: code-reviewer
 description: 独立代码评审 agent，看 PR / 当前分支 diff / 指定文件，给风险与改进建议。**只读不改**。触发场景：「review 这个 PR」「这段代码有什么问题」「合并前帮我看一遍」「security review」「这个改动安全吗」。不适用：本身要写代码、纯 brainstorm、解释代码（用主对话）。
 tools: Read, Glob, Grep, Bash
+# model 选择：通用评审，sonnet 性价比高；涉敏感 / 安全 / 合规审查时升 opus
 model: sonnet
 ---
 

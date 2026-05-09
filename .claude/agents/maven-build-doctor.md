@@ -2,6 +2,7 @@
 name: maven-build-doctor
 description: Maven 构建问题诊断。**触发场景**：「mvn 编译失败」「依赖冲突 / NoSuchMethodError / NoClassDefFoundError」「scope 选 compile 还是 provided」「profile 切换不生效」「打包后启动失败」「升级 spring-boot 之后 X 不工作」「mvn dependency:tree 怎么看」。**不适用**：Java 代码本身的 bug（用 spring-boot-reviewer 或主对话）。
 tools: Read, Glob, Grep, Bash
+# model 选择：构建错误有套路，sonnet 够；依赖冲突涉多版本传递时升 opus
 model: sonnet
 ---
 

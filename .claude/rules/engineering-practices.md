@@ -263,7 +263,85 @@ interfaces  →  application  →  domain  ←  infrastructure
 
 ---
 
-## 评分尺度（适用于本文全部 14 节）
+## 15. Policy 机制化（M7）
+
+**为什么**：Loop / Agent / Hook 是机制；Policy 是**机制之间的元规则**。没有显式 policy 时，模型选择 / 升级 / 降级 / 拒绝继续靠主对话即兴判断，质量随会话漂移。
+
+**怎么做**：
+
+### 模型选择 policy
+
+| 场景 | 默认模型 | 升级触发 |
+|------|---------|---------|
+| 主对话（Driver） | 沿用用户当前会话设置 | — |
+| 简单 review / 格式调整 / 小重构 | sonnet | 卡住 / 用户不满意 |
+| 长链路战略设计（DDD 边界 / 跨 BC） | **opus** | 已是最高，无可升 |
+| 安全 / 合规审查 | sonnet | 涉敏感数据→ opus |
+| 调试 / 修 bug | sonnet | 复现失败/根因深 → opus |
+| 大量文件批改 / 文档批改 | haiku（如可用）/ sonnet | 出错 → sonnet |
+| 路径明确的 TDD 红绿循环 | sonnet | — |
+
+**硬规则**：用户显式指定的优先；agent frontmatter 显式声明的次之；都没有则按本表。
+
+### 何时降级（degradation）
+
+| 触发 | 降级到 |
+|------|------|
+| MySQL MCP 连接失败 | 读 `schema.sql` 文件 / 问用户 |
+| gitnexus 索引过期或不可用 | `Glob + Grep` / 手动 trace |
+| prettier 跑失败 | 跳过格式化（输出标注 "未格式化"） |
+| 某 agent 输出含 "我不确定" | 升级模型一次后仍不确定 → 转给用户 |
+
+降级**必须**在输出顶部注明 "**已降级**: <原工具/模型> 不可用，使用 <替代>"。
+
+### 何时拒绝继续
+
+主对话 / agent **必须停下问用户**而非继续，当：
+
+1. PreToolUse 灰名单触发 `⚠️ 待人工授权:`
+2. 同一动作 retry 满 2 次仍失败
+3. 任务范围超出原始请求（"再做点 X 顺便"）
+4. 涉及不可逆操作（生产部署 / 删数据 / 主分支强推）但权限不足
+5. agent 之间互相推诿（A 说该问 B，B 说该问 A）— 升级到用户决策
+
+### 升级链（与 AGENTS.md 表同步）
+
+详见 [AGENTS.md "升级链"](../../AGENTS.md)。本节仅给原则：
+
+- **永不向下升级**（用户决策后回到原层级）
+- **同模型 retry 上限 2 次**，超即换模型或换 agent
+- **跨 agent 升级时保留原 Worker 输出**，反馈 agent 看得到
+- **三次以内必升到用户**（agent ≤ 2 次 / model 升 1 次 / 都失败 → 用户）
+
+### Bypass policy（M7-T5 引入）
+
+`HARNESS_BYPASS=1` 环境变量下 hook 放行黑+灰名单，但：
+
+1. **强制写审计日志**（`.claude/.audit.log`）含 `bypass: true` 标记
+2. **本地可用**（开发者紧急情况下手动 export）
+3. **CI 拒合**：commit message 含 `BYPASS:` 或环境变量传到 CI runner 时 lint.yml 直接 fail
+4. **hook 输出红色警告**到 stderr 提醒主对话不要常用
+
+### 审计 policy
+
+所有 hook 拦截 / 灰名单触发 / bypass 使用 → 写 JSONL 到 `.claude/.audit.log`（已 .gitignore），格式：
+
+```json
+{"ts": "2026-05-09T16:00:00Z", "hook": "PreToolUse", "tool": "Bash", "target": "rm -rf /", "action": "deny", "reason": "rm -rf 根目录", "bypass": false}
+```
+
+用 `python .claude/scripts/audit-log-summary.py` 跑摘要（M7-T4 引入）。
+
+**达标**：
+
+- 每个 agent frontmatter 中 model 选择有 1 行注释解释为什么
+- `.claude/.audit.log` 格式合法（JSONL，每行可独立 parse）
+- bypass 在 CI 不可用（`grep -q '^BYPASS:' commit message` → fail）
+- 升级链超过 3 步必须问用户，**不可静默继续**
+
+---
+
+## 评分尺度（适用于本文全部 15 节）
 
 - ✅ **达标**：本节"达标"条件全满足
 - ⚠️ **部分**：基础在但缺一两项

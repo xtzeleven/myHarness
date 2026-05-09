@@ -16,8 +16,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
+      - name: Install pinned prettier
+        run: npm ci || npm install
       - name: Run prettier --check
-        run: npx --yes prettier@3 --check "**/*.{md,json,yml,yaml}" --ignore-path .gitignore
+        run: npm run format:check
 
   structure-check:
     name: Project structure sanity
@@ -36,6 +39,9 @@ jobs:
             ".gitignore"
             ".env.example"
             ".mcp.json"
+            "package.json"
+            ".prettierrc.json"
+            ".tool-versions"
             ".claude/settings.json"
             ".claude/rules/engineering-practices.md"
             ".claude/hooks/format.sh"
@@ -48,12 +54,14 @@ jobs:
             ".claude/commands/onboard.md"
             ".claude/commands/sync-docs.md"
             ".claude/scripts/audit-context-cost.py"
+            ".claude/scripts/audit-log-summary.py"
             "docs/AGENTS.backend.md"
             "docs/roadmap.md"
             "docs/memory-conventions.md"
             "docs/loop-architecture.md"
             "docs/periodic-tasks.md"
             "docs/context-management.md"
+            "docs/tools-fallback.md"
             "docs/adr/README.md"
             ".github/workflows/lint.yml"
             ".github/workflows/scheduled.yml"
@@ -162,3 +170,34 @@ jobs:
           done
           [ "$missing" -eq 0 ] || exit 1
           echo "All .mcp.json variables documented."
+
+  bypass-guard:
+    name: Reject BYPASS in PRs / push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: No BYPASS in commit messages on this branch
+        run: |
+          set -e
+          # PR：检查所有 PR commit；push：检查 main 上新增 commit
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            range="HEAD~10..HEAD"
+          fi
+          if git log --format='%s%n%b' "$range" | grep -Eq '^BYPASS:|HARNESS_BYPASS=1'; then
+            echo "::error::Found commit with BYPASS marker in $range"
+            git log --format='  %h %s' "$range" | grep -E 'BYPASS|HARNESS_BYPASS' || true
+            echo "::error::HARNESS_BYPASS is for emergency local use only; remove the commit or revert before merging"
+            exit 1
+          fi
+          echo "No BYPASS markers found in commit messages."
+      - name: HARNESS_BYPASS env var must not be set in CI
+        run: |
+          if [ -n "${HARNESS_BYPASS:-}" ]; then
+            echo "::error::HARNESS_BYPASS is set in CI environment — this should never happen"
+            exit 1
+          fi
+          echo "HARNESS_BYPASS is unset in CI ✅"

@@ -2,6 +2,7 @@
 name: schema-analyst
 description: MySQL schema 与 SQL 分析。用 MySQL 只读 MCP（mysql-readonly）查 INFORMATION_SCHEMA，给表关系、索引覆盖、慢 query 改写、N+1 检测建议。**触发场景**：「这张表怎么设计的」「画下 ER 图」「这条 SQL 慢」「缺索引吗」「N+1 怎么定位」「这个 join 顺序对吗」「外键级联怎么定」。**只读，绝不写库**。**不适用**：写迁移（用 migration-author）、纯 Java 性能（用 spring-boot-reviewer）。
 tools: Read, Glob, Grep, Bash
+# model 选择：EXPLAIN / 索引分析有套路，sonnet 够；跨表 join / 分库分表设计升 opus
 model: sonnet
 ---
 

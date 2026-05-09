@@ -8,8 +8,30 @@
 ## [Unreleased]
 
 ### 计划中
-- M7：Tools 治理 + Policy 机制化（版本锁、fallback chain、model selection、审计日志、emergency override）
 - M8：Java DDD 实例化（pom.xml + src/，六维度回归测试）
+
+## [M7] - 2026-05-09 — Tools 治理 + Policy 机制化
+
+### Added
+- **工具版本锁**：`package.json`（prettier 3.3.3）+ `.prettierrc.json`（格式约定）+ `.tool-versions`（asdf/mise 风格：node 20 / python 3.13 / java 17 / maven 3.9）
+- `docs/tools-fallback.md`：工具失效降级路径（gitnexus → grep / MCP → schema dump / prettier → 跳过）+ "降级 ≠ 失败"原则 + 不该降级的场景
+- `engineering-practices.md §15 Policy 机制化`：模型选择 / 降级 / 拒绝继续 / 升级链 / bypass / 审计 6 类元规则
+- `.claude/scripts/audit-log-summary.py`：JSONL 审计日志摘要工具，支持 --tail / --bypass / --since
+- AGENTS.md 加 "Model Selection Policy" 章 + "Tools Lock" 章 + "Audit Log" 章
+- 8 个 agent frontmatter 加 model 选择注释（YAML `# why this model`）
+- CI bypass-guard job：commit message 含 `BYPASS:` / 环境含 `HARNESS_BYPASS=1` 时直接 fail
+
+### Changed
+- PreToolUse hook 加 `_audit_log()` 函数：deny / ask_user / bypass 全部写 `.claude/.audit.log`（JSONL，已 .gitignore）
+- PreToolUse hook 加 `HARNESS_BYPASS=1` 检测：env 设置时放行黑+灰名单但**强制写审计**（bypass: true 标记）
+- CI lint.yml format-check 改用 `npm ci` 装 pinned prettier，与本地一致
+- `/audit-practices` 命令从 14 维度扩到 **15 维度**（加 Policy 机制化）
+- engineering-practices 评分尺度更新为"适用于全部 15 节"
+
+### 验证
+- audit log 4 类记录正常写入（deny / ask_user×2 / bypass）
+- bypass 模式：HARNESS_BYPASS=1 时 `rm -rf /` 放行但 audit 标 bypass:true ✅
+- summary 工具按动作 / 工具 / 原因正确统计
 
 ## [M6] - 2026-05-09 — Context 治理
 

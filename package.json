@@ -1,0 +1,16 @@
+{
+  "name": "myharness-tooling",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Tooling version locks for myHarness — not a real package, only for prettier/format consistency between local hooks and CI",
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "prettier": "3.3.3"
+  },
+  "scripts": {
+    "format": "prettier --write \"**/*.{md,json,yml,yaml}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{md,json,yml,yaml}\" --ignore-path .gitignore"
+  }
+}

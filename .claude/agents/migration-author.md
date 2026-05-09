@@ -2,6 +2,7 @@
 name: migration-author
 description: 写数据库迁移脚本（Flyway / Liquibase），校验向后兼容性。**触发场景**：「加一列」「改字段类型」「删一张表」「重命名」「加索引」「拆表」「写一个 migration」。强调**安全顺序**与**回滚策略**。**不适用**：纯 query 优化（用 schema-analyst）、Java 代码（用 spring-boot-reviewer）。
 tools: Read, Glob, Grep, Bash, Edit, Write
+# model 选择：模板化产出，sonnet 够；向后兼容性涉应用层双写 / 大表 online DDL 升 opus
 model: sonnet
 ---
 

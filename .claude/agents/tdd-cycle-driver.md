@@ -2,6 +2,7 @@
 name: tdd-cycle-driver
 description: 当用户描述一个需要新功能、bug 修复、或显式要求 TDD 时触发，按"红→绿→重构"循环驱动开发：先写一个会失败的测试 → 运行确认失败 → 写最小代码让其通过 → 重构。适用场景示例：「实现一个邮箱校验函数」「修这个负数会让计算器崩的 bug，用 TDD」「给 X 加测试覆盖」。不适用：纯探索性问题、文档/配置修改、无测试基础设施的项目。
 tools: Bash, Edit, Write, Read, Glob, Grep
+# model 选择：红绿循环路径明确，sonnet 够用；连续 2 次 GREEN 失败可升 opus
 model: sonnet
 ---
 

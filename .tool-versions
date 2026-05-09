@@ -1,0 +1,7 @@
+# asdf / mise 风格的工具版本声明
+# 用法：asdf install / mise install 自动按本文件装齐
+
+nodejs 20.18.0
+python 3.13.0
+java temurin-17.0.13+11
+maven 3.9.9

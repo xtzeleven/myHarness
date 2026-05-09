@@ -2,6 +2,7 @@
 name: docs-keeper
 description: 项目文档同步守护者。看 git diff 找需更新的文档点，给改文档清单（不直接动 README）。**触发场景**：「最近这些 commit 文档同步了吗」「这次改动该更新哪些文档」「README 跟代码漂没漂」「新人看文档能跑起来吗」「sync docs」。**不适用**：直接写 README（让用户基于本 agent 输出的清单去改）、agent 描述更新（用户手工改 AGENTS.md）。
 tools: Read, Glob, Grep, Bash
+# model 选择：漂移检测是模式匹配，sonnet 够；罕见情况（文档结构剧变）升 opus
 model: sonnet
 ---
 

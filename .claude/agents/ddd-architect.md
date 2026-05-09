@@ -2,6 +2,7 @@
 name: ddd-architect
 description: DDD 战略与战术设计顾问。**触发场景**：「这块归哪个限界上下文（BC）」「设计这个聚合的边界」「这个该是 entity 还是 value object」「这里应不应该发领域事件」「跨聚合怎么调」「Repository 接口怎么定义」「应用层 vs 领域层的职责」。**不适用**：纯实现细节、Spring 配置（用 spring-boot-reviewer）、SQL/索引（用 schema-analyst）。
 tools: Read, Glob, Grep, Bash
+# model 选择：战略设计 / 跨 BC 决策 / 聚合边界判断需长链路推理，必须 opus；下一步是用户决策
 model: opus
 ---
 

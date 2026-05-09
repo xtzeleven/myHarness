@@ -2,6 +2,7 @@
 name: spring-boot-reviewer
 description: Spring Boot 特有反模式审查。**触发场景**：「review 这个 Spring 项目」「@Transactional 用得对吗」「为什么循环依赖」「N+1 怎么排查」「Bean 作用域有问题」「Lombok 这么用合适吗」「事务边界泄漏」。**不适用**：DDD 边界设计（用 ddd-architect）、纯 SQL 优化（用 schema-analyst）、Maven 构建（用 maven-build-doctor）。**只读不改**。
 tools: Read, Glob, Grep, Bash
+# model 选择：Spring 反模式有清单可对照，sonnet 够；涉事务边界 / 复杂 Bean 生命周期升 opus
 model: sonnet
 ---
 

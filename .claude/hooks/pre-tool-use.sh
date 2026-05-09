@@ -32,6 +32,7 @@ new_content="$(printf '%s' "$payload" | _extract tool_input.new_string)"
 [ -z "$new_content" ] && new_content="$(printf '%s' "$payload" | _extract tool_input.content)"
 
 deny() {
+  _audit_log "deny" "$1" false
   echo "[pre-tool-use] BLOCKED: $1" >&2
   echo "[pre-tool-use] 如确需执行，请用户在终端手动跑，或调整规则后重试" >&2
   exit 2
@@ -40,10 +41,45 @@ deny() {
 # 灰名单：阻止 + 提示主对话向用户索要授权
 # 主对话看到 "⚠️ 待人工授权:" 前缀应当停下，把待执行操作描述给用户，由用户口头确认后才继续。
 ask_user() {
+  _audit_log "ask_user" "$1" false
   echo "[pre-tool-use] ⚠️ 待人工授权: $1" >&2
   echo "[pre-tool-use] 主 Claude：请向用户描述将执行的动作并等待明确授权后再重试，不可绕过。" >&2
   exit 2
 }
+
+# 写 JSONL 到 .claude/.audit.log（M7-T4 引入；已 .gitignore）
+# 用法：_audit_log <action: deny|ask_user|bypass|hint> <reason> <bypass: true|false>
+_audit_log() {
+  local action="$1" reason="$2" bypass="${3:-false}"
+  local target="${file_path:-${cmd:-}}"
+  # 截断 target 到 200 字符，避免 log 爆炸
+  target="${target:0:200}"
+  python - "$action" "$reason" "$bypass" "${tool_name:-}" "$target" <<'PY' 2>/dev/null || true
+import json, sys, os, datetime
+action, reason, bypass, tool, target = sys.argv[1:6]
+log_dir = ".claude"
+os.makedirs(log_dir, exist_ok=True)
+entry = {
+    "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+    "hook": "PreToolUse",
+    "tool": tool,
+    "target": target,
+    "action": action,
+    "reason": reason,
+    "bypass": bypass == "true",
+}
+with open(f"{log_dir}/.audit.log", "a", encoding="utf-8") as f:
+    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+PY
+}
+
+# Bypass 检查（M7-T5）：HARNESS_BYPASS=1 时绕过黑+灰名单，但仍记录审计
+if [ "${HARNESS_BYPASS:-}" = "1" ]; then
+  _audit_log "bypass" "HARNESS_BYPASS=1 in env" true
+  echo "[pre-tool-use] ⚠️⚠️⚠️ BYPASS ACTIVE — 黑+灰名单全部放行，仅记录审计 ⚠️⚠️⚠️" >&2
+  echo "[pre-tool-use] 这不应是常态。CI 检测到 commit message 含 'BYPASS:' 会拒合。" >&2
+  exit 0
+fi
 
 # === Bash 命令防御 ===
 if [ "$tool_name" = "Bash" ] && [ -n "${cmd:-}" ]; then

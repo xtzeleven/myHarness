@@ -123,3 +123,54 @@ prettier (npx) → 跳过格式化（注明 "未格式化"）
 ```
 
 降级时 Worker 必须在输出顶部注明 "**已降级**: <原工具>不可用，使用 <替代>"。
+
+详见 [docs/tools-fallback.md](docs/tools-fallback.md)（M7-T2）。
+
+## Model Selection Policy（M7 新增）
+
+> 详见 [engineering-practices.md §15](.claude/rules/engineering-practices.md)。本表给每个 Worker 的默认模型与升级路径，对应 frontmatter 的 `model:` 字段。
+
+| Agent | 默认模型 | 选这个的原因 | 升级路径 |
+|-------|--------|-----------|---------|
+| `tdd-cycle-driver` | sonnet | 红绿循环路径明确，sonnet 够用 | sonnet → opus（连续 2 次 GREEN 失败时） |
+| `code-reviewer` | sonnet | 通用评审，sonnet 性价比高 | sonnet → opus（涉敏感 / 安全审查时） |
+| `ddd-architect` | **opus** | 战略设计 / 跨 BC 决策需要长链路推理 | 已最高，下一步是用户决策 |
+| `spring-boot-reviewer` | sonnet | Spring 反模式有清单可对，sonnet 够 | sonnet → opus（涉事务边界 / 复杂 Bean 生命周期） |
+| `maven-build-doctor` | sonnet | 构建错误有套路 | sonnet → opus（依赖冲突涉多版本传递时） |
+| `schema-analyst` | sonnet | EXPLAIN / 索引分析有套路 | sonnet → opus（跨表 join / 分库分表设计） |
+| `migration-author` | sonnet | 模板化产出 | sonnet → opus（向后兼容性涉应用层双写时） |
+| `docs-keeper` | sonnet | 漂移检测是模式匹配 | sonnet → opus（罕见，文档结构剧变时） |
+
+**规则**：
+- 用户显式指定模型 > agent frontmatter > 本表默认
+- 升级前必须 retry 当前模型 1 次（瞬时失败可能并非模型能力问题）
+- 跨 agent 转交时**保留**当前会话上下文，不让接手 agent 从零开始
+- Driver（主对话）的模型由用户选择，本表不约束
+
+## Tools Lock（M7 新增）
+
+工具版本由这些文件约束：
+
+| 工具 | 锁版本文件 | 当前锁定 |
+|------|----------|---------|
+| Node | `.tool-versions`（asdf/mise）| `nodejs 20.18.0` |
+| Python | `.tool-versions` | `python 3.13.0` |
+| Java | `.tool-versions` | `java temurin-17.0.13+11` |
+| Maven | `.tool-versions` | `maven 3.9.9` |
+| prettier | `package.json` + `.prettierrc.json` | `prettier 3.3.3` |
+
+CI 与本地用同一版本（CI 通过 `npm ci` 装；本地通过 `npm install` 或 hook 自动）。
+
+## Audit Log（M7 新增）
+
+所有 hook 拦截 / 灰名单触发 / 降级 / bypass → 写 `.claude/.audit.log`（已 .gitignore）。
+
+跑摘要：
+
+```bash
+python .claude/scripts/audit-log-summary.py             # 全量
+python .claude/scripts/audit-log-summary.py --tail 20   # 最近 20 条
+python .claude/scripts/audit-log-summary.py --bypass    # 仅 bypass 记录
+```
+
+详见 [docs/tools-fallback.md §7](docs/tools-fallback.md)。

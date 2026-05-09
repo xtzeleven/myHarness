@@ -1,15 +1,15 @@
 ---
-description: 工程实践自检清单，对照 engineering-practices.md 14 节逐项打勾
-argument-hint: "[focus] 可选：聚焦某一节名（如 ddd / java / mcp / hooks）"
+description: 工程实践自检清单，对照 engineering-practices.md 15 节逐项打勾
+argument-hint: "[focus] 可选：聚焦某一节名（如 ddd / java / mcp / hooks / policy）"
 ---
 
 # /audit-practices
 
-对当前项目工程化实践做一次自检，按 **14 维度** 逐项打 ✅ / ⚠️ / ❌ 并给一句话依据 + 改进建议。
+对当前项目工程化实践做一次自检，按 **15 维度** 逐项打 ✅ / ⚠️ / ❌ 并给一句话依据 + 改进建议。
 
-**优先**对照 `.claude/rules/engineering-practices.md`（含 §1-§11 通用 + §12-§14 领域专项）；该文件不存在时退回下方通用清单。
+**优先**对照 `.claude/rules/engineering-practices.md`（含 §1-§11 通用 + §12-§14 领域专项 + §15 Policy）；该文件不存在时退回下方通用清单。
 
-## 14 维度自检清单
+## 15 维度自检清单
 
 ### Layer 1 约束层
 
@@ -39,6 +39,10 @@ argument-hint: "[focus] 可选：聚焦某一节名（如 ddd / java / mcp / hoo
 12. **DDD 分层** — 依赖方向单向、domain 层无 Spring/JPA import、`@Transactional` 仅 application 层
 13. **Java / Spring 风格** — Lombok 不滥用、循环依赖、N+1、Optional 用法、SLF4J 参数化
 14. **MCP 治理** — `.mcp.json` 不含明文凭据、`.env.example` 与 `.mcp.json` 变量对齐、DB 账号确认只读
+
+### 元规则（M7 引入）
+
+15. **Policy 机制化** — model selection / fallback chain / bypass / 升级链 / 审计日志
 
 ## 执行步骤
 
@@ -101,8 +105,8 @@ argument-hint: "[focus] 可选：聚焦某一节名（如 ddd / java / mcp / hoo
 
 ## 参数
 
-- `$ARGUMENTS` 为空：跑全量 14 维度
-- `$ARGUMENTS` 指定关键词（如 `ddd` / `mcp` / `hooks` / `ci`）：仅对该维度做深度审查并给修复样例
+- `$ARGUMENTS` 为空：跑全量 15 维度
+- `$ARGUMENTS` 指定关键词（如 `ddd` / `mcp` / `hooks` / `ci` / `policy`）：仅对该维度做深度审查并给修复样例
 
 ## 硬性规则
 

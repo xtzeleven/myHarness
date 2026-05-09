@@ -12,7 +12,9 @@
       "Bash(chmod +x .claude/hooks/session-start.sh)",
       "Bash(python -c \"import json; d=json.load\\(open\\('.claude/settings.json'\\)\\);print\\(list\\(d['hooks'].keys\\(\\)\\)\\)\")",
       "Bash(git check-ignore *)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(rm /d/myGithub/myHarness/.claude/hooks/_test_m7_audit.sh)",
+      "Bash(rm -f /d/myGithub/myHarness/.claude/.audit.log)"
     ]
   }
 }
