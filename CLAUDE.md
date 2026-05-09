@@ -115,19 +115,21 @@ DDD 依赖方向 **严格单向**：interfaces → application → domain ← in
 
 ## 7. 测试 / 校验命令
 
+> 注：M3 阶段，`src/` 与 `pom.xml` 暂未实例化；以下 `mvn` 命令为 M4 启用后的约定，当前会因无 pom.xml 报错。
+
 ```bash
-# Java / Maven
+# Java / Maven（M4 后启用）
 mvn clean compile              # 编译
 mvn test                       # 单测
 mvn verify                     # 单测 + 集成测 + 静态检查
 mvn dependency:tree            # 看依赖树（排冲突）
 
-# 文档 / 配置
+# 文档 / 配置（当前可用）
 npx prettier --check "**/*.{md,json,yml,yaml}"
 npx prettier --write  "**/*.{md,json,yml,yaml}"
 
-# 工程实践 / 项目自检
-/audit-practices               # 11 维度工程化自检
+# 工程实践 / 项目自检（当前可用）
+/audit-practices               # 14 维度工程化自检（对照 engineering-practices.md 14 节）
 /onboard                       # 新人 5 分钟全局上手
 /sync-docs                     # 手动触发文档同步检查
 
@@ -137,7 +139,7 @@ git status --porcelain
 
 ## 8. gitnexus 路由（何时用哪个 skill）
 
-本项目的代码已（或将）由 [gitnexus](https://github.com/) 做索引；遇到以下场景**优先**用对应 skill 而不是手写 Grep/Glob：
+本项目的代码已（或将）由 gitnexus 做索引；遇到以下场景**优先**用对应 skill 而不是手写 Grep/Glob：
 
 | 场景                             | 优先 Skill                 |
 | -------------------------------- | -------------------------- |

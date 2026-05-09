@@ -7,12 +7,15 @@ set -uo pipefail
 
 payload="$(cat)"
 
-# 提取 file_path（容错：jq 不在则用 sed 兜底）
-if command -v jq >/dev/null 2>&1; then
-  file_path="$(printf '%s' "$payload" | jq -r '.tool_input.file_path // empty' 2>/dev/null)"
-else
-  file_path="$(printf '%s' "$payload" | sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
-fi
+# 提取 file_path（python 解析 JSON，与 pre-tool-use.sh 一致，避免 sed 在转义引号上截断）
+file_path="$(printf '%s' "$payload" | python -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    sys.stdout.write(data.get("tool_input", {}).get("file_path", "") or "")
+except Exception:
+    pass
+' 2>/dev/null)"
 
 [ -z "${file_path:-}" ] && exit 0
 [ ! -f "$file_path" ] && exit 0

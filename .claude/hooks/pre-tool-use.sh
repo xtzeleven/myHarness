@@ -85,13 +85,16 @@ if [ "$tool_name" = "Bash" ] && [ -n "${cmd:-}" ]; then
       ;;
   esac
 
-  # 6. 灰名单 — 数据库写操作（即便 MCP 是只读，禁止主对话拼写操作 SQL）
-  if echo "$cmd" | grep -Eiq '(^|[[:space:]"'\''])(INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|GRANT|REVOKE)[[:space:]]+(INTO|FROM|TABLE|DATABASE|SCHEMA|VIEW|INDEX|ON)?'; then
-    case "$cmd" in
-      *"mysql "*|*"mysqldump "*|*"psql "*|*".sql"*)
-        ask_user "包含 DDL/DML（INSERT/UPDATE/DELETE/DROP/ALTER/...）的数据库命令"
-        ;;
-    esac
+  # 6. 灰名单 — 数据库写操作（只在命令本身就是 mysql/psql 客户端调用时检查，
+  #    避免误伤 grep / cat / echo 等含 SQL 关键字字面量的普通命令）
+  if echo "$cmd" | grep -Eq '^[[:space:]]*(mysql|mysqldump|psql)([[:space:]]|$)'; then
+    if echo "$cmd" | grep -Eiq '\b(INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|GRANT|REVOKE|CREATE)[[:space:]]+(INTO|FROM|TABLE|DATABASE|SCHEMA|VIEW|INDEX|ON|USER)?\b'; then
+      ask_user "包含 DDL/DML（INSERT/UPDATE/DELETE/DROP/ALTER/...）的数据库命令"
+    fi
+  fi
+  # 同时拦截 .sql 文件管道喂入 mysql/psql
+  if echo "$cmd" | grep -Eq '(mysql|psql)([[:space:]][^&|;]*)?[[:space:]]*<[[:space:]]*[^[:space:]]+\.sql'; then
+    ask_user "通过 .sql 文件喂给 mysql/psql 执行"
   fi
 
   # 7. 灰名单 — 高影响 git 操作

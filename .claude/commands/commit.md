@@ -89,6 +89,17 @@ git status
 - working tree 干净（如有意保留未 stage，明确告诉用户）
 - **不要 `git push`**，除非用户说了 push
 
+## 遇到 PreToolUse 灰名单提示
+
+如果 `git add` / `git commit` 过程中看到 stderr 含 `⚠️ 待人工授权: <动作>`：
+
+1. **停下**。不要重试，不要换形式绕过
+2. 把动作描述给用户：「我正要 X（如：改 pom.xml 中 spring-boot 版本 / 删除 domain 下 Repository 接口），hook 拦下需授权」
+3. 等用户明确说"授权"或"继续"后，再重试同一动作
+4. 用户拒绝 → 调整改动范围（如把 pom.xml 主依赖变更拆出去单独提，或暂不动 domain 边界）
+
+**禁止**：以"绕过测试"为由跳过 hook（`--no-verify`）；以"快速完成"为由不向用户报告。
+
 ## 硬性规则
 
 - 永不 `--amend` 已 push 的 commit（除非用户显式要）
@@ -96,6 +107,7 @@ git status
 - 永不 `git add -A` / `git add .`（精确 stage）
 - 永不在 main/master 分支上做实验性提交（先建分支）
 - 任何 `.env` / `*.key` / `id_rsa` 出现在 staging 区 → **拒绝提交并报警**
+- 灰名单触发 → **必须**让用户明确授权，不可绕过
 
 ## 输出汇报
 

@@ -1,47 +1,90 @@
 ---
-description: 工程实践自检清单，逐维度打勾报告项目当前落地状态
-argument-hint: "[focus] 可选：聚焦某一维度名"
+description: 工程实践自检清单，对照 engineering-practices.md 14 节逐项打勾
+argument-hint: "[focus] 可选：聚焦某一节名（如 ddd / java / mcp / hooks）"
 ---
 
 # /audit-practices
 
-对当前项目工程化实践做一次自检，按以下 11 维度逐项打 ✅ / ⚠️ / ❌ 并给一句话依据 + 改进建议。
+对当前项目工程化实践做一次自检，按 **14 维度** 逐项打 ✅ / ⚠️ / ❌ 并给一句话依据 + 改进建议。
 
-如果项目根有 `.claude/rules/engineering-practices.md`，**优先**对照该文件 11 节执行。否则使用下方通用 11 维度。
+**优先**对照 `.claude/rules/engineering-practices.md`（含 §1-§11 通用 + §12-§14 领域专项）；该文件不存在时退回下方通用清单。
 
-## 通用 11 维度自检
+## 14 维度自检清单
 
-1. **CLAUDE.md 完备性** — 是否覆盖技术栈 / 目录 / 禁忌 / 测试命令 / 行为准则
-2. **Hook 配置** — PostToolUse 格式化、Stop 提醒、PreToolUse 校验是否合理
-3. **权限治理** — `.claude/settings.local.json` 是否用通配符收敛、有无危险通配
-4. **自定义 Agent** — `.claude/agents/` 是否有专项 agent 覆盖高频场景
-5. **自定义 Command** — `.claude/commands/` 是否有项目专属 slash 命令
-6. **Skill 资产** — `skills/` 或可调用的 plugin skill 是否到位
-7. **测试基础设施** — 测试框架、运行命令、覆盖率门禁是否齐备
-8. **Git 卫生** — `.gitignore` 是否覆盖 `.idea/` / build 产物 / 临时文件；是否有泄露风险
-9. **CI / 质量门禁** — 是否有 lint / format / test 的自动检查（GitHub Actions / pre-commit）
-10. **文档同步** — README / docs 是否与代码现状一致；有无 WIP/占位声明
-11. **可观测性** — 日志 / 错误处理 / 关键路径监控是否有规划
+### Layer 1 约束层
+
+1. **CLAUDE.md 完备性** — 行为准则 / 项目上下文 / 技术栈 / 目录 / 禁忌 / 测试命令 / 子目录指引
+2. **Rules 文档** — `engineering-practices.md` 每节"为什么 / 怎么做 / 达标"三段齐全
+3. **PreToolUse 防御** — 黑名单（直接拦）+ 灰名单（人工授权）
+
+### Layer 2 反馈循环层
+
+4. **Hooks** — PostToolUse 格式化 + Stop 提醒 + PreToolUse 防御 至少三件齐
+5. **Agents** — `.claude/agents/` 覆盖项目高频场景；description 含触发关键词；最小权限
+6. **Commands** — `.claude/commands/` 含日常重复动作（提交 / 评审 / 自检 / 上手 / 同步）
+
+### Layer 3 质量门禁层
+
+7. **CI / 质量门禁** — `.github/workflows/*.yml` 跑 lint + 必需文件 + 配置合法性
+8. **Git 卫生** — `.gitignore` 完整、提交 Conventional 风格、`settings.local.json` 不在 tracking
+9. **测试 / 校验** — 项目类型对应的测试命令；本项目至少跑 `/audit-practices` 当冒烟
+
+### 支撑层
+
+10. **文档同步** — README / CLAUDE.md / docs 与代码现状一致；ADR 记录关键决策；CHANGELOG 标记发布
+11. **可观测 / 审计** — statusLine / Stop hook 摘要 / 决策入 git
+
+### 领域专项（Java + DDD + MCP）
+
+12. **DDD 分层** — 依赖方向单向、domain 层无 Spring/JPA import、`@Transactional` 仅 application 层
+13. **Java / Spring 风格** — Lombok 不滥用、循环依赖、N+1、Optional 用法、SLF4J 参数化
+14. **MCP 治理** — `.mcp.json` 不含明文凭据、`.env.example` 与 `.mcp.json` 变量对齐、DB 账号确认只读
 
 ## 执行步骤
 
-1. **采集**：读 `CLAUDE.md`、`.claude/settings*.json`、`.claude/hooks/`、`.claude/agents/`、`.claude/commands/`、`README.md`、`.gitignore`、CI 目录（`.github/workflows/`）。如可能，跑 `git status --porcelain` 看脏度。
+1. **采集**（用 Bash + Read 一次跑完）：
+
+   ```bash
+   ls -la CLAUDE.md README.md AGENTS.md docs/AGENTS.backend.md
+   ls .claude/{settings.json,rules,hooks,agents,commands}
+   ls .github/workflows/
+   cat .gitignore | head -30
+   git ls-files | grep -E 'settings.local|\.env$'  # 应为空
+   git status --porcelain
+   ls .mcp.json .env.example
+   ```
+
 2. **打分**：逐维度判定，**用证据说话**（引用文件路径或具体行）。
-3. **汇总**：按下表格式输出，最后给"前 3 个最值得动手的改进"。
+
+3. **汇总**：按下表输出，最后给"前 3 个最值得动手的改进"。
 
 ## 输出模板
 
 ```
 # 工程实践自检报告 — <YYYY-MM-DD>
 
+## 总览
+**层次状态**：L1 ✅ / L2 ⚠️ / L3 ✅ / 支撑 ⚠️ / 领域 ✅
+
 | # | 维度 | 状态 | 依据 | 建议 |
 |---|------|------|------|------|
-| 1 | CLAUDE.md 完备性 | ✅ | CLAUDE.md:1-90 含 7 节 | 补充 lint 命令 |
-| 2 | Hook 配置 | ⚠️ | 仅 PostToolUse | 加 PreToolUse 校验 |
-| ... | ... | ... | ... | ... |
+| 1 | CLAUDE.md 完备性 | ✅ | 含 10 节，覆盖 7 类 | 无 |
+| 2 | Rules 文档 | ✅ | engineering-practices 14 节齐 | 无 |
+| 3 | PreToolUse 防御 | ✅ | 黑+灰双层，python 解析 | 收紧 SQL 检测 |
+| 4 | Hooks | ✅ | format/stop/pre 三件齐 | 加 SessionStart |
+| 5 | Agents | ✅ | 8 个 agent | description 路由清晰 |
+| 6 | Commands | ✅ | audit/commit/onboard/sync-docs | 可加 /review |
+| 7 | CI 门禁 | ⚠️ | lint.yml 存在 | 必需文件清单缺新增 |
+| 8 | Git 卫生 | ⚠️ | .gitignore 完整 | settings.local.json 已 tracked |
+| 9 | 测试 | ⚠️ | 仅 prettier --check | 项目无 src/，待 M4 |
+| 10 | 文档同步 | ❌ | README badge M2 vs CLAUDE M3 | 刷新 README |
+| 11 | 可观测 | ⚠️ | Stop hook 摘要 | 缺 statusLine / 审计日志 |
+| 12 | DDD 分层 | N/A | 项目尚无 src/ | M4 后启用 |
+| 13 | Java/Spring | N/A | 同上 | 同上 |
+| 14 | MCP 治理 | ✅ | .mcp.json 走 env、强制只读 | 无 |
 
 ## 优先改进（Top 3）
-1. <最值得做的> — 预估成本 X 分钟
+1. <最该动的> — 预估 X 分钟
 2. ...
 3. ...
 
@@ -51,11 +94,19 @@ argument-hint: "[focus] 可选：聚焦某一维度名"
 
 ## 评分尺度
 
-- ✅ **达标**：核心要素齐全，可直接生产使用
-- ⚠️ **部分**：基础在但有缺口，未阻塞但建议补齐
+- ✅ **达标**：本节"达标"条件全满足
+- ⚠️ **部分**：基础在但缺一两项
 - ❌ **缺失**：未实施或严重不足
+- **N/A**：本项目阶段不适用（如 DDD 维度在 M3 前为 N/A）
 
 ## 参数
 
-- `$ARGUMENTS` 为空：跑全量 11 维度
-- `$ARGUMENTS` 指定维度名（如 `hooks`）：仅对该维度做深度审查并给修复样例
+- `$ARGUMENTS` 为空：跑全量 14 维度
+- `$ARGUMENTS` 指定关键词（如 `ddd` / `mcp` / `hooks` / `ci`）：仅对该维度做深度审查并给修复样例
+
+## 硬性规则
+
+- **以证据说话**，不允许"看着像 ✅ 就 ✅"。每条都引文件路径或行号
+- **N/A 也要写明原因**（如"项目无 src/，本维度待 M4 启用"）
+- **Top 3 改进必须可执行**，不写"建议提升质量"这种空话
+- 不动文件，**只产报告**

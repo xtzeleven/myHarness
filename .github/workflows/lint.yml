@@ -24,19 +24,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Required files exist
         run: |
           set -e
           required=(
             "CLAUDE.md"
             "README.md"
+            "AGENTS.md"
+            "CHANGELOG.md"
             ".gitignore"
+            ".env.example"
+            ".mcp.json"
             ".claude/settings.json"
             ".claude/rules/engineering-practices.md"
             ".claude/hooks/format.sh"
             ".claude/hooks/stop-check.sh"
             ".claude/hooks/pre-tool-use.sh"
-            "AGENTS.md"
+            ".claude/commands/audit-practices.md"
+            ".claude/commands/commit.md"
+            ".claude/commands/onboard.md"
+            ".claude/commands/sync-docs.md"
+            "docs/AGENTS.backend.md"
+            ".github/workflows/lint.yml"
           )
           missing=0
           for f in "${required[@]}"; do
@@ -50,7 +60,31 @@ jobs:
             exit 1
           fi
           echo "All required files present."
-      - name: Hook scripts are executable shell
+
+      - name: Agents directory has expected files
+        run: |
+          set -e
+          expected_agents=(
+            "tdd-cycle-driver"
+            "code-reviewer"
+            "ddd-architect"
+            "spring-boot-reviewer"
+            "maven-build-doctor"
+            "schema-analyst"
+            "migration-author"
+            "docs-keeper"
+          )
+          missing=0
+          for a in "${expected_agents[@]}"; do
+            if [ ! -e ".claude/agents/$a.md" ]; then
+              echo "::error file=.claude/agents/$a.md::missing agent file"
+              missing=$((missing+1))
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 1
+          echo "All expected agents present."
+
+      - name: Hook scripts have shebang and are executable in git
         run: |
           set -e
           for h in .claude/hooks/*.sh; do
@@ -58,8 +92,63 @@ jobs:
               echo "::error file=$h::missing bash shebang"
               exit 1
             }
+            mode="$(git ls-files -s "$h" | awk '{print $1}')"
+            if [ "$mode" != "100755" ]; then
+              echo "::error file=$h::git mode is $mode, expected 100755 (chmod +x then commit)"
+              exit 1
+            fi
           done
-          echo "All hook scripts have proper shebang."
-      - name: settings.json is valid JSON
+          echo "All hook scripts have shebang + git +x bit."
+
+      - name: settings.json + .mcp.json are valid JSON
         run: |
-          python3 -c "import json,sys; json.load(open('.claude/settings.json')); print('settings.json OK')"
+          python3 -c "import json; json.load(open('.claude/settings.json')); print('settings.json OK')"
+          python3 -c "import json; json.load(open('.mcp.json')); print('.mcp.json OK')"
+
+      - name: .gitignore protects secrets
+        run: |
+          set -e
+          for pat in '\.env$' '\*\.key' '\*\.pem' 'id_rsa'; do
+            grep -Eq "$pat" .gitignore || {
+              echo "::error file=.gitignore::missing pattern matching $pat"
+              exit 1
+            }
+          done
+          echo ".gitignore covers .env / *.key / *.pem / id_rsa."
+
+      - name: settings.local.json is NOT tracked (personal config)
+        run: |
+          if git ls-files --error-unmatch .claude/settings.local.json >/dev/null 2>&1; then
+            echo "::error file=.claude/settings.local.json::personal config is tracked, run: git rm --cached .claude/settings.local.json"
+            exit 1
+          fi
+          echo "settings.local.json correctly untracked."
+
+      - name: AGENTS.md links resolve
+        run: |
+          set -e
+          # Extract relative .claude/agents/*.md links from AGENTS.md and verify each exists
+          mapfile -t links < <(grep -oE '\.claude/agents/[a-z-]+\.md' AGENTS.md | sort -u)
+          missing=0
+          for link in "${links[@]}"; do
+            if [ ! -e "$link" ]; then
+              echo "::error file=AGENTS.md::dangling link: $link"
+              missing=$((missing+1))
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 1
+          echo "All AGENTS.md links resolve (${#links[@]} checked)."
+
+      - name: .mcp.json variables are documented in .env.example
+        run: |
+          set -e
+          mcp_vars=$(grep -oE '\$\{[A-Z_]+' .mcp.json | sed 's/\${//' | sort -u)
+          missing=0
+          for v in $mcp_vars; do
+            if ! grep -q "^${v}=" .env.example; then
+              echo "::error file=.env.example::missing variable: $v (referenced in .mcp.json)"
+              missing=$((missing+1))
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 1
+          echo "All .mcp.json variables documented."
