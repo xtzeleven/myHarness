@@ -172,3 +172,21 @@ git status --porcelain
 - 后端 agent 设计：`docs/AGENTS.backend.md`
 - DDD 约定（实例化后）：`docs/ddd-conventions.md`
 - 工程化规则：`.claude/rules/engineering-practices.md`
+- 路线图：`docs/roadmap.md`（M4-M8 六维度计划）
+- 决策记录：`docs/adr/`（公开追溯）
+
+## 11. 项目记忆（Memory）
+
+本项目启用了 Claude Code 内置 memory 系统，索引在 `~/.claude/projects/D--myGithub-myHarness/memory/MEMORY.md`，含两类条目：
+
+- **决策原因**（`decision_*`）：补充 ADR 写不下的"为什么没选 Y"、"何时该重审"
+- **项目踩坑**（`pitfall_*`）：jq 不可用、SQL 检测误伤、settings.local 已 tracked、hook 自我拦截、Windows 路径、格式 hook 幂等性等
+
+**遇到下列场景时主动查 MEMORY.md**：
+- 写 / 调试 hook 脚本前 → 看 `pitfall_jq_not_in_path` / `pitfall_hook_self_block`
+- 加 PreToolUse 规则前 → 看 `pitfall_sql_detection_overscan` / `decision_grey_list_over_pure_block`
+- 加 .gitignore 条目时 → 看 `pitfall_settings_local_already_tracked`
+- 用 Bash 工具碰路径问题 → 看 `pitfall_windows_path_d_drive`
+- 讨论技术选型替代方案 → 看 `decision_*` 系列
+
+载体分工详见 `docs/memory-conventions.md`：CLAUDE.md（每会话注入硬规则）/ ADR（公开决策追溯）/ Memory（协作偏好与踩坑）。
