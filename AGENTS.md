@@ -77,3 +77,49 @@ gitnexus 系列 skill 由本机 Claude Code 环境直接提供，**不在 `.clau
 - ❌ 多个 agent 职责重叠 → 路由变随机
 - ❌ 评审类 agent 给 Edit/Write 权限 → 容易越权改代码
 - ❌ 把 agent 当 skill 用 → skill 是用户主动调用的能力包，agent 是主对话委派的子工作流
+
+## 自反馈环（M5 新增）
+
+> 详见 [docs/loop-architecture.md §5](docs/loop-architecture.md)。让 agent 互相审，避免单 agent 偏见。**不全开**，只在以下高价值组合启用。
+
+| 主 Worker | 反馈 Worker | 触发场景 | 反馈聚焦 |
+|----------|-----------|---------|---------|
+| `ddd-architect` 给出聚合设计 | `docs-keeper` | 主 Worker 输出含"建议"或"草图" | 设计是否完整文档化、是否含落地路径 |
+| `migration-author` 写完 migration 文件 | `schema-analyst` | 写文件后立即触发 | migration 在已有 schema 上是否安全（兼容性 / 索引影响） |
+| `tdd-cycle-driver` 完成 GREEN 步 | `code-reviewer` | 进入 REFACTOR 前 | 实现是否符合通用 quality（命名 / 安全 / 异常） |
+| 任一 Worker 改 `domain/` 边界 | `ddd-architect` | PreToolUse 灰名单触发 + 用户授权后 | 改动是否符合 DDD 分层准入（[engineering-practices §12](.claude/rules/engineering-practices.md)） |
+
+自反馈 ≠ 串行链：反馈 Worker **审**主 Worker 的输出，发现问题 → escalate 给 Driver；不在主 Worker 输出基础上"继续工作"。
+
+## 升级链（M5 新增）
+
+按 [loop-architecture §3 escalation](docs/loop-architecture.md) 的策略，每个 Worker 失败 / 卡住时的升级目标：
+
+| Worker | 卡住时升级到 | 仍卡升级到 |
+|--------|-----------|----------|
+| `tdd-cycle-driver` | sonnet → opus（同 agent） | Driver → 用户 |
+| `code-reviewer` | sonnet → opus | `spring-boot-reviewer`（专项）+ Driver |
+| `ddd-architect` | 已 opus，无可升 | Driver → 用户（设计决策需用户拍板） |
+| `spring-boot-reviewer` | sonnet → opus | `ddd-architect`（边界问题） + Driver |
+| `maven-build-doctor` | sonnet → opus | `spring-boot-reviewer`（运行时问题） |
+| `schema-analyst` | sonnet → opus | `ddd-architect`（建模问题） |
+| `migration-author` | sonnet → opus | `schema-analyst`（兼容性疑问） |
+| `docs-keeper` | sonnet → opus | Driver → 用户 |
+
+**规则**：
+- 升级**永不向下**（用户决策后回到原层级）
+- 跨 agent 升级时，**保留**原 Worker 的输出在上下文，反馈 Worker 看得到
+- 同模型 retry 上限 **2 次**；超过即升级
+
+## 降级链（M5 新增）
+
+工具失败时的降级路径（详见 [loop-architecture §3 degradation](docs/loop-architecture.md)）：
+
+```
+gitnexus-exploring  → Glob + Grep   → ls + cat（手动）
+gitnexus-impact-analysis → git grep + 手动 trace
+schema-analyst (mysql MCP) → 读 schema.sql 文件 → 问用户
+prettier (npx) → 跳过格式化（注明 "未格式化"）
+```
+
+降级时 Worker 必须在输出顶部注明 "**已降级**: <原工具>不可用，使用 <替代>"。

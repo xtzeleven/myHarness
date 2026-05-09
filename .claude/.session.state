@@ -1,0 +1,11 @@
+{
+  "ended_at": "2026-05-09T10:45:55Z",
+  "branch": "main",
+  "head_sha": "0853690",
+  "head_msg": "feat:新增memory",
+  "uncommitted_count": 14,
+  "current_task": null,
+  "pending_steps": [],
+  "blocked_on": null,
+  "last_checkpoint": null
+}

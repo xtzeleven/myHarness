@@ -156,4 +156,65 @@ if [ "$tool_name" = "Edit" ] || [ "$tool_name" = "Write" ] || [ "$tool_name" = "
   fi
 fi
 
+# === M6 按需注入 hint（建议性，不阻塞）===
+# 主 Claude 看到 stderr 的 "💡 提示:" 前缀应当主动 prefetch 对应文档/agent
+hint() {
+  echo "💡 提示: $1" >&2
+}
+
+# 基于 file_path 的 hint
+if [ -n "${file_path:-}" ]; then
+  case "$file_path" in
+    */pom.xml|pom.xml)
+      hint "改 pom.xml 前可读 .claude/agents/maven-build-doctor.md + engineering-practices.md §13"
+      ;;
+    *src/main/java/*/domain/*)
+      hint "改 domain 层前可读 .claude/agents/ddd-architect.md + engineering-practices.md §12（DDD 分层）"
+      ;;
+    *src/main/java/*/infrastructure/*)
+      hint "改 infrastructure 层前可读 .claude/agents/spring-boot-reviewer.md（Repository 实现 / 适配器）"
+      ;;
+    *src/main/java/*/application/*)
+      hint "改 application 层前可读 engineering-practices.md §12（事务边界仅在此层） + spring-boot-reviewer.md"
+      ;;
+    *db/migration/*|*db/changelog/*)
+      hint "写 migration 前可读 .claude/agents/migration-author.md（向后兼容性 / 回滚预案）"
+      ;;
+    */application*.yml|*/application*.yaml|*/application*.properties)
+      hint "改 application 配置前可读 .claude/agents/spring-boot-reviewer.md §5（配置 / Profile）"
+      ;;
+    */.mcp.json|.mcp.json)
+      hint "改 .mcp.json 前必读 engineering-practices.md §14（MCP 治理 — 凭据走 .env、强制只读）"
+      ;;
+    */.env.example|.env.example)
+      hint "改 .env.example 后须同步 .mcp.json 引用变量；CI lint.yml 会校验对齐"
+      ;;
+    */CLAUDE.md|CLAUDE.md)
+      hint "改 CLAUDE.md 后跑 /audit-context 看 token 数（每会话付费）"
+      ;;
+    */.claude/agents/*.md)
+      hint "改 agent 后须同步 AGENTS.md 路由速查表 + 升级链表（M5 引入）"
+      ;;
+    */.gitignore|.gitignore)
+      hint "加 ignore 条目后跑 git ls-files 检查是否需要 git rm --cached（参考 memory: pitfall_settings_local_already_tracked）"
+      ;;
+  esac
+fi
+
+# 基于 cmd 的 hint
+if [ -n "${cmd:-}" ]; then
+  if echo "$cmd" | grep -Eq '^[[:space:]]*mvn[[:space:]]+(test|verify|compile|clean|package)'; then
+    hint "跑 mvn 前可看 maven-build-doctor agent；若失败常见根因见 §速查表"
+  fi
+  if echo "$cmd" | grep -Eq '^[[:space:]]*(mysql|psql)[[:space:]].*\b(SELECT|EXPLAIN)\b'; then
+    hint "查 DB schema / SQL 性能可走 schema-analyst agent（已配 mysql-readonly MCP）"
+  fi
+  if echo "$cmd" | grep -Eq '^[[:space:]]*git[[:space:]]+(commit|push)'; then
+    hint "提交前考虑跑 /commit 命令（标准化 + 灰名单交互检查）；推送前 /audit-practices 自检"
+  fi
+  if echo "$cmd" | grep -Eq 'grep|find.*-name'; then
+    hint "代码探索可优先用 gitnexus-exploring（结构化检索） / gitnexus-impact-analysis（影响面）"
+  fi
+fi
+
 exit 0

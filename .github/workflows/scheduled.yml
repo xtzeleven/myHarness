@@ -1,0 +1,114 @@
+name: scheduled
+
+on:
+  schedule:
+    # 每天 09:00 UTC（约北京 17:00）
+    - cron: "13 9 * * *"
+    # 每周一 03:00 UTC
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  daily-structure-audit:
+    name: Daily structure audit
+    if: github.event.schedule == '13 9 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse structure-check（与 lint.yml 一致）
+        run: |
+          set -e
+          required=(
+            "CLAUDE.md" "README.md" "AGENTS.md" "CHANGELOG.md"
+            ".gitignore" ".env.example" ".mcp.json"
+            ".claude/settings.json"
+            ".claude/rules/engineering-practices.md"
+            ".claude/hooks/format.sh"
+            ".claude/hooks/stop-check.sh"
+            ".claude/hooks/pre-tool-use.sh"
+            ".claude/hooks/session-start.sh"
+            "docs/AGENTS.backend.md"
+            "docs/roadmap.md"
+            "docs/loop-architecture.md"
+            "docs/memory-conventions.md"
+            "docs/periodic-tasks.md"
+          )
+          missing=()
+          for f in "${required[@]}"; do
+            [ ! -e "$f" ] && missing+=("$f")
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            printf -- "- %s\n" "${missing[@]}" > /tmp/missing.txt
+            echo "MISSING<<EOF" >> $GITHUB_ENV
+            cat /tmp/missing.txt >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          fi
+      - name: Open issue if missing
+        if: env.MISSING != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const missing = process.env.MISSING;
+            const today = new Date().toISOString().slice(0, 10);
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[scheduled] ${today} 必需文件缺失`,
+              body: `每日结构自检发现以下文件缺失：\n\n${missing}\n\n详见 [.github/workflows/scheduled.yml](../blob/main/.github/workflows/scheduled.yml)`,
+              labels: ['harness-health', 'auto-generated']
+            });
+
+  weekly-stale-check:
+    name: Weekly stale-check
+    if: github.event.schedule == '17 3 * * 1' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compute stale signals
+        id: signals
+        run: |
+          set -e
+          last_commit_ts=$(git log -1 --pretty=%ct main)
+          now_ts=$(date +%s)
+          days_since=$(( (now_ts - last_commit_ts) / 86400 ))
+          echo "days_since_main_commit=$days_since" >> $GITHUB_OUTPUT
+      - name: Open issue if stale
+        if: steps.signals.outputs.days_since_main_commit > 7
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const days = '${{ steps.signals.outputs.days_since_main_commit }}';
+            const today = new Date().toISOString().slice(0, 10);
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[scheduled] ${today} 仓库 ${days} 天无 main 提交`,
+              body: `main 分支已 ${days} 天无新 commit。\n\n如果是有意停滞（如等设计），关掉本 issue 即可。\n如果只是漏了 push，建议跑 \`/audit-practices\` + \`/sync-docs\` 后再决定。`,
+              labels: ['harness-health', 'auto-generated', 'stale']
+            });
+
+  weekly-tool-versions:
+    name: Weekly tool drift check
+    if: github.event.schedule == '17 3 * * 1' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Check prettier latest vs locked
+        id: pretty
+        run: |
+          # lint.yml 当前用 prettier@3，简单检测最新 3.x
+          latest=$(npm view prettier@^3 version 2>/dev/null | tail -1 | tr -d "'")
+          echo "latest_prettier=$latest" >> $GITHUB_OUTPUT
+          echo "Latest prettier 3.x: $latest"
+      - name: (Future M7) compare against locked version
+        run: |
+          echo "M7 后此处对比 .prettierrc / package.json 锁定版本，目前仅记录"

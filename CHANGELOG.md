@@ -8,9 +8,45 @@
 ## [Unreleased]
 
 ### 计划中
-- M4：实例化 `pom.xml` + `src/main/java/<base>/{interfaces,application,domain,infrastructure}/`
-- M5：接入第二个真实项目，对照框架做差异分析
-- M6：8+ 模型在本框架下的表现差异
+- M7：Tools 治理 + Policy 机制化（版本锁、fallback chain、model selection、审计日志、emergency override）
+- M8：Java DDD 实例化（pom.xml + src/，六维度回归测试）
+
+## [M6] - 2026-05-09 — Context 治理
+
+### Added
+- `docs/context-management.md`：三类注入来源、token 预算（自动注入 ≤ 8K）、按需注入机制、压缩策略、M8 后子目录 CLAUDE.md 拆分原则
+- `.claude/scripts/audit-context-cost.py`：tiktoken 优先（fallback char/4）的 token 审计脚本，分 6 大类汇总 + 预算检查 + 减重建议
+- `.claude/commands/audit-context.md`：`/audit-context` slash 命令，包装审计脚本
+- PreToolUse hook 加按需注入 hint：根据 file_path 与 cmd 模式输出 `💡 提示:` 前缀的建议（11 种触发场景，14/14 测试通过），不阻塞
+
+### Baseline 数据（M6 完成时）
+- 自动注入：3589 tokens（占 8K 预算的 45% ✅）
+- 常被 prefetch：6451 tokens（README + AGENTS.md + CHANGELOG）
+- Rules 按需：4078 tokens
+- Agents 总和：11220 tokens（仅 spawn 时计入单个）
+- Docs 总和：18066 tokens（按需 Read，不计预算）
+
+## [M4-M5] - 2026-05-09 — Memory 启用 + Loop 架构
+
+### Added
+- **M4 Memory**：启用 Claude Code 内置 memory（`~/.claude/projects/<id>/memory/`）
+  - 5 条决策类记忆（Java DDD / MySQL 只读 / 三层架构 / 灰名单 / python over jq）
+  - 6 条踩坑类记忆（jq 不可用 / SQL 误伤 / settings.local 已 tracked / hook 自拦 / Windows 路径 / format hook 幂等）
+  - `MEMORY.md` 索引（按主题分组）
+  - `docs/memory-conventions.md`：CLAUDE.md / ADR / Memory 三载体分工矩阵
+  - CLAUDE.md §11 加 memory 引用与常见查阅场景
+- **M5 Loop 架构**：
+  - `docs/loop-architecture.md`：Driver / Worker 角色、调度决策树、并行/串行硬规则、retry/escalation/degradation 三策略、`.session.state` 中断恢复机制、自反馈环
+  - `docs/periodic-tasks.md`：会话内 `/loop` skill + 仓库级 GitHub Actions 定时（D2 决策："两都要"）
+  - `.github/workflows/scheduled.yml`：每日结构自检 / 每周 stale-check / 每周工具版本漂移（仅 open issue，不 fail repo）
+  - `.claude/hooks/session-start.sh`：注入分支 / 最近 commit / 上次会话状态 / Memory 索引摘要 / 工具就绪状态
+  - AGENTS.md 加自反馈环表 + 升级链表 + 降级链
+- `docs/roadmap.md`：M4-M8 六维度路线总览（Loop / Context / Tools / Permission Gate / Memory / Policy）
+
+### Changed
+- Stop hook（stop-check.sh）扩展为同时写 `.session.state`（含分支 / head / 未提交数）供下次会话读
+- settings.json 注册 SessionStart hook
+- lint.yml required 列表扩到 25 项（加 session-start.sh / scheduled.yml / 4 份 docs）
 
 ## [M3] - 2026-05-09 — Layer 3 质量门禁
 

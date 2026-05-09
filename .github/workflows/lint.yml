@@ -41,12 +41,22 @@ jobs:
             ".claude/hooks/format.sh"
             ".claude/hooks/stop-check.sh"
             ".claude/hooks/pre-tool-use.sh"
+            ".claude/hooks/session-start.sh"
             ".claude/commands/audit-practices.md"
+            ".claude/commands/audit-context.md"
             ".claude/commands/commit.md"
             ".claude/commands/onboard.md"
             ".claude/commands/sync-docs.md"
+            ".claude/scripts/audit-context-cost.py"
             "docs/AGENTS.backend.md"
+            "docs/roadmap.md"
+            "docs/memory-conventions.md"
+            "docs/loop-architecture.md"
+            "docs/periodic-tasks.md"
+            "docs/context-management.md"
+            "docs/adr/README.md"
             ".github/workflows/lint.yml"
+            ".github/workflows/scheduled.yml"
           )
           missing=0
           for f in "${required[@]}"; do

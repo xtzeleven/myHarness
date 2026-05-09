@@ -8,7 +8,11 @@
       "Bash(bash /d/myGithub/myHarness/.claude/hooks/pre-tool-use.sh)",
       "Bash(echo \"exit=$?\")",
       "Bash(bash .claude/hooks/pre-tool-use.sh)",
-      "Bash(bash *)"
+      "Bash(bash *)",
+      "Bash(chmod +x .claude/hooks/session-start.sh)",
+      "Bash(python -c \"import json; d=json.load\\(open\\('.claude/settings.json'\\)\\);print\\(list\\(d['hooks'].keys\\(\\)\\)\\)\")",
+      "Bash(git check-ignore *)",
+      "Bash(python *)"
     ]
   }
 }
