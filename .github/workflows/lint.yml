@@ -1,0 +1,65 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  format-check:
+    name: Prettier format check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run prettier --check
+        run: npx --yes prettier@3 --check "**/*.{md,json,yml,yaml}" --ignore-path .gitignore
+
+  structure-check:
+    name: Project structure sanity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Required files exist
+        run: |
+          set -e
+          required=(
+            "CLAUDE.md"
+            "README.md"
+            ".gitignore"
+            ".claude/settings.json"
+            ".claude/rules/engineering-practices.md"
+            ".claude/hooks/format.sh"
+            ".claude/hooks/stop-check.sh"
+            ".claude/hooks/pre-tool-use.sh"
+            "AGENTS.md"
+          )
+          missing=0
+          for f in "${required[@]}"; do
+            if [ ! -e "$f" ]; then
+              echo "::error file=$f::missing required file"
+              missing=$((missing+1))
+            fi
+          done
+          if [ "$missing" -gt 0 ]; then
+            echo "::error::$missing required file(s) missing"
+            exit 1
+          fi
+          echo "All required files present."
+      - name: Hook scripts are executable shell
+        run: |
+          set -e
+          for h in .claude/hooks/*.sh; do
+            head -1 "$h" | grep -q '^#!/usr/bin/env bash' || {
+              echo "::error file=$h::missing bash shebang"
+              exit 1
+            }
+          done
+          echo "All hook scripts have proper shebang."
+      - name: settings.json is valid JSON
+        run: |
+          python3 -c "import json,sys; json.load(open('.claude/settings.json')); print('settings.json OK')"

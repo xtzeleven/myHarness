@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod +x /d/myGithub/myHarness/.claude/hooks/format.sh)",
+      "Bash(chmod +x /d/myGithub/myHarness/.claude/hooks/stop-check.sh)",
+      "Bash(bash /d/myGithub/myHarness/.claude/hooks/stop-check.sh)",
+      "Bash(chmod +x /d/myGithub/myHarness/.claude/hooks/pre-tool-use.sh)",
+      "Bash(bash /d/myGithub/myHarness/.claude/hooks/pre-tool-use.sh)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(bash .claude/hooks/pre-tool-use.sh)",
+      "Bash(bash *)"
+    ]
+  }
+}

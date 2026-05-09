@@ -1,0 +1,67 @@
+# --- IDE / 编辑器 ---
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- 操作系统 ---
+*~
+.~lock.*
+desktop.ini
+
+# --- Node ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm/
+.yarn/
+.pnp.*
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+dist/
+build/
+*.egg
+
+# --- Java ---
+target/
+*.class
+*.jar
+*.war
+*.iml
+.gradle/
+
+# --- 通用日志 / 临时 ---
+*.log
+logs/
+*.tmp
+*.bak
+.cache/
+
+# --- 密钥 / 环境变量 ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+*.p12
+
+# --- Claude Code 本地状态 ---
+.claude/settings.local.json
+.claude/settings.local.json.bak
+.claude/.session*
