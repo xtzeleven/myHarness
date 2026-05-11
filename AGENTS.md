@@ -44,14 +44,14 @@ gitnexus 系列 skill 由本机 Claude Code 环境直接提供，**不在 `.clau
 
 ## 相关文档（按主题）
 
-| 主题                  | 文档                                                                             |
-| --------------------- | -------------------------------------------------------------------------------- |
-| 后端 agent 详细约定   | [docs/AGENTS.backend.md](docs/AGENTS.backend.md)                                 |
-| 行为准则              | [CLAUDE.md](CLAUDE.md)                                                           |
-| 工程化规则（11+3 节） | [.claude/rules/engineering-practices.md](.claude/rules/engineering-practices.md) |
-| Slash 命令            | [.claude/commands/](.claude/commands/)                                           |
-| Hook 脚本             | [.claude/hooks/](.claude/hooks/)                                                 |
-| MCP 配置              | [.mcp.json](.mcp.json) + [.env.example](.env.example)                            |
+| 主题                | 文档                                                                             |
+| ------------------- | -------------------------------------------------------------------------------- |
+| 后端 agent 详细约定 | [docs/AGENTS.backend.md](docs/AGENTS.backend.md)                                 |
+| 行为准则            | [CLAUDE.md](CLAUDE.md)                                                           |
+| 工程化规则（15 节） | [.claude/rules/engineering-practices.md](.claude/rules/engineering-practices.md) |
+| Slash 命令          | [.claude/commands/](.claude/commands/)                                           |
+| Hook 脚本           | [.claude/hooks/](.claude/hooks/)                                                 |
+| MCP 配置            | [.mcp.json](.mcp.json) + [.env.example](.env.example)                            |
 
 ## 触发约定
 
@@ -82,12 +82,12 @@ gitnexus 系列 skill 由本机 Claude Code 环境直接提供，**不在 `.clau
 
 > 详见 [docs/loop-architecture.md §5](docs/loop-architecture.md)。让 agent 互相审，避免单 agent 偏见。**不全开**，只在以下高价值组合启用。
 
-| 主 Worker | 反馈 Worker | 触发场景 | 反馈聚焦 |
-|----------|-----------|---------|---------|
-| `ddd-architect` 给出聚合设计 | `docs-keeper` | 主 Worker 输出含"建议"或"草图" | 设计是否完整文档化、是否含落地路径 |
-| `migration-author` 写完 migration 文件 | `schema-analyst` | 写文件后立即触发 | migration 在已有 schema 上是否安全（兼容性 / 索引影响） |
-| `tdd-cycle-driver` 完成 GREEN 步 | `code-reviewer` | 进入 REFACTOR 前 | 实现是否符合通用 quality（命名 / 安全 / 异常） |
-| 任一 Worker 改 `domain/` 边界 | `ddd-architect` | PreToolUse 灰名单触发 + 用户授权后 | 改动是否符合 DDD 分层准入（[engineering-practices §12](.claude/rules/engineering-practices.md)） |
+| 主 Worker                              | 反馈 Worker      | 触发场景                           | 反馈聚焦                                                                                         |
+| -------------------------------------- | ---------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `ddd-architect` 给出聚合设计           | `docs-keeper`    | 主 Worker 输出含"建议"或"草图"     | 设计是否完整文档化、是否含落地路径                                                               |
+| `migration-author` 写完 migration 文件 | `schema-analyst` | 写文件后立即触发                   | migration 在已有 schema 上是否安全（兼容性 / 索引影响）                                          |
+| `tdd-cycle-driver` 完成 GREEN 步       | `code-reviewer`  | 进入 REFACTOR 前                   | 实现是否符合通用 quality（命名 / 安全 / 异常）                                                   |
+| 任一 Worker 改 `domain/` 边界          | `ddd-architect`  | PreToolUse 灰名单触发 + 用户授权后 | 改动是否符合 DDD 分层准入（[engineering-practices §12](.claude/rules/engineering-practices.md)） |
 
 自反馈 ≠ 串行链：反馈 Worker **审**主 Worker 的输出，发现问题 → escalate 给 Driver；不在主 Worker 输出基础上"继续工作"。
 
@@ -95,18 +95,19 @@ gitnexus 系列 skill 由本机 Claude Code 环境直接提供，**不在 `.clau
 
 按 [loop-architecture §3 escalation](docs/loop-architecture.md) 的策略，每个 Worker 失败 / 卡住时的升级目标：
 
-| Worker | 卡住时升级到 | 仍卡升级到 |
-|--------|-----------|----------|
-| `tdd-cycle-driver` | sonnet → opus（同 agent） | Driver → 用户 |
-| `code-reviewer` | sonnet → opus | `spring-boot-reviewer`（专项）+ Driver |
-| `ddd-architect` | 已 opus，无可升 | Driver → 用户（设计决策需用户拍板） |
-| `spring-boot-reviewer` | sonnet → opus | `ddd-architect`（边界问题） + Driver |
-| `maven-build-doctor` | sonnet → opus | `spring-boot-reviewer`（运行时问题） |
-| `schema-analyst` | sonnet → opus | `ddd-architect`（建模问题） |
-| `migration-author` | sonnet → opus | `schema-analyst`（兼容性疑问） |
-| `docs-keeper` | sonnet → opus | Driver → 用户 |
+| Worker                 | 卡住时升级到              | 仍卡升级到                             |
+| ---------------------- | ------------------------- | -------------------------------------- |
+| `tdd-cycle-driver`     | sonnet → opus（同 agent） | Driver → 用户                          |
+| `code-reviewer`        | sonnet → opus             | `spring-boot-reviewer`（专项）+ Driver |
+| `ddd-architect`        | 已 opus，无可升           | Driver → 用户（设计决策需用户拍板）    |
+| `spring-boot-reviewer` | sonnet → opus             | `ddd-architect`（边界问题） + Driver   |
+| `maven-build-doctor`   | sonnet → opus             | `spring-boot-reviewer`（运行时问题）   |
+| `schema-analyst`       | sonnet → opus             | `ddd-architect`（建模问题）            |
+| `migration-author`     | sonnet → opus             | `schema-analyst`（兼容性疑问）         |
+| `docs-keeper`          | sonnet → opus             | Driver → 用户                          |
 
 **规则**：
+
 - 升级**永不向下**（用户决策后回到原层级）
 - 跨 agent 升级时，**保留**原 Worker 的输出在上下文，反馈 Worker 看得到
 - 同模型 retry 上限 **2 次**；超过即升级
@@ -130,18 +131,19 @@ prettier (npx) → 跳过格式化（注明 "未格式化"）
 
 > 详见 [engineering-practices.md §15](.claude/rules/engineering-practices.md)。本表给每个 Worker 的默认模型与升级路径，对应 frontmatter 的 `model:` 字段。
 
-| Agent | 默认模型 | 选这个的原因 | 升级路径 |
-|-------|--------|-----------|---------|
-| `tdd-cycle-driver` | sonnet | 红绿循环路径明确，sonnet 够用 | sonnet → opus（连续 2 次 GREEN 失败时） |
-| `code-reviewer` | sonnet | 通用评审，sonnet 性价比高 | sonnet → opus（涉敏感 / 安全审查时） |
-| `ddd-architect` | **opus** | 战略设计 / 跨 BC 决策需要长链路推理 | 已最高，下一步是用户决策 |
-| `spring-boot-reviewer` | sonnet | Spring 反模式有清单可对，sonnet 够 | sonnet → opus（涉事务边界 / 复杂 Bean 生命周期） |
-| `maven-build-doctor` | sonnet | 构建错误有套路 | sonnet → opus（依赖冲突涉多版本传递时） |
-| `schema-analyst` | sonnet | EXPLAIN / 索引分析有套路 | sonnet → opus（跨表 join / 分库分表设计） |
-| `migration-author` | sonnet | 模板化产出 | sonnet → opus（向后兼容性涉应用层双写时） |
-| `docs-keeper` | sonnet | 漂移检测是模式匹配 | sonnet → opus（罕见，文档结构剧变时） |
+| Agent                  | 默认模型 | 选这个的原因                        | 升级路径                                         |
+| ---------------------- | -------- | ----------------------------------- | ------------------------------------------------ |
+| `tdd-cycle-driver`     | sonnet   | 红绿循环路径明确，sonnet 够用       | sonnet → opus（连续 2 次 GREEN 失败时）          |
+| `code-reviewer`        | sonnet   | 通用评审，sonnet 性价比高           | sonnet → opus（涉敏感 / 安全审查时）             |
+| `ddd-architect`        | **opus** | 战略设计 / 跨 BC 决策需要长链路推理 | 已最高，下一步是用户决策                         |
+| `spring-boot-reviewer` | sonnet   | Spring 反模式有清单可对，sonnet 够  | sonnet → opus（涉事务边界 / 复杂 Bean 生命周期） |
+| `maven-build-doctor`   | sonnet   | 构建错误有套路                      | sonnet → opus（依赖冲突涉多版本传递时）          |
+| `schema-analyst`       | sonnet   | EXPLAIN / 索引分析有套路            | sonnet → opus（跨表 join / 分库分表设计）        |
+| `migration-author`     | sonnet   | 模板化产出                          | sonnet → opus（向后兼容性涉应用层双写时）        |
+| `docs-keeper`          | sonnet   | 漂移检测是模式匹配                  | sonnet → opus（罕见，文档结构剧变时）            |
 
 **规则**：
+
 - 用户显式指定模型 > agent frontmatter > 本表默认
 - 升级前必须 retry 当前模型 1 次（瞬时失败可能并非模型能力问题）
 - 跨 agent 转交时**保留**当前会话上下文，不让接手 agent 从零开始
@@ -151,13 +153,13 @@ prettier (npx) → 跳过格式化（注明 "未格式化"）
 
 工具版本由这些文件约束：
 
-| 工具 | 锁版本文件 | 当前锁定 |
-|------|----------|---------|
-| Node | `.tool-versions`（asdf/mise）| `nodejs 20.18.0` |
-| Python | `.tool-versions` | `python 3.13.0` |
-| Java | `.tool-versions` | `java temurin-17.0.13+11` |
-| Maven | `.tool-versions` | `maven 3.9.9` |
-| prettier | `package.json` + `.prettierrc.json` | `prettier 3.3.3` |
+| 工具     | 锁版本文件                          | 当前锁定                  |
+| -------- | ----------------------------------- | ------------------------- |
+| Node     | `.tool-versions`（asdf/mise）       | `nodejs 20.18.0`          |
+| Python   | `.tool-versions`                    | `python 3.13.0`           |
+| Java     | `.tool-versions`                    | `java temurin-17.0.13+11` |
+| Maven    | `.tool-versions`                    | `maven 3.9.9`             |
+| prettier | `package.json` + `.prettierrc.json` | `prettier 3.3.3`          |
 
 CI 与本地用同一版本（CI 通过 `npm ci` 装；本地通过 `npm install` 或 hook 自动）。
 

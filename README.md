@@ -19,7 +19,7 @@
 
 - **Layer 1：约束层（Constraint Harness）**
   在 LLM 行动**之前**注入规则与禁忌，让"错误的代码写不出来"。
-  - `CLAUDE.md`：每次会话自动注入的行为准则（10 节，含 Java/DDD 上下文与 gitnexus 路由）
+  - `CLAUDE.md`：每次会话自动注入的行为准则（11 节，含 Java/DDD 上下文与 gitnexus 路由）
   - `.claude/rules/engineering-practices.md`：15 节工程化规则（11 通用 + DDD 分层 / Java&Spring / MCP 治理 + Policy 机制化）
   - `.claude/hooks/pre-tool-use.sh`：黑名单（直接拦：`rm -rf /`、强推主分支、写敏感文件）+ 灰名单（人工授权：DDD 边界改动、主依赖升级、DDL/DML、`mvn deploy`）
 
@@ -44,17 +44,17 @@
 
 ## 📊 阶段性路线
 
-| 阶段   | 目标                                                                 | 状态    |
-| ------ | -------------------------------------------------------------------- | ------- |
-| **M0** | 项目立项，写下三层架构假设                                           | ✅ 完成 |
-| **M1** | Layer 1 落地（CLAUDE.md + rules + PreToolUse）                       | ✅ 完成 |
-| **M2** | Layer 2 落地（hooks + agents + commands）                            | ✅ 完成 |
-| **M3** | Layer 3 落地（CI + 提交规范 + 必需文件门禁）                         | ✅ 完成 |
-| **M4** | Memory 启用（决策原因 + 项目踩坑两类，索引 `MEMORY.md`）             | ✅ 完成 |
-| **M5** | Loop 架构（Driver/Worker 调度 + 三策略 + `.session.state` 恢复）     | ✅ 完成 |
-| **M6** | Context 治理（token 预算 ≤ 8K + 按需 hint + 子目录 CLAUDE.md 规划）  | ✅ 完成 |
-| **M7** | Tools 治理 + Policy 机制化（版本锁 + 降级链 + bypass + audit log）   | ✅ 完成 |
-| **M8** | 实例化 Java DDD 骨架（`pom.xml` + `src/`，六维度回归测试场）         | 🟢 当前 |
+| 阶段   | 目标                                                                | 状态    |
+| ------ | ------------------------------------------------------------------- | ------- |
+| **M0** | 项目立项，写下三层架构假设                                          | ✅ 完成 |
+| **M1** | Layer 1 落地（CLAUDE.md + rules + PreToolUse）                      | ✅ 完成 |
+| **M2** | Layer 2 落地（hooks + agents + commands）                           | ✅ 完成 |
+| **M3** | Layer 3 落地（CI + 提交规范 + 必需文件门禁）                        | ✅ 完成 |
+| **M4** | Memory 启用（决策原因 + 项目踩坑两类，索引 `MEMORY.md`）            | ✅ 完成 |
+| **M5** | Loop 架构（Driver/Worker 调度 + 三策略 + `.session.state` 恢复）    | ✅ 完成 |
+| **M6** | Context 治理（token 预算 ≤ 8K + 按需 hint + 子目录 CLAUDE.md 规划） | ✅ 完成 |
+| **M7** | Tools 治理 + Policy 机制化（版本锁 + 降级链 + bypass + audit log）  | ✅ 完成 |
+| **M8** | 实例化 Java DDD 骨架（`pom.xml` + `src/`，六维度回归测试场）        | 🟢 当前 |
 
 ## 🚀 快速上手
 
@@ -78,7 +78,7 @@ cp .env.example .env && vi .env
 ## 📁 目录速览
 
 ```
-CLAUDE.md                            行为准则（10 节，每会话自动注入）
+CLAUDE.md                            行为准则（11 节，每会话自动注入）
 README.md                            本文件
 AGENTS.md                            Agent 索引（路由表 + 8 agent）
 CHANGELOG.md                         发布变更记录

@@ -72,20 +72,21 @@ argument-hint: "[focus] 可选：聚焦某一节名（如 ddd / java / mcp / hoo
 
 | # | 维度 | 状态 | 依据 | 建议 |
 |---|------|------|------|------|
-| 1 | CLAUDE.md 完备性 | ✅ | 含 10 节，覆盖 7 类 | 无 |
-| 2 | Rules 文档 | ✅ | engineering-practices 14 节齐 | 无 |
-| 3 | PreToolUse 防御 | ✅ | 黑+灰双层，python 解析 | 收紧 SQL 检测 |
-| 4 | Hooks | ✅ | format/stop/pre 三件齐 | 加 SessionStart |
+| 1 | CLAUDE.md 完备性 | ✅ | 含 11 节，覆盖 7 类 | 无 |
+| 2 | Rules 文档 | ✅ | engineering-practices 15 节齐 | 无 |
+| 3 | PreToolUse 防御 | ✅ | 黑+灰双层，python 解析 | 无 |
+| 4 | Hooks | ✅ | 6 类齐（pre/post/stop/sessionstart/subagentstop/userpromptsubmit） | 无 |
 | 5 | Agents | ✅ | 8 个 agent | description 路由清晰 |
-| 6 | Commands | ✅ | audit/commit/onboard/sync-docs | 可加 /review |
-| 7 | CI 门禁 | ⚠️ | lint.yml 存在 | 必需文件清单缺新增 |
-| 8 | Git 卫生 | ⚠️ | .gitignore 完整 | settings.local.json 已 tracked |
-| 9 | 测试 | ⚠️ | 仅 prettier --check | 项目无 src/，待 M4 |
-| 10 | 文档同步 | ❌ | README badge M2 vs CLAUDE M3 | 刷新 README |
-| 11 | 可观测 | ⚠️ | Stop hook 摘要 | 缺 statusLine / 审计日志 |
-| 12 | DDD 分层 | N/A | 项目尚无 src/ | M4 后启用 |
+| 6 | Commands | ✅ | audit-practices/audit-context/commit/onboard/sync-docs（5 个） | 可加 /review |
+| 7 | CI 门禁 | ✅ | lint.yml + scheduled.yml + 必需文件单点真源 | 无 |
+| 8 | Git 卫生 | ✅ | .gitignore 完整，settings.local 已 untracked | 无 |
+| 9 | 测试 | ⚠️ | prettier --check + hook smoke test（26 case） | 项目无 src/，待 M8 |
+| 10 | 文档同步 | ✅ | README/CLAUDE/ADR/CHANGELOG 一致 | 无 |
+| 11 | 可观测 | ⚠️ | Stop hook 摘要 + audit log + summary 工具 | 缺 statusLine |
+| 12 | DDD 分层 | N/A | 项目尚无 src/ | M8 实例化后启用 |
 | 13 | Java/Spring | N/A | 同上 | 同上 |
 | 14 | MCP 治理 | ✅ | .mcp.json 走 env、强制只读 | 无 |
+| 15 | Policy 机制化 | ✅ | model selection / bypass / audit log | 无 |
 
 ## 优先改进（Top 3）
 1. <最该动的> — 预估 X 分钟
@@ -101,7 +102,7 @@ argument-hint: "[focus] 可选：聚焦某一节名（如 ddd / java / mcp / hoo
 - ✅ **达标**：本节"达标"条件全满足
 - ⚠️ **部分**：基础在但缺一两项
 - ❌ **缺失**：未实施或严重不足
-- **N/A**：本项目阶段不适用（如 DDD 维度在 M3 前为 N/A）
+- **N/A**：本项目阶段不适用（如 DDD 维度在 M8 实例化前为 N/A）
 
 ## 参数
 
