@@ -104,4 +104,4 @@ agent 不应试图绕过；遇到 ⚠️ 提示时把动作描述给主对话，
 
 ---
 
-**Last reviewed**: 2026-05-09 — 6 个后端 agent 已激活，对应 Java + DDD + MySQL 场景。
+**Last reviewed**: 2026-05-11 — 5 个后端专项 agent 已激活（ddd-architect / spring-boot-reviewer / maven-build-doctor / schema-analyst / migration-author），对应 Java + DDD + MySQL 场景；docs-keeper / code-reviewer / tdd-cycle-driver 在主索引 [AGENTS.md](../AGENTS.md) 中（非后端专项）。

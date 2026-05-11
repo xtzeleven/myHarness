@@ -114,3 +114,39 @@ model: sonnet
 - 不重复 lint 已发现的事
 - 优先级排序，避免"20 条建议没排序"
 - 不确定的（如不知道是否在 application 层）→ 先问，别瞎判
+
+## 输出范例（含 SubagentStop schema 块）
+
+详见 [docs/agent-output-schema.md](../../docs/agent-output-schema.md)。本 agent 必填 schema。
+
+### 正常完成
+
+```markdown
+## 评审结论
+
+发现 3 处反模式（详见上文）。无阻塞性问题，建议合并前修。
+
+<!-- harness:agent-output -->
+
+status: ok
+risks: 3 处 P1 反模式待修（@Transactional 在 domain 层 / N+1 / 循环依赖）
+
+<!-- /harness:agent-output -->
+```
+
+### 升级到 ddd-architect（发现 DDD 边界问题）
+
+```markdown
+## 越界发现
+
+`@Transactional` 在 `OrderAggregate.java` 上 — 属于 domain 层。
+本 agent 范围只判 Spring 反模式，DDD 边界涉及聚合事务一致性，应由 ddd-architect 判定。
+
+<!-- harness:agent-output -->
+
+status: escalate
+escalate_to: ddd-architect
+risks: 事务边界泄漏到 domain 层；可能违反聚合内一致性原则
+
+<!-- /harness:agent-output -->
+```

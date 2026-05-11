@@ -135,3 +135,60 @@ order ── customer
 - **不在生产库做 `ANALYZE TABLE`**，建议用户在 dev 库跑后再决定。
 - **数据隐私**：不要导出真实业务数据；样本不超过 5 行。
 ```
+
+## 输出范例（含 SubagentStop schema 块）
+
+详见 [docs/agent-output-schema.md](../../docs/agent-output-schema.md)。本 agent 必填 schema（schema-analyst 高频降级，schema 信号尤其重要）。
+
+### 正常完成
+
+```markdown
+## 分析结论
+
+users.email 索引缺失，建议加 `idx_users_email`（详见上文 EXPLAIN 输出）。
+
+<!-- harness:agent-output -->
+
+status: ok
+
+<!-- /harness:agent-output -->
+```
+
+### 降级（MCP 不可用，改读 schema.sql 文件）
+
+```markdown
+## 分析结论（已降级）
+
+已降级: mysql-readonly MCP 连接失败（错误：connection refused），改用项目内 `src/main/resources/schema.sql` 静态读。
+**无法跑 EXPLAIN**，索引建议基于 schema + 经验，不是实测。
+
+（schema 分析 ...）
+
+<!-- harness:agent-output -->
+
+status: degraded
+degraded_from: mysql-readonly MCP
+risks: 无 EXPLAIN 实测，索引建议为经验值；合并前应在 dev 库 EXPLAIN 验证
+
+<!-- /harness:agent-output -->
+```
+
+### 停止（无 schema 上下文）
+
+```markdown
+## 无法继续
+
+mysql-readonly MCP 不可用，且项目内未找到 `schema.sql` / `db/migration/` 目录。
+无 schema 上下文，给不出可信建议。建议：
+
+1. 配 MCP 凭据（`.env` 加 MYSQL_HOST 等）
+2. 或提供 schema dump 文件
+
+<!-- harness:agent-output -->
+
+status: stop
+degraded_from: mysql-readonly MCP + schema 文件
+risks: 无任何 schema 上下文，强行分析会误导
+
+<!-- /harness:agent-output -->
+```

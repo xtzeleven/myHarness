@@ -99,7 +99,7 @@ public class Order { /* ... */ }
 
 - <开放问题>
 
-```
+````
 
 ## 硬性规则
 
@@ -116,4 +116,62 @@ public class Order { /* ... */ }
 - 跨聚合直接持有引用：`Order.customer.balance.deduct()`
 - 事件用现在时 / 命令式：`PlaceOrder` ❌（命令）vs `OrderPlaced` ✅（事件）
 - Application 层写业务规则：`if (order.amount > 1000) ...`
+
+## 输出范例（含 SubagentStop schema 块）
+
+详见 [docs/agent-output-schema.md](../../docs/agent-output-schema.md)。本 agent 必填 schema。
+
+### 正常完成
+
+```markdown
+## 设计结论
+
+将 OrderItem 划入 Order 聚合内（非独立聚合根），因为 ...
+
+<!-- harness:agent-output -->
+status: ok
+<!-- /harness:agent-output -->
+````
+
+### 降级（gitnexus 索引不可用）
+
+```markdown
+## 设计建议（已降级）
+
+已降级: gitnexus-impact-analysis 不可用（索引 7 天未更新），改用 git grep + 手动 trace。
+跨聚合引用扫描可能漏，建议合并前用 IDE Find Usages 复核。
+
+（设计内容 ...）
+
+<!-- harness:agent-output -->
+
+status: degraded
+degraded_from: gitnexus-impact-analysis
+risks: 跨聚合引用扫描可能漏；建议合并前用 IDE Find Usages 复核
+
+<!-- /harness:agent-output -->
+```
+
+### 升级到用户决策
+
+```markdown
+## 需要您决策
+
+`OrderItem` 是否做独立聚合根，取决于业务上是否独立修改它（如售后退款局部改 item 状态）。
+两种方案各有取舍，业务上下文我没有把握，请您选：
+
+- 方案 A：内嵌（事务范围小，简单）
+- 方案 B：独立聚合（独立演化，但要保证最终一致）
+
+<!-- harness:agent-output -->
+
+status: escalate
+escalate_to: user
+risks: 聚合边界决策影响事务范围与一致性，业务上下文需用户拍板
+
+<!-- /harness:agent-output -->
+```
+
+```
+
 ```

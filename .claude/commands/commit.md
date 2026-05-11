@@ -105,7 +105,7 @@ git status
 - 永不 `--amend` 已 push 的 commit（除非用户显式要）
 - 永不 `--no-verify`（绕 hook = 绕质量门禁）
 - 永不 `git add -A` / `git add .`（精确 stage）
-- 永不在 main/master 分支上做实验性提交（先建分支）
+- 永不在 main/master 分支做实验性提交（多人协作 / 进入 M8 后**强烈建议先建分支**；当前单人 + 工程化方法论阶段可在 main 上提交小改动，但任何 ≥ 2 文件 / 涉及 hook / agent / CI 的提交都应分支化）
 - 任何 `.env` / `*.key` / `id_rsa` 出现在 staging 区 → **拒绝提交并报警**
 - 灰名单触发 → **必须**让用户明确授权，不可绕过
 

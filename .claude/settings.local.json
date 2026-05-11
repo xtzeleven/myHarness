@@ -31,7 +31,9 @@
       "Bash(git -C /d/myGithub/myHarness status --porcelain)",
       "Bash(awk '{print $1, $NF}')",
       "Bash(git update-index *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(chmod +x /d/myGithub/myHarness/.claude/hooks/tests/test_user_prompt_submit.sh)",
+      "Bash(chmod +x /d/myGithub/myHarness/.claude/hooks/tests/test_secret_detection.sh)"
     ]
   }
 }
