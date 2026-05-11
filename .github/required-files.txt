@@ -34,7 +34,10 @@ package.json
 .claude/hooks/pre-tool-use.sh
 .claude/hooks/session-start.sh
 .claude/hooks/subagent-stop.sh
+.claude/hooks/user-prompt-submit.sh
 .claude/hooks/tests/test_pre_tool_use.sh
+.claude/hooks/tests/test_secret_detection.sh
+.claude/hooks/tests/test_user_prompt_submit.sh
 
 # --- Commands ---
 .claude/commands/audit-practices.md

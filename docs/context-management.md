@@ -121,7 +121,7 @@ src/main/java/<base>/
 
 - **每会话开始**：SessionStart 自动跑（不算 audit）
 - **手动**：`/audit-context` 跑 token 审计
-- **每周**：GH Actions `scheduled.yml` 加一个 `weekly-context-audit` job（M6 后追加）
+- **每周**（计划中，详见 [improvement-backlog.md](improvement-backlog.md) B4）：GH Actions `scheduled.yml` 加一个 `weekly-context-audit` job
 - **里程碑边界**：每完成一个 M 跑一次手动 `/audit-context`，记录 baseline
 
 ## 8. 反模式
