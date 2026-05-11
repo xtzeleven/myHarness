@@ -55,6 +55,7 @@ jobs:
             ".claude/commands/sync-docs.md"
             ".claude/scripts/audit-context-cost.py"
             ".claude/scripts/audit-log-summary.py"
+            ".claude/hooks/tests/test_pre_tool_use.sh"
             "docs/AGENTS.backend.md"
             "docs/roadmap.md"
             "docs/memory-conventions.md"
@@ -105,7 +106,7 @@ jobs:
       - name: Hook scripts have shebang and are executable in git
         run: |
           set -e
-          for h in .claude/hooks/*.sh; do
+          while IFS= read -r h; do
             head -1 "$h" | grep -q '^#!/usr/bin/env bash' || {
               echo "::error file=$h::missing bash shebang"
               exit 1
@@ -115,7 +116,7 @@ jobs:
               echo "::error file=$h::git mode is $mode, expected 100755 (chmod +x then commit)"
               exit 1
             fi
-          done
+          done < <(find .claude/hooks -type f -name "*.sh")
           echo "All hook scripts have shebang + git +x bit."
 
       - name: settings.json + .mcp.json are valid JSON
@@ -201,3 +202,15 @@ jobs:
             exit 1
           fi
           echo "HARNESS_BYPASS is unset in CI ✅"
+
+  hook-test:
+    name: Pre-tool-use hook smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure hook + test are executable
+        run: |
+          chmod +x .claude/hooks/pre-tool-use.sh
+          chmod +x .claude/hooks/tests/test_pre_tool_use.sh
+      - name: Run smoke test
+        run: bash .claude/hooks/tests/test_pre_tool_use.sh

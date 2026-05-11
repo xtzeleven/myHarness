@@ -4,11 +4,12 @@
 
 ## 阅读顺序
 
-| #                                   | 主题                                 | 状态     |
-| ----------------------------------- | ------------------------------------ | -------- |
-| [0001](0001-three-layer-harness.md) | 三层 Harness 架构                    | Accepted |
-| [0002](0002-java-ddd-backend.md)    | Java + DDD 作为后端实战载体          | Accepted |
-| [0003](0003-mcp-and-gitnexus.md)    | MySQL 只读 MCP + gitnexus skill 接入 | Accepted |
+| #                                     | 主题                                 | 状态     |
+| ------------------------------------- | ------------------------------------ | -------- |
+| [0001](0001-three-layer-harness.md)   | 三层 Harness 架构                    | Accepted |
+| [0002](0002-java-ddd-backend.md)      | Java + DDD 作为后端实战载体          | Accepted |
+| [0003](0003-mcp-and-gitnexus.md)      | MySQL 只读 MCP + gitnexus skill 接入 | Accepted |
+| [0004](0004-deprecate-bypass-once.md) | 废弃 `.bypass-once` 单次授权机制     | Accepted |
 
 ## 何时写 ADR
 

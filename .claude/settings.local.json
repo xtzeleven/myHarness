@@ -14,7 +14,16 @@
       "Bash(git check-ignore *)",
       "Bash(python *)",
       "Bash(rm /d/myGithub/myHarness/.claude/hooks/_test_m7_audit.sh)",
-      "Bash(rm -f /d/myGithub/myHarness/.claude/.audit.log)"
+      "Bash(rm -f /d/myGithub/myHarness/.claude/.audit.log)",
+      "Bash(grep -nE \"audit|\\\\\\\\*\\\\\\\\.log|session\" D:/myGithub/myHarness/.gitignore)",
+      "Bash(grep -E \"^## [0-9]+\\\\\\\\.\" D:/myGithub/myHarness/.claude/rules/engineering-practices.md)",
+      "Bash(git -C D:/myGithub/myHarness log --oneline -20)",
+      "Bash(grep -rn \"HARNESS_BYPASS\\\\\\\\|bypass-once\" D:/myGithub/myHarness/.claude/hooks/ D:/myGithub/myHarness/.github/)",
+      "Bash(git -C D:/myGithub/myHarness diff --stat README.md)",
+      "Bash(git -C D:/myGithub/myHarness diff --no-color README.md)",
+      "Bash(chmod +x D:/myGithub/myHarness/.claude/hooks/tests/test_pre_tool_use.sh)",
+      "Bash(echo \"===END=== exit=$?\")",
+      "Bash(git -C D:/myGithub/myHarness status --porcelain)"
     ]
   }
 }

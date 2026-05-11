@@ -322,6 +322,8 @@ interfaces  →  application  →  domain  ←  infrastructure
 3. **CI 拒合**：commit message 含 `BYPASS:` 或环境变量传到 CI runner 时 lint.yml 直接 fail
 4. **hook 输出红色警告**到 stderr 提醒主对话不要常用
 
+**注**：早期（2026-05-09 M8 第一次尝试）实验过 `.bypass-once` 文件式单次授权机制（audit.log 有 3 条残留记录），现已废弃。统一只走 `HARNESS_BYPASS=1` env 变量 + commit message marker + CI 拒合三道。废弃理由见 [ADR-0004](../../docs/adr/0004-deprecate-bypass-once.md)。
+
 ### 审计 policy
 
 所有 hook 拦截 / 灰名单触发 / bypass 使用 → 写 JSONL 到 `.claude/.audit.log`（已 .gitignore），格式：
