@@ -1,7 +1,11 @@
 # ADR 0002 — Java + DDD 作为后端实战载体
 
-**Status**: Accepted
+**Status**: Superseded by [ADR-0005](0005-pivot-to-plugin.md)（2026-05-11 战略转向 plugin 化）
 **Date**: 2026-05-09
+
+> ⚠️ **状态变更**：本 ADR 中"实例化 Java DDD 骨架作为 Harness 实战验证载体"的决定已被 ADR-0005 超越。Java/DDD 相关资产（5 个后端 agent / engineering-practices §12-§14 / pre-tool-use 灰名单 Java 路径规则）**保留**作为 plugin 的"Java/DDD 扩展套件"。下文内容作为决策追溯保留。
+
+---
 
 ## 背景
 
@@ -12,6 +16,7 @@
 后端实战载体选 **Java 17+ / Spring Boot / Maven / DDD 四层架构**。
 
 DDD 分层依赖方向严格单向：
+
 ```
 interfaces → application → domain ← infrastructure
 ```
@@ -20,11 +25,11 @@ interfaces → application → domain ← infrastructure
 
 ## 替代方案
 
-| 候选 | 否决原因 |
-|------|---------|
-| Python + FastAPI + 贫血模型 | 缺架构纪律样本，DDD 在 Python 里不典型 |
-| Go + clean architecture | 生态对 DDD 战术工具支持弱（无 JPA / Spring 这种"反模式温床"） |
-| Node + NestJS | 类 DDD 但 TypeScript 类型系统对领域不变量约束弱 |
+| 候选                        | 否决原因                                                      |
+| --------------------------- | ------------------------------------------------------------- |
+| Python + FastAPI + 贫血模型 | 缺架构纪律样本，DDD 在 Python 里不典型                        |
+| Go + clean architecture     | 生态对 DDD 战术工具支持弱（无 JPA / Spring 这种"反模式温床"） |
+| Node + NestJS               | 类 DDD 但 TypeScript 类型系统对领域不变量约束弱               |
 
 选 Java 是因为它**最容易踩坑**：Lombok 滥用、`@Transactional` 边界、N+1、循环依赖。Harness 在最容易出错的栈上验证才有说服力。
 
