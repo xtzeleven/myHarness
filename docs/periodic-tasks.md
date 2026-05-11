@@ -14,24 +14,28 @@
 `/loop` 在 Claude Code 当前会话内**周期触发**指定的 prompt 或 slash command。两种模式：
 
 **固定间隔**：
+
 ```
 /loop 30m /audit-practices
 ```
+
 每 30 分钟跑一次 `/audit-practices`，直到用户停止或会话结束。
 
 **动态间隔（默认）**：
+
 ```
 /loop /audit-practices
 ```
+
 默认 10 min；适合长会话中的"后台健康检查"。
 
 ### 推荐周期任务（会话内）
 
-| 场景 | 命令 | 何时启用 |
-|------|------|---------|
-| 长 review 会话健康检查 | `/loop 30m /audit-practices` | 跑大型 review > 1 小时时 |
-| 文档持续巡检 | `/loop 1h /sync-docs` | 修代码 + 修文档同时进行的会话 |
-| 测试守护 | `/loop 5m mvn -q test` | M8 实例化代码后；TDD 红绿期间 |
+| 场景                   | 命令                         | 何时启用                      |
+| ---------------------- | ---------------------------- | ----------------------------- |
+| 长 review 会话健康检查 | `/loop 30m /audit-practices` | 跑大型 review > 1 小时时      |
+| 文档持续巡检           | `/loop 1h /sync-docs`        | 修代码 + 修文档同时进行的会话 |
+| 测试守护               | `/loop 5m mvn -q test`       | M8 实例化代码后；TDD 红绿期间 |
 
 ### 不该用 /loop 的场景
 
@@ -62,11 +66,11 @@
 
 #### 跑什么
 
-| Job | 内容 | 失败动作 |
-|-----|------|---------|
-| daily-structure-audit | 跑 lint.yml 同样的 structure-check job | 创建 issue（不阻塞） |
-| weekly-stale-check | 看仓库是否 7 天无 commit + 是否有 PR > 14 天未合 | 仅警告（issue / 评论） |
-| weekly-tool-versions | 检查 prettier / actions 版本是否过期 | 仅警告 |
+| Job                   | 内容                                             | 失败动作               |
+| --------------------- | ------------------------------------------------ | ---------------------- |
+| daily-structure-audit | 跑 lint.yml 同样的 structure-check job           | 创建 issue（不阻塞）   |
+| weekly-stale-check    | 看仓库是否 7 天无 commit + 是否有 PR > 14 天未合 | 仅警告（issue / 评论） |
+| weekly-tool-versions  | 检查 prettier / actions 版本是否过期             | 仅警告                 |
 
 **重要**：调度型 workflow **不能**直接 fail repo（会噪音）；用 issue / 评论方式给提示，而不是 status check。
 
@@ -80,14 +84,14 @@ manual   ──► workflow_dispatch ──► 任一 yml 都可手动触发
 
 ## 3. 与 hook 的关系
 
-| 触发 | 谁 | 何时 | 关系 |
-|------|---|------|------|
-| 工具调用前 | PreToolUse hook | 每次调工具 | **不周期** |
-| 工具调用后 | PostToolUse hook | 每次写文件 | **不周期** |
-| 会话开始 | SessionStart hook | 一次性 | 注入"上次会话未完" |
-| 会话结束 | Stop hook | 一次性 | 写 .session.state |
-| 会话内周期 | `/loop` | 用户/Driver 启动 | 不写 state |
-| 仓库周期 | GH Actions schedule | cron | 完全独立于会话 |
+| 触发       | 谁                  | 何时             | 关系               |
+| ---------- | ------------------- | ---------------- | ------------------ |
+| 工具调用前 | PreToolUse hook     | 每次调工具       | **不周期**         |
+| 工具调用后 | PostToolUse hook    | 每次写文件       | **不周期**         |
+| 会话开始   | SessionStart hook   | 一次性           | 注入"上次会话未完" |
+| 会话结束   | Stop hook           | 一次性           | 写 .session.state  |
+| 会话内周期 | `/loop`             | 用户/Driver 启动 | 不写 state         |
+| 仓库周期   | GH Actions schedule | cron             | 完全独立于会话     |
 
 ## 4. 反模式
 

@@ -34,21 +34,21 @@ risks: <one-line summary>                 # 可选
 
 ### 字段定义
 
-| 字段            | 必需   | 取值                                    | 意义                       |
-| --------------- | ------ | --------------------------------------- | -------------------------- |
-| `status`        | ✅      | `ok` / `degraded` / `stop` / `escalate` | 见下表                     |
-| `degraded_from` | 视 status | 工具名 / 模型名                         | 哪个工具/模型失败，被替代  |
-| `escalate_to`   | 视 status | `user` 或 agent 名                      | 转交给谁                   |
-| `risks`         | 可选   | 单行文字                                | 主要风险摘要               |
+| 字段            | 必需      | 取值                                    | 意义                      |
+| --------------- | --------- | --------------------------------------- | ------------------------- |
+| `status`        | ✅        | `ok` / `degraded` / `stop` / `escalate` | 见下表                    |
+| `degraded_from` | 视 status | 工具名 / 模型名                         | 哪个工具/模型失败，被替代 |
+| `escalate_to`   | 视 status | `user` 或 agent 名                      | 转交给谁                  |
+| `risks`         | 可选      | 单行文字                                | 主要风险摘要              |
 
 ### Status 含义
 
-| status     | 何时用                          | hook 行为                              |
-| ---------- | ------------------------------- | -------------------------------------- |
-| `ok`       | 正常完成，无降级                | 写 audit（静默）                       |
-| `degraded` | 部分工具/模型失败，用替代完成   | 写 audit + stderr 提示主对话           |
-| `stop`     | 无法完成且无替代                | 写 audit + stderr 提示主对话停         |
-| `escalate` | 需要更高权限或另一 agent        | 写 audit + stderr 提示主对话转交       |
+| status     | 何时用                        | hook 行为                        |
+| ---------- | ----------------------------- | -------------------------------- |
+| `ok`       | 正常完成，无降级              | 写 audit（静默）                 |
+| `degraded` | 部分工具/模型失败，用替代完成 | 写 audit + stderr 提示主对话     |
+| `stop`     | 无法完成且无替代              | 写 audit + stderr 提示主对话停   |
+| `escalate` | 需要更高权限或另一 agent      | 写 audit + stderr 提示主对话转交 |
 
 ## 3. 示例
 
@@ -62,7 +62,9 @@ risks: <one-line summary>                 # 可选
 通过。
 
 <!-- harness:agent-output -->
+
 status: ok
+
 <!-- /harness:agent-output -->
 ```
 
@@ -76,9 +78,11 @@ status: ok
 `gitnexus-impact-analysis` 不可用，已用 `git grep` 替代；跨聚合引用扫描可能漏。
 
 <!-- harness:agent-output -->
+
 status: degraded
 degraded_from: gitnexus-impact-analysis
 risks: 跨聚合引用扫描可能漏；建议合并前用 IDE "Find Usages" 复核
+
 <!-- /harness:agent-output -->
 ```
 
@@ -92,9 +96,11 @@ risks: 跨聚合引用扫描可能漏；建议合并前用 IDE "Find Usages" 复
 需要选 `OrderItem` 是聚合根还是 `Order` 的内部实体，涉及业务规则取舍。
 
 <!-- harness:agent-output -->
+
 status: escalate
 escalate_to: user
 risks: 聚合边界决策影响事务范围与一致性
+
 <!-- /harness:agent-output -->
 ```
 
@@ -108,9 +114,11 @@ risks: 聚合边界决策影响事务范围与一致性
 `@Transactional` 在 domain 层。本 agent 范围只判 Spring 反模式，建议交 `ddd-architect`。
 
 <!-- harness:agent-output -->
+
 status: escalate
 escalate_to: ddd-architect
 risks: 事务边界泄漏 + 领域纯净性问题，需 DDD 层面判定
+
 <!-- /harness:agent-output -->
 ```
 

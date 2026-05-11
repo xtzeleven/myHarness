@@ -111,12 +111,12 @@ docs-keeper agent
 
 某些任务一旦工具不可用就**应该停**而非降级：
 
-| 任务 | 为什么不降级 |
-|------|----------|
-| 写生产 SQL migration | schema-analyst 不可用 → 必须停（盲改 schema 风险高） |
-| 升 spring-boot 大版本 | maven-build-doctor 不可用 → 必须停（兼容性看不见） |
-| 跨 BC 重构 | gitnexus-impact-analysis 不可用 → 应停或显式声明"未做影响面分析，仅本 BC 内安全" |
-| 删 commit / 改 git 历史 | 任何 hook / 工具问题 → 直接停，问用户 |
+| 任务                    | 为什么不降级                                                                     |
+| ----------------------- | -------------------------------------------------------------------------------- |
+| 写生产 SQL migration    | schema-analyst 不可用 → 必须停（盲改 schema 风险高）                             |
+| 升 spring-boot 大版本   | maven-build-doctor 不可用 → 必须停（兼容性看不见）                               |
+| 跨 BC 重构              | gitnexus-impact-analysis 不可用 → 应停或显式声明"未做影响面分析，仅本 BC 内安全" |
+| 删 commit / 改 git 历史 | 任何 hook / 工具问题 → 直接停，问用户                                            |
 
 **判断准则**：降级后输出仍**对用户有价值**就降；变成"不如不做"就停。
 
@@ -141,7 +141,15 @@ docs-keeper agent
 降级写 JSONL 到 `.claude/.audit.log`（M7-T4）：
 
 ```json
-{"ts": "...", "hook": "agent", "tool": "schema-analyst", "target": "mysql-readonly MCP", "action": "degrade", "reason": "MCP connection failed", "fallback": "schema.sql"}
+{
+  "ts": "...",
+  "hook": "agent",
+  "tool": "schema-analyst",
+  "target": "mysql-readonly MCP",
+  "action": "degrade",
+  "reason": "MCP connection failed",
+  "fallback": "schema.sql"
+}
 ```
 
 跑 `python .claude/scripts/audit-log-summary.py --type degrade` 可统计降级频次，发现高频降级目标 → 优先修。

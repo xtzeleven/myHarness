@@ -18,32 +18,35 @@
 
 ## 各层组件映射
 
-| 层 | 组件 | 文件 |
-|----|------|------|
-| L1 | 行为准则 | `CLAUDE.md`（10 节，自动注入） |
-| L1 | 工程化规则 | `.claude/rules/engineering-practices.md`（14 节） |
-| L1 | 事前防御 | `.claude/hooks/pre-tool-use.sh`（黑+灰双层） |
-| L2 | 事后格式化 | `.claude/hooks/format.sh`（PostToolUse） |
-| L2 | 会话结束摘要 | `.claude/hooks/stop-check.sh`（Stop） |
-| L2 | 子工作流 | `.claude/agents/*.md`（8 个，含 ddd-architect 等） |
-| L2 | 流程命令 | `.claude/commands/*.md`（4 个） |
-| L3 | 仓库卫生 | `.gitignore` |
-| L3 | 不可绕兜底 | `.github/workflows/lint.yml`（CI） |
-| L3 | 提交规范 | Conventional Commits（由 `/commit` 强制） |
+| 层  | 组件         | 文件                                               |
+| --- | ------------ | -------------------------------------------------- |
+| L1  | 行为准则     | `CLAUDE.md`（10 节，自动注入）                     |
+| L1  | 工程化规则   | `.claude/rules/engineering-practices.md`（14 节）  |
+| L1  | 事前防御     | `.claude/hooks/pre-tool-use.sh`（黑+灰双层）       |
+| L2  | 事后格式化   | `.claude/hooks/format.sh`（PostToolUse）           |
+| L2  | 会话结束摘要 | `.claude/hooks/stop-check.sh`（Stop）              |
+| L2  | 子工作流     | `.claude/agents/*.md`（8 个，含 ddd-architect 等） |
+| L2  | 流程命令     | `.claude/commands/*.md`（4 个）                    |
+| L3  | 仓库卫生     | `.gitignore`                                       |
+| L3  | 不可绕兜底   | `.github/workflows/lint.yml`（CI）                 |
+| L3  | 提交规范     | Conventional Commits（由 `/commit` 强制）          |
 
 ## 替代方案与权衡
 
 ### A. 只用 CLAUDE.md（无 hook、无 CI）
+
 - 👍 简单，零基础设施
 - 👎 LLM 仍然能犯所有低级错误（写 .env、强推 main、改 domain 边界），无强制力
 - ❌ 弃用
 
 ### B. 只用 hook（无 CLAUDE.md、无 CI）
+
 - 👍 强制力强
 - 👎 hook 是黑名单，无法穷尽。新人没准则会一直触发拦截
 - ❌ 弃用
 
 ### C. 三层都做（当前方案）
+
 - 👍 三层各司其职，叠加防御
 - 👎 维护成本高（14 节规则 + 8 agent + 3 hook + CI）
 - ✅ 采纳，因为本项目目标就是探索"工程级"边界

@@ -192,7 +192,7 @@ interfaces  →  application  →  domain  ←  infrastructure
 
 | 层                | 允许                                                                        | 禁止                                                  |
 | ----------------- | --------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `interfaces/`     | 收 HTTP / RPC、DTO ↔ Command 转换、调 application                           | 直接调 Repository、写业务规则                         |
+| `interfaces/`     | 收 HTTP / RPC、DTO ↔ Command 转换、调 application                          | 直接调 Repository、写业务规则                         |
 | `application/`    | 用例编排、事务边界（`@Transactional` 仅在此）、调 domain                    | 写业务规则、import infra 实现类                       |
 | `domain/`         | Entity / VO / Aggregate / DomainService / DomainEvent / Repository **接口** | import 任何 Spring / JPA / MyBatis / Jackson / Web 类 |
 | `infrastructure/` | Repository **实现**、外部适配器、MQ、第三方 SDK                             | 反向调 application 或 interfaces                      |

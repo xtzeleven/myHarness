@@ -19,12 +19,14 @@
 
 - **Layer 1：约束层（Constraint Harness）**
   在 LLM 行动**之前**注入规则与禁忌，让"错误的代码写不出来"。
+
   - `CLAUDE.md`：每次会话自动注入的行为准则（11 节，含 Java/DDD 上下文与 gitnexus 路由）
   - `.claude/rules/engineering-practices.md`：15 节工程化规则（11 通用 + DDD 分层 / Java&Spring / MCP 治理 + Policy 机制化）
   - `.claude/hooks/pre-tool-use.sh`：黑名单（直接拦：`rm -rf /`、强推主分支、写敏感文件）+ 灰名单（人工授权：DDD 边界改动、主依赖升级、DDL/DML、`mvn deploy`）
 
 - **Layer 2：反馈循环层（Feedback Loop）**
   在 LLM 行动**期间与之后**给出即时信号，让"错的能立刻被纠"。
+
   - **Hooks**：SessionStart（注入 git 态 / memory 索引 / 工具就绪）+ PreToolUse（黑灰双层 + 审计日志 + 按需 hint）+ PostToolUse（按后缀分发 prettier/ruff）+ Stop（变更摘要 + 写 `.session.state`）
   - **8 个 Sub-agents**：`tdd-cycle-driver`（TDD 红绿重构）、`code-reviewer`（通用评审）、`ddd-architect`（DDD 战略战术，opus）、`spring-boot-reviewer`（Spring 反模式）、`maven-build-doctor`（构建诊断）、`schema-analyst`（schema/SQL 分析，走 MySQL MCP）、`migration-author`（Flyway/Liquibase）、`docs-keeper`（文档漂移检测）
   - **5 个 Slash commands**：`/audit-practices`（15 维度自检）、`/audit-context`（token 注入审计）、`/commit`（标准化提交）、`/onboard`（新人 5 分钟上手）、`/sync-docs`（文档同步检查）
