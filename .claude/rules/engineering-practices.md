@@ -271,25 +271,25 @@ interfaces  →  application  →  domain  ←  infrastructure
 
 ### 模型选择 policy
 
-| 场景 | 默认模型 | 升级触发 |
-|------|---------|---------|
-| 主对话（Driver） | 沿用用户当前会话设置 | — |
-| 简单 review / 格式调整 / 小重构 | sonnet | 卡住 / 用户不满意 |
-| 长链路战略设计（DDD 边界 / 跨 BC） | **opus** | 已是最高，无可升 |
-| 安全 / 合规审查 | sonnet | 涉敏感数据→ opus |
-| 调试 / 修 bug | sonnet | 复现失败/根因深 → opus |
-| 大量文件批改 / 文档批改 | haiku（如可用）/ sonnet | 出错 → sonnet |
-| 路径明确的 TDD 红绿循环 | sonnet | — |
+| 场景                               | 默认模型                | 升级触发               |
+| ---------------------------------- | ----------------------- | ---------------------- |
+| 主对话（Driver）                   | 沿用用户当前会话设置    | —                      |
+| 简单 review / 格式调整 / 小重构    | sonnet                  | 卡住 / 用户不满意      |
+| 长链路战略设计（DDD 边界 / 跨 BC） | **opus**                | 已是最高，无可升       |
+| 安全 / 合规审查                    | sonnet                  | 涉敏感数据→ opus       |
+| 调试 / 修 bug                      | sonnet                  | 复现失败/根因深 → opus |
+| 大量文件批改 / 文档批改            | haiku（如可用）/ sonnet | 出错 → sonnet          |
+| 路径明确的 TDD 红绿循环            | sonnet                  | —                      |
 
 **硬规则**：用户显式指定的优先；agent frontmatter 显式声明的次之；都没有则按本表。
 
 ### 何时降级（degradation）
 
-| 触发 | 降级到 |
-|------|------|
-| MySQL MCP 连接失败 | 读 `schema.sql` 文件 / 问用户 |
-| gitnexus 索引过期或不可用 | `Glob + Grep` / 手动 trace |
-| prettier 跑失败 | 跳过格式化（输出标注 "未格式化"） |
+| 触发                       | 降级到                            |
+| -------------------------- | --------------------------------- |
+| MySQL MCP 连接失败         | 读 `schema.sql` 文件 / 问用户     |
+| gitnexus 索引过期或不可用  | `Glob + Grep` / 手动 trace        |
+| prettier 跑失败            | 跳过格式化（输出标注 "未格式化"） |
 | 某 agent 输出含 "我不确定" | 升级模型一次后仍不确定 → 转给用户 |
 
 降级**必须**在输出顶部注明 "**已降级**: <原工具/模型> 不可用，使用 <替代>"。
@@ -329,7 +329,15 @@ interfaces  →  application  →  domain  ←  infrastructure
 所有 hook 拦截 / 灰名单触发 / bypass 使用 → 写 JSONL 到 `.claude/.audit.log`（已 .gitignore），格式：
 
 ```json
-{"ts": "2026-05-09T16:00:00Z", "hook": "PreToolUse", "tool": "Bash", "target": "rm -rf /", "action": "deny", "reason": "rm -rf 根目录", "bypass": false}
+{
+  "ts": "2026-05-09T16:00:00Z",
+  "hook": "PreToolUse",
+  "tool": "Bash",
+  "target": "rm -rf /",
+  "action": "deny",
+  "reason": "rm -rf 根目录",
+  "bypass": false
+}
 ```
 
 用 `python .claude/scripts/audit-log-summary.py` 跑摘要（M7-T4 引入）。
@@ -348,6 +356,6 @@ interfaces  →  application  →  domain  ←  infrastructure
 - ✅ **达标**：本节"达标"条件全满足
 - ⚠️ **部分**：基础在但缺一两项
 - ❌ **缺失**：未实施
-- **N/A**：当前项目阶段不适用（如本项目 M3 阶段，§12-§13 在 src/ 实例化前为 N/A）
+- **N/A**：当前项目阶段不适用（如本项目 M7 完成 / M8 待启动，§12-§13 在 src/ 实例化前为 N/A）
 
 `/audit-practices` 输出按此尺度。

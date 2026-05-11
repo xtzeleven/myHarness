@@ -20,12 +20,7 @@
 
 ## A. 紧急（P0）
 
-| #   | 项                                                                                    | 工作量 | 修法                                                                                     |
-| --- | ------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------- |
-| A1  | `test_pre_tool_use.sh` git mode = 100644 而非 100755                                  | 1 min  | `git update-index --add --chmod=+x .claude/hooks/tests/test_pre_tool_use.sh` + 新 commit |
-| A2  | `subagent-stop.sh` git mode 也需 100755                                               | 1 min  | 同上 `git update-index --chmod=+x .claude/hooks/subagent-stop.sh`                        |
-| A3  | `CLAUDE.md:118` "M3 阶段" / `CLAUDE.md:132` "14 维度" 漂移                            | 5 min  | Edit 改为 "M7 完成" / "15 维度 15 节"                                                    |
-| A4  | `CHANGELOG.md` 没补本批 commit（README 修 + ADR-0004 + hook smoke test + 八维度补完） | 10 min | 加 `[Unreleased]` 一段                                                                   |
+_全部完成。详见 §E（A1+A2→E11 / A3→E6 / A4→E7）。_
 
 ---
 
@@ -44,12 +39,7 @@
 
 ### 前两轮 audit 剩余 P1
 
-| #   | 项                                                                                                   | 工作量 | 修法                                                                                                |
-| --- | ---------------------------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------- |
-| B7  | `scheduled.yml` 必需文件清单未同步 lint.yml（差 13 项）                                              | 20 min | 抽 `.github/required-files.txt`，两个 workflow 各自 source；或 daily-structure-audit reuse lint.yml |
-| B8  | `onboard.md:45 / :61` 阶段示例过时（"M0-M5" / "M3 Layer 3 落地中"）                                  | 5 min  | Edit 改为 "M7 完成 / M8 待启动"                                                                     |
-| B9  | `commit.md:107` 硬规则 "永不在 main/master 分支上做实验性提交" 与现实矛盾（项目全部 commit 在 main） | 5 min  | 软化为 "建议在分支，单人项目可在 main"，或承认现状改条文                                            |
-| B10 | `AGENTS.backend.md:107` "6 个后端 agent 已激活" 但只列 5 个                                          | 2 min  | 改为 "5 个" 或补全列表                                                                              |
+_B7–B10 全部完成。详见 §E（B7→E12 / B8→E8 / B9→E9 / B10→E10）。_
 
 ---
 
@@ -102,13 +92,21 @@
 
 ## E. 已完成（参考 / 不删，保留追溯）
 
-| #   | 项                                                                                               | 完成 commit     |
-| --- | ------------------------------------------------------------------------------------------------ | --------------- |
-| E1  | Top 3 #1: README 漂移修复                                                                        | c067ee2         |
-| E2  | Top 3 #2: `.bypass-once` 废弃 ADR-0004 + engineering-practices §15 声明                          | c067ee2         |
-| E3  | Top 3 #3: hook 自动化测试（26 case smoke test）+ CI 集成                                         | c067ee2         |
-| E4  | 八维度 #1: SubagentStop hook + agent output schema                                               | （本批 commit） |
-| E5  | 八维度 #2: PostToolUse audit log + audit-log-summary 聚合（--by-hook/tool/action/agent/ext/day） | （本批 commit） |
+| #   | 项                                                                                               | 完成 commit |
+| --- | ------------------------------------------------------------------------------------------------ | ----------- |
+| E1  | Top 3 #1: README 漂移修复                                                                        | c067ee2     |
+| E2  | Top 3 #2: `.bypass-once` 废弃 ADR-0004 + engineering-practices §15 声明                          | c067ee2     |
+| E3  | Top 3 #3: hook 自动化测试（26 case smoke test）+ CI 集成                                         | c067ee2     |
+| E4  | 八维度 #1: SubagentStop hook + agent output schema                                               | b63538a     |
+| E5  | 八维度 #2: PostToolUse audit log + audit-log-summary 聚合（--by-hook/tool/action/agent/ext/day） | b63538a     |
+| E6  | A3: CLAUDE.md "M3 阶段" / "14 维度" → "M7 完成" / "15 维度"                                      | b63538a     |
+| E7  | A4: CHANGELOG.md [Unreleased] 段补全（八维度 + ADR-0004 + smoke test 全部入账）                  | b63538a     |
+| E8  | B8: onboard.md "M0-M5" → "M0-M8"                                                                 | 2ab8383     |
+| E9  | B9: commit.md:107 "永不在 main 实验性提交" 软化为承认当前单人项目现状                            | 2ab8383     |
+| E10 | B10: AGENTS.backend.md "6 个后端 agent" → "5 个" + 列表正确                                      | 2ab8383     |
+| E11 | A1+A2 扩面：7 个 hook 全部 git mode 100755（4 老 hook + UserPromptSubmit + 2 测试）              | 本批 commit |
+| E12 | B7: lint.yml + scheduled.yml 必需文件清单去重 → 抽 `.github/required-files.txt` 单点真源         | 本批 commit |
+| E13 | engineering-practices.md:351 "M3 阶段" 残留 → "M7 完成 / M8 待启动"                              | 本批 commit |
 
 ---
 
