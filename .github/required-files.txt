@@ -1,0 +1,64 @@
+# Required files for myHarness Harness layer (M1–M7)
+# Sourced by .github/workflows/lint.yml (structure-check) and
+# .github/workflows/scheduled.yml (daily-structure-audit).
+#
+# Rules:
+#   - one file path per line, relative to repo root
+#   - blank lines and lines starting with '#' are ignored
+#   - any missing entry fails CI (lint.yml) and opens an issue (scheduled.yml)
+#
+# When adding a new file:
+#   1. Add the path here (alphabetical within its section is nice but not required)
+#   2. Commit alongside the file it lists
+#   3. No workflow edit needed — both workflows read this file
+
+# --- Root manifests ---
+CLAUDE.md
+README.md
+AGENTS.md
+CHANGELOG.md
+.gitignore
+.env.example
+.mcp.json
+package.json
+.prettierrc.json
+.tool-versions
+
+# --- Harness config (.claude/) ---
+.claude/settings.json
+.claude/rules/engineering-practices.md
+
+# --- Hooks ---
+.claude/hooks/format.sh
+.claude/hooks/stop-check.sh
+.claude/hooks/pre-tool-use.sh
+.claude/hooks/session-start.sh
+.claude/hooks/subagent-stop.sh
+.claude/hooks/tests/test_pre_tool_use.sh
+
+# --- Commands ---
+.claude/commands/audit-practices.md
+.claude/commands/audit-context.md
+.claude/commands/commit.md
+.claude/commands/onboard.md
+.claude/commands/sync-docs.md
+
+# --- Scripts ---
+.claude/scripts/audit-context-cost.py
+.claude/scripts/audit-log-summary.py
+
+# --- Docs ---
+docs/AGENTS.backend.md
+docs/roadmap.md
+docs/memory-conventions.md
+docs/loop-architecture.md
+docs/periodic-tasks.md
+docs/context-management.md
+docs/tools-fallback.md
+docs/agent-output-schema.md
+docs/adr/README.md
+
+# --- CI ---
+.github/workflows/lint.yml
+.github/workflows/scheduled.yml
+.github/required-files.txt

@@ -19,47 +19,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Reuse structure-check（与 lint.yml 一致）
+      - name: "Required files check (manifest: .github/required-files.txt)"
         run: |
           set -e
-          required=(
-            "CLAUDE.md"
-            "README.md"
-            "AGENTS.md"
-            "CHANGELOG.md"
-            ".gitignore"
-            ".env.example"
-            ".mcp.json"
-            "package.json"
-            ".prettierrc.json"
-            ".tool-versions"
-            ".claude/settings.json"
-            ".claude/rules/engineering-practices.md"
-            ".claude/hooks/format.sh"
-            ".claude/hooks/stop-check.sh"
-            ".claude/hooks/pre-tool-use.sh"
-            ".claude/hooks/session-start.sh"
-            ".claude/hooks/subagent-stop.sh"
-            ".claude/commands/audit-practices.md"
-            ".claude/commands/audit-context.md"
-            ".claude/commands/commit.md"
-            ".claude/commands/onboard.md"
-            ".claude/commands/sync-docs.md"
-            ".claude/scripts/audit-context-cost.py"
-            ".claude/scripts/audit-log-summary.py"
-            ".claude/hooks/tests/test_pre_tool_use.sh"
-            "docs/AGENTS.backend.md"
-            "docs/roadmap.md"
-            "docs/memory-conventions.md"
-            "docs/loop-architecture.md"
-            "docs/periodic-tasks.md"
-            "docs/context-management.md"
-            "docs/tools-fallback.md"
-            "docs/agent-output-schema.md"
-            "docs/adr/README.md"
-            ".github/workflows/lint.yml"
-            ".github/workflows/scheduled.yml"
-          )
+          if [ ! -f .github/required-files.txt ]; then
+            echo "MISSING<<EOF" >> $GITHUB_ENV
+            echo "- .github/required-files.txt (清单本身缺失)" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+            exit 0
+          fi
+          mapfile -t required < <(grep -vE '^\s*(#|$)' .github/required-files.txt)
           missing=()
           for f in "${required[@]}"; do
             [ ! -e "$f" ] && missing+=("$f")
