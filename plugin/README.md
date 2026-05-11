@@ -59,9 +59,7 @@ plugin/
 
 | #   | 限制                                                                                                                             | 修复任务                                            |
 | --- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| L1  | hook 脚本内部仍引用 `.claude/scripts/...` 等绝对路径，plugin 模式下脚本调脚本会找不到                                            | G6 — 替换为 `${CLAUDE_PLUGIN_ROOT}/...`             |
 | L2  | CLAUDE.md 11 节"硬注入"在 plugin 模式下丢失（plugin 没有项目级 CLAUDE.md 等价物）                                                | G8 / G9 — 通用准则拆 skill，项目模板进 onboard 命令 |
-| L3  | 审计日志写到 `.claude/.audit.log`（用户项目根），plugin 私有 vs 用户项目根的决策未定                                             | G7 — 待用户拍板                                     |
 | L4  | pre-tool-use 灰名单含 `src/main/java/*/domain/*` 和 `pom.xml`，对非 Java 项目静默无副作用，但 agent description 仍带 Java 关键词 | G13 — 用非 Java demo 项目实测                       |
 | L5  | MCP 凭据 `.env` 在用户项目侧维护，本 plugin 提供 `.env.example` 模板（待 G11 完成）                                              | G11                                                 |
 
