@@ -23,7 +23,15 @@
       "Bash(git -C D:/myGithub/myHarness diff --no-color README.md)",
       "Bash(chmod +x D:/myGithub/myHarness/.claude/hooks/tests/test_pre_tool_use.sh)",
       "Bash(echo \"===END=== exit=$?\")",
-      "Bash(git -C D:/myGithub/myHarness status --porcelain)"
+      "Bash(git -C D:/myGithub/myHarness status --porcelain)",
+      "Bash(git -C D:/myGithub/myHarness log --oneline -5)",
+      "Bash(git -C D:/myGithub/myHarness ls-files -s .claude/hooks/tests/test_pre_tool_use.sh)",
+      "Bash(sed -n '20,45p' D:/myGithub/myHarness/.github/workflows/scheduled.yml)",
+      "Bash(git -C D:/myGithub/myHarness log --stat HEAD~3..HEAD --pretty=\"--- %h %s ---\")",
+      "Bash(git -C /d/myGithub/myHarness status --porcelain)",
+      "Bash(awk '{print $1, $NF}')",
+      "Bash(git update-index *)",
+      "Bash(git add *)"
     ]
   }
 }

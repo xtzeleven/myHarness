@@ -67,7 +67,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 5. 项目上下文
 
-**项目性质：** myHarness 是 Harness 工程化方法论项目，承载一个 **Java + DDD** 风格的后端实战，用以验证三层 Harness 在真实工程中的有效性。当前 WIP M3 阶段。
+**项目性质：** myHarness 是 Harness 工程化方法论项目，承载一个 **Java + DDD** 风格的后端实战，用以验证三层 Harness 在真实工程中的有效性。当前 M7 完成 / M8 待启动。
 
 **技术栈：**
 
@@ -115,7 +115,7 @@ DDD 依赖方向 **严格单向**：interfaces → application → domain ← in
 
 ## 7. 测试 / 校验命令
 
-> 注：M3 阶段，`src/` 与 `pom.xml` 暂未实例化；以下 `mvn` 命令为 M4 启用后的约定，当前会因无 pom.xml 报错。
+> 注：M7 完成（六维度框架就绪），M8 待启动 — `src/` 与 `pom.xml` 暂未实例化；以下 `mvn` 命令为 M8 启用后的约定，当前会因无 pom.xml 报错。
 
 ```bash
 # Java / Maven（M4 后启用）
@@ -129,7 +129,7 @@ npx prettier --check "**/*.{md,json,yml,yaml}"
 npx prettier --write  "**/*.{md,json,yml,yaml}"
 
 # 工程实践 / 项目自检（当前可用）
-/audit-practices               # 14 维度工程化自检（对照 engineering-practices.md 14 节）
+/audit-practices               # 15 维度工程化自检（对照 engineering-practices.md 15 节）
 /onboard                       # 新人 5 分钟全局上手
 /sync-docs                     # 手动触发文档同步检查
 
@@ -183,6 +183,7 @@ git status --porcelain
 - **项目踩坑**（`pitfall_*`）：jq 不可用、SQL 检测误伤、settings.local 已 tracked、hook 自我拦截、Windows 路径、格式 hook 幂等性等
 
 **遇到下列场景时主动查 MEMORY.md**：
+
 - 写 / 调试 hook 脚本前 → 看 `pitfall_jq_not_in_path` / `pitfall_hook_self_block`
 - 加 PreToolUse 规则前 → 看 `pitfall_sql_detection_overscan` / `decision_grey_list_over_pure_block`
 - 加 .gitignore 条目时 → 看 `pitfall_settings_local_already_tracked`
