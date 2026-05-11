@@ -202,22 +202,22 @@ hint() {
 if [ -n "${file_path:-}" ]; then
   case "$file_path" in
     */pom.xml|pom.xml)
-      hint "改 pom.xml 前可读 .claude/agents/maven-build-doctor.md + engineering-practices.md §13"
+      hint "改 pom.xml 前建议调 maven-build-doctor agent + 看 rules §13"
       ;;
     *src/main/java/*/domain/*)
-      hint "改 domain 层前可读 .claude/agents/ddd-architect.md + engineering-practices.md §12（DDD 分层）"
+      hint "改 domain 层前建议调 ddd-architect agent + 看 rules §12（DDD 分层）"
       ;;
     *src/main/java/*/infrastructure/*)
-      hint "改 infrastructure 层前可读 .claude/agents/spring-boot-reviewer.md（Repository 实现 / 适配器）"
+      hint "改 infrastructure 层前建议调 spring-boot-reviewer agent（Repository 实现 / 适配器）"
       ;;
     *src/main/java/*/application/*)
-      hint "改 application 层前可读 engineering-practices.md §12（事务边界仅在此层） + spring-boot-reviewer.md"
+      hint "改 application 层前看 rules §12（事务边界仅在此层）+ 调 spring-boot-reviewer agent"
       ;;
     *db/migration/*|*db/changelog/*)
-      hint "写 migration 前可读 .claude/agents/migration-author.md（向后兼容性 / 回滚预案）"
+      hint "写 migration 前建议调 migration-author agent（向后兼容性 / 回滚预案）"
       ;;
     */application*.yml|*/application*.yaml|*/application*.properties)
-      hint "改 application 配置前可读 .claude/agents/spring-boot-reviewer.md §5（配置 / Profile）"
+      hint "改 application 配置前建议调 spring-boot-reviewer agent（配置 / Profile）"
       ;;
     */.mcp.json|.mcp.json)
       hint "改 .mcp.json 前必读 engineering-practices.md §14（MCP 治理 — 凭据走 .env、强制只读）"
