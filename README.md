@@ -3,15 +3,15 @@
 > 自用 Harness 工程级实践
 > _Real-world coding benchmark for AI assistants_
 
-![Status](https://img.shields.io/badge/status-M7%20done%20%7C%20M8%20next-green)
+![Status](https://img.shields.io/badge/status-M7%20done%20%7C%20M8'%20plugin%20in%20progress-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Models](https://img.shields.io/badge/models-8%2B-green)
 
 ## 🎯 项目简介
 
-从 Harness 原理开始，构建持续迭代框架，用一个 **Java + DDD** 后端实战来验证三层 Harness 在真实工程中的有效性。
+从 Harness 原理开始，把三层 Harness（约束 / 反馈 / 门禁）**封装为 Claude Code Plugin**（`plugin/` 子目录），让任何项目都能一行命令装上。Java/Spring/DDD/Maven 作为 plugin 的**扩展套件**保留（专项 agent + 灰名单），其他语言栈静默无副作用。
 
-> **当前状态**：M7 完成 — 六维度 Harness 框架（Loop / Context / Tools / Permission Gate / Memory / Policy）就绪。M8 待启动：实例化 Java DDD 骨架（`pom.xml` + `src/`，作为六维度回归测试场）。
+> **当前状态**：M7 完成（六维度 Harness 框架就绪）+ M8' Plugin 化进行中（plugin 资产已就位 + 外部验证通过自动部分，详见 [ADR-0005](docs/adr/0005-pivot-to-plugin.md) / [plugin/README.md](plugin/README.md)）。
 
 ## 🛠️ 技术路线
 
@@ -20,7 +20,7 @@
 - **Layer 1：约束层（Constraint Harness）**
   在 LLM 行动**之前**注入规则与禁忌，让"错误的代码写不出来"。
 
-  - `CLAUDE.md`：每次会话自动注入的行为准则（11 节，含 Java/DDD 上下文与 gitnexus 路由）
+  - `CLAUDE.md`：每次会话自动注入的行为准则（项目重定位 + 技术栈 + DDD 禁忌 + 测试命令 + gitnexus 路由）
   - `.claude/rules/engineering-practices.md`：15 节工程化规则（11 通用 + DDD 分层 / Java&Spring / MCP 治理 + Policy 机制化）
   - `.claude/hooks/pre-tool-use.sh`：黑名单（直接拦：`rm -rf /`、强推主分支、写敏感文件）+ 灰名单（人工授权：DDD 边界改动、主依赖升级、DDL/DML、`mvn deploy`）
 
@@ -46,17 +46,18 @@
 
 ## 📊 阶段性路线
 
-| 阶段   | 目标                                                                | 状态    |
-| ------ | ------------------------------------------------------------------- | ------- |
-| **M0** | 项目立项，写下三层架构假设                                          | ✅ 完成 |
-| **M1** | Layer 1 落地（CLAUDE.md + rules + PreToolUse）                      | ✅ 完成 |
-| **M2** | Layer 2 落地（hooks + agents + commands）                           | ✅ 完成 |
-| **M3** | Layer 3 落地（CI + 提交规范 + 必需文件门禁）                        | ✅ 完成 |
-| **M4** | Memory 启用（决策原因 + 项目踩坑两类，索引 `MEMORY.md`）            | ✅ 完成 |
-| **M5** | Loop 架构（Driver/Worker 调度 + 三策略 + `.session.state` 恢复）    | ✅ 完成 |
-| **M6** | Context 治理（token 预算 ≤ 8K + 按需 hint + 子目录 CLAUDE.md 规划） | ✅ 完成 |
-| **M7** | Tools 治理 + Policy 机制化（版本锁 + 降级链 + bypass + audit log）  | ✅ 完成 |
-| **M8** | 实例化 Java DDD 骨架（`pom.xml` + `src/`，六维度回归测试场）        | 🟢 当前 |
+| 阶段    | 目标                                                                | 状态    |
+| ------- | ------------------------------------------------------------------- | ------- |
+| **M0**  | 项目立项，写下三层架构假设                                          | ✅ 完成 |
+| **M1**  | Layer 1 落地（CLAUDE.md + rules + PreToolUse）                      | ✅ 完成 |
+| **M2**  | Layer 2 落地（hooks + agents + commands）                           | ✅ 完成 |
+| **M3**  | Layer 3 落地（CI + 提交规范 + 必需文件门禁）                        | ✅ 完成 |
+| **M4**  | Memory 启用（决策原因 + 项目踩坑两类，索引 `MEMORY.md`）            | ✅ 完成 |
+| **M5**  | Loop 架构（Driver/Worker 调度 + 三策略 + `.session.state` 恢复）    | ✅ 完成 |
+| **M6**  | Context 治理（token 预算 ≤ 8K + 按需 hint + 子目录 CLAUDE.md 规划） | ✅ 完成 |
+| **M7**  | Tools 治理 + Policy 机制化（版本锁 + 降级链 + bypass + audit log）  | ✅ 完成 |
+| **M8**  | ~~实例化 Java DDD 骨架（六维度回归测试场）~~ → 已废弃，见 ADR-0005  | ⏭️ 改向 |
+| **M8'** | Plugin 化（封装 Harness 为 Claude Code Plugin，分发给任意项目）     | 🟢 当前 |
 
 ## 🚀 快速上手
 
@@ -112,7 +113,7 @@ docs/
   tools-fallback.md                  工具降级链
   memory-conventions.md              memory 与 ADR 分工
   periodic-tasks.md                  /loop + GH Actions schedule
-  AGENTS.backend.md                  后端 agent 索引（Java/DDD 实战）
+  AGENTS.backend.md                  后端 agent 索引（Java/DDD 扩展套件）
   adr/                               架构决策记录
 
 .github/workflows/
@@ -122,15 +123,17 @@ docs/
 
 ## 🧭 关键文档导航
 
-| 想了解          | 看                                                                               |
-| --------------- | -------------------------------------------------------------------------------- |
-| 行为准则        | [CLAUDE.md](CLAUDE.md)                                                           |
-| Agent 用哪个    | [AGENTS.md](AGENTS.md) 路由速查                                                  |
-| 后端 Agent 协作 | [docs/AGENTS.backend.md](docs/AGENTS.backend.md)                                 |
-| 工程化规则      | [.claude/rules/engineering-practices.md](.claude/rules/engineering-practices.md) |
-| 六维度路线      | [docs/roadmap.md](docs/roadmap.md)                                               |
-| Loop 架构       | [docs/loop-architecture.md](docs/loop-architecture.md)                           |
-| Context 治理    | [docs/context-management.md](docs/context-management.md)                         |
-| 工具降级链      | [docs/tools-fallback.md](docs/tools-fallback.md)                                 |
-| 关键决策记录    | [docs/adr/](docs/adr/)                                                           |
-| 变更历史        | [CHANGELOG.md](CHANGELOG.md)                                                     |
+| 想了解            | 看                                                                               |
+| ----------------- | -------------------------------------------------------------------------------- |
+| 行为准则          | [CLAUDE.md](CLAUDE.md)                                                           |
+| **Plugin 用法**   | [plugin/README.md](plugin/README.md)                                             |
+| **Plugin 化决策** | [docs/adr/0005-pivot-to-plugin.md](docs/adr/0005-pivot-to-plugin.md)             |
+| Agent 用哪个      | [AGENTS.md](AGENTS.md) 路由速查                                                  |
+| 后端 Agent 协作   | [docs/AGENTS.backend.md](docs/AGENTS.backend.md)                                 |
+| 工程化规则        | [.claude/rules/engineering-practices.md](.claude/rules/engineering-practices.md) |
+| 六维度路线        | [docs/roadmap.md](docs/roadmap.md)                                               |
+| Loop 架构         | [docs/loop-architecture.md](docs/loop-architecture.md)                           |
+| Context 治理      | [docs/context-management.md](docs/context-management.md)                         |
+| 工具降级链        | [docs/tools-fallback.md](docs/tools-fallback.md)                                 |
+| 关键决策记录      | [docs/adr/](docs/adr/)                                                           |
+| 变更历史          | [CHANGELOG.md](CHANGELOG.md)                                                     |

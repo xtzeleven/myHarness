@@ -67,18 +67,17 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 5. 项目上下文
 
-**项目性质：** myHarness 是 Harness 工程化方法论项目，承载一个 **Java + DDD** 风格的后端实战，用以验证三层 Harness 在真实工程中的有效性。当前 M7 完成 / M8 待启动。
+**项目性质：** myHarness 是 Harness 工程化方法论项目，**最终产物是 Claude Code Plugin**（`plugin/` 子目录），把三层 Harness（约束 / 反馈 / 门禁）封装为可分发组件。原本计划的 Java + DDD 后端实战已经**转为 plugin 的扩展套件**（Java/Spring/DDD/MCP 专项 agent + 灰名单）。当前进度：M7 完成 / M8' Plugin 化进行中（详见 [ADR-0005](docs/adr/0005-pivot-to-plugin.md)）。
 
 **技术栈：**
 
-- 语言：Java 17+
-- 框架：Spring Boot（具体版本以 `pom.xml` 为准）
-- 构建：Maven
-- 架构：DDD（Domain-Driven Design）—— 战略上分限界上下文（BC），战术上严格分层
-- 数据：MySQL（通过只读 MCP 接入查询能力）
+- plugin 资产：Bash hooks / Markdown agents+commands / Python 脚本 / JSON manifest
+- 扩展套件目标语言：Java 17+ / Spring Boot / Maven（仅 `ddd-architect` / `spring-boot-reviewer` / `maven-build-doctor` 等专项 agent 涉及）
+- 架构：DDD 战略分层（限界上下文 BC + 严格分层）— 用于 Java 项目 plugin 用户
+- 数据：MySQL 只读 MCP（通过 plugin/.mcp.json 提供）
 - 文档：Markdown，配 gitnexus 做代码索引
 
-**目录结构（约定，未实例化时按本约定生成）：**
+**目录结构：**
 
 ```
 .
@@ -115,7 +114,7 @@ DDD 依赖方向 **严格单向**：interfaces → application → domain ← in
 
 ## 7. 测试 / 校验命令
 
-> 注：M7 完成（六维度框架就绪），M8 待启动 — `src/` 与 `pom.xml` 暂未实例化；以下 `mvn` 命令为 M8 启用后的约定，当前会因无 pom.xml 报错。
+> 注：myHarness 战略转向 plugin 化（ADR-0005），原 M8 计划的"实例化 Java DDD 骨架"已改为"把 Java/DDD 资产打包进 plugin"。下面 `mvn` 命令对 plugin 用户（Java 项目）适用；对 myHarness 仓库自身**不适用**（仓库自身无 src/，跑 mvn 会报错）。
 
 ```bash
 # Java / Maven（M4 后启用）
