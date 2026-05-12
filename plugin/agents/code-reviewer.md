@@ -54,7 +54,7 @@ model: sonnet
 
 ### 5. 项目契合
 
-- 是否符合本项目 `CLAUDE.md` 的禁忌事项
+- 是否符合当前项目 `CLAUDE.md` 的禁忌事项
 - 是否符合 `${CLAUDE_PLUGIN_ROOT}/rules/engineering-practices.md`
 - 风格与现有代码是否一致（不要"擅自改进"）
 

@@ -1,110 +1,184 @@
 ---
-description: 新人 5 分钟全局上手 — 自动生成项目摘要、当前阶段、第一周建议
-argument-hint: "[role] 可选：backend | frontend | qa | pm（决定侧重点）"
+description: 项目快速入职助手 — 5 分钟摘要 + 可选产出 CLAUDE.md 模板让用户贴
+argument-hint: "[summary | init | role(backend/frontend/qa/pm)]"
 ---
 
-# /onboard
+# /harness:onboard
+
+两种模式：
+
+- **默认 / `summary`**：给当前项目做 5 分钟摘要（不假设语言栈）
+- **`init`**：产出一段"建议贴到本项目 CLAUDE.md 的内容"模板。**不**直接 Edit 用户的 CLAUDE.md —— 输出文本由用户审阅后**手动**复制。
+
+按 `$ARGUMENTS` 选择分支。空 `$ARGUMENTS` = `summary`。
+
+---
+
+## 模式 A：项目摘要（默认）
 
 帮新人在 5 分钟内回答四个问题：**这是什么？跑起来怎么做？现在做到哪？我下一步该做啥？**
 
-## 执行步骤
-
-### 1. 采集（并行跑）
+### 1. 采集（并行跑，缺失文件兜底 `2>/dev/null`）
 
 ```bash
 # 项目身份
-cat README.md | head -40
-cat CLAUDE.md | sed -n '/## 5/,/## 6/p'   # 项目上下文节
-cat AGENTS.md | head -40
+ls README.md CLAUDE.md AGENTS.md 2>/dev/null
+head -40 README.md 2>/dev/null
 
-# 技术栈与构建
-cat pom.xml 2>/dev/null | head -40 || echo "no pom.xml"
-ls src/main/java/ 2>/dev/null
-ls src/main/resources/ 2>/dev/null
+# 技术栈线索（不假设是哪一种）
+ls package.json pom.xml build.gradle Cargo.toml pyproject.toml go.mod requirements.txt 2>/dev/null
+ls src/ app/ lib/ cmd/ 2>/dev/null | head -10
 
 # 当前阶段
-git log --oneline -10
-git branch --show-current
-git status --porcelain | head -20
+git log --oneline -10 2>/dev/null
+git branch --show-current 2>/dev/null
+git status --porcelain 2>/dev/null | head -20
 
-# 仓库 / 索引就绪？
-ls .mcp.json 2>/dev/null && echo "mcp 配置存在"
-ls .env 2>/dev/null && echo ".env 存在（连接已配）" || echo ".env 缺失，需要复制 .env.example"
-
-# 跑得起来吗？
-mvn -v 2>&1 | head -3
-java -version 2>&1
+# plugin / MCP 就绪？
+ls .mcp.json 2>/dev/null
+ls .env 2>/dev/null || echo ".env 缺失（如需 MCP 须先配）"
 ```
 
 ### 2. 综合判断
 
-读上面输出，回答：
+读上面输出，**只**回答能从证据支撑的：
 
-- **它是什么**：领域 / 架构（DDD 四层）/ 关键 BC
-- **跑起来需要**：JDK 版本、Maven、是否需要本地 MySQL、`.env` 必填变量
-- **现在到哪**：当前阶段（M0-M8 哪个）、最近一周做了什么、未合并的工作
-- **下一步**（按 `$ARGUMENTS` 角色调整）：
-  - `backend`：先看哪个 BC、先读哪几个聚合根、先跑哪个 module
-  - `frontend`：API 文档位置、本地 mock 方式、对接的 BC
-  - `qa`：测试策略、集成测试入口、当前覆盖率
-  - `pm`：路线图位置、阻塞项、未关 issue
+- **它是什么**：从 README + 构建文件推断领域 / 主要语言 / 框架
+- **跑起来需要**：从存在的构建文件给标准命令（npm / mvn / cargo / pip / go），**不要猜版本**
+- **现在到哪**：最近一周 commit 摘要、未合并分支
+- **下一步**：按 `$ARGUMENTS` 角色（`backend` / `frontend` / `qa` / `pm`，默认 `backend`）给建议
 
 ### 3. 输出格式
 
 ````
-# 👋 欢迎入职 myHarness
+# 👋 项目入职摘要 — <project basename>
 
 ## 这是什么
-<1 句话> + <技术栈一行> + <架构一行>
+<1 句话> + <技术栈一行> + <架构一行（如能推断）>
 
 ## 现在做到哪
-**当前阶段**：<M7 完成 / M8 待启动或实例化中>
 **最近一周**：
 - <commit 1 — 一句话意图>
 - <commit 2 — ...>
-**进行中**：<未合并分支 / 未关 PR>
+**进行中**：<未合并分支 / 未提交变更>
 
 ## 跑起来怎么做
-1. **环境**：JDK 17+、Maven 3.8+、MySQL 8（dev）
-2. **配置**：复制 `.env.example` → `.env`，填 MySQL 只读账号
+1. **环境**：<根据构建文件推断>
+2. **配置**：复制 `.env.example` → `.env`（如存在）
 3. **构建**：
    ```bash
-   mvn clean compile
-   mvn test
+   <根据构建文件给命令>
 ````
 
-4. **入口**：（按代码现状指出 main / Application 类位置）
+## 第一周建议（角色：<role>）
 
-## 你的第一周建议（角色：<role>）
+1. 读 `README.md` 全部 + `CLAUDE.md`（如存在）
+2. 探索 src/ 主入口（main / index / app）
+3. ... 按角色定制
 
-1. 读 `CLAUDE.md` 全部 + `${CLAUDE_PLUGIN_ROOT}/rules/engineering-practices.md` 第 12 节（DDD 分层）
-2. 用 gitnexus-exploring 浏览 `domain/<bc>/` —— 从聚合根开始
-3. <根据角色定制>
-4. 跑通一个完整流程（在哪发请求 → 进哪个 Controller → 走哪个用例）
-5. 提一个 trivial PR（修个 typo / 加测试）熟悉 /commit 流程
+## 出问题先看（按 plugin 提供的 agent）
 
-## 出问题先看
+- Maven 构建报错 → maven-build-doctor（仅 Maven 项目）
+- Spring 反模式 → spring-boot-reviewer（仅 Spring 项目）
+- 通用 code review → code-reviewer
+- 文档漂移 → docs-keeper
+  ```
 
-- 编译报错 → maven-build-doctor agent
-- 启动报错 → 查 application.yml 与 .env
-- DDD 边界疑惑 → ddd-architect agent
-- SQL 慢 / schema 疑问 → schema-analyst agent
+  ```
 
-## 阅读路径（按优先级）
+### 模式 A 硬性规则
 
-1. `README.md`、`CLAUDE.md`
-2. `${CLAUDE_PLUGIN_ROOT}/rules/engineering-practices.md`
-3. 项目自带 `AGENTS.md`（如有）
-4. `src/main/java/<base>/domain/`（领域核心）
-5. `src/main/java/<base>/application/`（用例编排）
+- **基于事实**：每段陈述都来自 step 1 的真实采集，不要瞎编
+- **不要假设语言栈**：没看到 pom.xml 就不要说 Maven；没看到 src/main/java 就不要谈 DDD
+- 不要超过一页
 
+---
+
+## 模式 B：产 CLAUDE.md 模板（`init`）
+
+> ⚠️ **本 plugin 不直接写用户的 CLAUDE.md**。下面是建议**手动复制贴到项目根 `CLAUDE.md`** 的模板。请基于项目实际情况修改 `<...>` 占位符。
+
+### 1. 采集项目事实
+
+```bash
+ls README.md CLAUDE.md 2>/dev/null
+[ -f CLAUDE.md ] && echo "⚠️ CLAUDE.md 已存在，请审阅后选择性合并下方模板，勿覆盖" || echo "无 CLAUDE.md，可直接贴"
+git remote -v 2>/dev/null
+git log --oneline -3 2>/dev/null
+ls package.json pom.xml build.gradle Cargo.toml pyproject.toml go.mod 2>/dev/null
 ```
 
-## 硬性规则
+### 2. 产出模板（喂给用户复制）
 
-- **基于事实**：每段陈述都来自 step 1 的真实采集，不要瞎编。
-- 检测到 .env 不存在 / pom.xml 缺失 / java 不可用 → 显式提示新人先解决环境。
-- 路线图阶段从 README 表格读，不是猜。
-- 不要超过一页（屏幕能滚到底）。
-- 角色未指定 → 默认 `backend`。
+````markdown
+# CLAUDE.md
+
+> 本项目使用 [harness plugin](https://github.com/<user>/myHarness)。通用行为准则由 plugin 的 `harness-guidelines` SKILL 提供，本文件只写项目专属上下文。
+
+## 项目上下文
+
+**项目性质**：<一句话，例如"<X> 系统的后端服务"或"<Y> 工具的 CLI">
+**当前阶段**：<例如"v1.0 待发布" / "重构中" / "初始原型">
+
+## 技术栈
+
+- 语言：<从构建文件读>
+- 主要框架：<如 Spring Boot / Next.js / Django / ...>
+- 构建：<mvn / npm / cargo / go / ...>
+- 数据：<MySQL / Postgres / 无 / ...>
+
+## 目录结构
+
 ```
+.
+├── README.md
+├── CLAUDE.md
+├── <主源码目录>
+├── <测试目录>
+└── ...
+```
+````
+
+## 禁忌事项
+
+- 不要提交 `.env*` / 密钥文件（plugin 已通过 PreToolUse 拦截，但仍要警惕）
+- <项目自己的硬规则，例如"不修改 schema 不写迁移脚本">
+- <例如"不引入未在 README 声明的依赖">
+
+## 测试 / 校验命令
+
+```bash
+<构建命令>     # 例如 mvn clean compile / npm run build
+<测试命令>     # 例如 mvn test / npm test / pytest
+<lint 命令>    # 例如 npx prettier --check . / ruff check .
+```
+
+## plugin 提供能力
+
+- `/harness:audit-practices` — 15 维度工程化自检
+- `/harness:commit` — 标准化提交流程
+- `/harness:sync-docs` — 文档同步检查
+- `harness-guidelines` SKILL — 通用行为准则（思考优先 / 简单优先 / 外科手术 / 目标驱动）
+- `code-reviewer` / `docs-keeper` 等通用 agent；Java/Spring 项目额外有 ddd-architect / spring-boot-reviewer / maven-build-doctor
+
+## 项目专属约定
+
+<例如"所有 API 必须有 OpenAPI 注解" / "DB 迁移走 Flyway，命名 V<n>\_\_<desc>.sql">
+
+````
+
+### 3. 末尾给用户的指引
+
+```
+✅ 模板已产出。请：
+1. 复制上面的代码块（不含末尾说明）
+2. 项目根新建 / 合并 CLAUDE.md
+3. 把所有 <占位符> 改为实际值
+4. 删掉不适用的段（例如非 Java 项目删 ddd-architect 那条）
+````
+
+### 模式 B 硬性规则
+
+- **绝对不能**用 Edit / Write 直接动用户的 CLAUDE.md —— 只产文本，让用户审阅后手动贴
+- 模板末尾必须列"占位符待替换"清单
+- 已存在 CLAUDE.md 时必须警告"勿覆盖，选择性合并"

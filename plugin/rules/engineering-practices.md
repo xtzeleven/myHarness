@@ -2,6 +2,8 @@
 
 > `audit-practices` 命令对照本文 15 节执行。每节给出**为什么**、**怎么做**、**什么算达标**。
 
+> **本文双重身份**：(a) plugin 内部规则源——`/harness:audit-practices` 命令默认对照此文件；(b) 用户项目自检清单——文中"`.claude/hooks/...`"等路径是讲**用户项目自身**的 Claude Code 资产，不是 plugin 内部路径。若用户项目本身不维护自己的 `.claude/`（完全依赖 plugin 提供），则 §4-6 部分维度对该项目为 N/A。
+
 ## 0. 阅读顺序
 
 1. **Layer 1 约束层**：第 1–3 节（CLAUDE.md / rules / PreToolUse）

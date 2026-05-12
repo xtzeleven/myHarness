@@ -27,7 +27,7 @@ argument-hint: "[focus] 可选：聚焦某一节名（如 ddd / java / mcp / hoo
 
 7. **CI / 质量门禁** — `.github/workflows/*.yml` 跑 lint + 必需文件 + 配置合法性
 8. **Git 卫生** — `.gitignore` 完整、提交 Conventional 风格、`settings.local.json` 不在 tracking
-9. **测试 / 校验** — 项目类型对应的测试命令；本项目至少跑 `/audit-practices` 当冒烟
+9. **测试 / 校验** — 项目类型对应的测试命令；至少跑 `/audit-practices` 当冒烟
 
 ### 支撑层
 
@@ -102,7 +102,7 @@ argument-hint: "[focus] 可选：聚焦某一节名（如 ddd / java / mcp / hoo
 - ✅ **达标**：本节"达标"条件全满足
 - ⚠️ **部分**：基础在但缺一两项
 - ❌ **缺失**：未实施或严重不足
-- **N/A**：本项目阶段不适用（如 DDD 维度在 M8 实例化前为 N/A）
+- **N/A**：当前项目阶段不适用（如 §12-§13 DDD/Java 维度对非 Java 项目永远 N/A）
 
 ## 参数
 

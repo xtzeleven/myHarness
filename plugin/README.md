@@ -33,13 +33,16 @@ plugin/
 │                                 # + maven-build-doctor / schema-analyst / migration-author
 ├── commands/      (5)            # /harness:audit-practices / :audit-context
 │                                 # /harness:commit / :onboard / :sync-docs
-├── hooks/         (6 + 3 tests)  # session-start / user-prompt-submit / pre-tool-use
+├── skills/        (1)            # harness-guidelines（通用行为准则，model-invoked）
+├── hooks/         (6 + 4 tests)  # session-start / user-prompt-submit / pre-tool-use
 │                                 # / format / stop-check / subagent-stop
-│                                 # tests: pre-tool-use / secret-detection / user-prompt-submit
+│                                 # tests: pre-tool-use / secret-detection
+│                                 #        user-prompt-submit / external-cwd
 ├── hooks/hooks.json              # hook 注册（用 ${CLAUDE_PLUGIN_ROOT}）
 ├── scripts/       (2)            # audit-context-cost.py / audit-log-summary.py
 ├── rules/         (1)            # engineering-practices.md（15 节）
-└── .mcp.json                     # MySQL 只读 MCP（凭据在用户侧 .env）
+├── .mcp.json                     # MySQL 只读 MCP（凭据在用户侧 .env）
+└── .env.example                  # MCP env 模板，用户侧复制到项目根
 ```
 
 调用所有命令统一加 `harness:` 前缀（namespace 由 plugin.json `name` 字段定义）。
@@ -57,11 +60,11 @@ plugin/
 
 按 [improvement-backlog.md §G](../docs/improvement-backlog.md) 排期：
 
-| #   | 限制                                                                                                                             | 修复任务                                            |
-| --- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| L2  | CLAUDE.md 11 节"硬注入"在 plugin 模式下丢失（plugin 没有项目级 CLAUDE.md 等价物）                                                | G8 / G9 — 通用准则拆 skill，项目模板进 onboard 命令 |
-| L4  | pre-tool-use 灰名单含 `src/main/java/*/domain/*` 和 `pom.xml`，对非 Java 项目静默无副作用，但 agent description 仍带 Java 关键词 | G13 — 用非 Java demo 项目实测                       |
-| L5  | MCP 凭据 `.env` 在用户项目侧维护，本 plugin 提供 `.env.example` 模板（待 G11 完成）                                              | G11                                                 |
+| #   | 限制                                                                                                                                   | 修复任务                                                           |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| L2  | ~~CLAUDE.md 通用准则在 plugin 模式下丢失~~ ✅ 已修：G8 拆为 `skills/harness-guidelines/` SKILL；G9 onboard `init` 模式产模板让用户贴   | 已完成（G8 / G9）                                                  |
+| L4  | pre-tool-use 灰名单含 `src/main/java/*/domain/*` 和 `pom.xml`，对非 Java 项目静默无副作用；agent description 已加"适用：Java 项目"限定 | G13 — 用非 Java demo 项目实测（路径不匹配 = 静默 no-op，已设计好） |
+| L5  | ~~MCP 凭据 `.env` 在用户项目侧维护，本 plugin 提供 `.env.example` 模板~~ ✅ 已修：`plugin/.env.example` 已就位                         | 已完成（G11）                                                      |
 
 ## 路线 / 文档
 
