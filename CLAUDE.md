@@ -81,22 +81,24 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ```
 .
-├── CLAUDE.md                  # 行为准则（每会话注入）
-├── AGENTS.md                  # agent 索引
+├── CLAUDE.md                  # 行为准则 + 项目专属上下文（每会话注入）
+├── AGENTS.md                  # agent 索引（链接到 plugin/agents/）
 ├── README.md                  # 项目简介与路线
-├── pom.xml                    # Maven 主构建（未实例化）
-├── src/
-│   └── main/java/<base>/
-│       ├── interfaces/        # ① 用户接口层：Controller / DTO / Assembler
-│       ├── application/       # ② 应用层：用例编排 / 事务边界 / CommandHandler
-│       ├── domain/            # ③ 领域层：Entity / VO / Aggregate / DomainService / DomainEvent / Repository 接口
-│       └── infrastructure/    # ④ 基础设施层：Repository 实现 / 适配器 / MQ / 外部 RPC
-├── src/test/                  # 单测 / 集成测
-├── docs/
-│   ├── AGENTS.backend.md      # 后端 agent 索引
-│   └── ddd-conventions.md     # DDD 约定（按需建）
-└── .claude/                   # Harness 配置（hooks / agents / commands / rules）
+├── scripts/dev.sh             # 自举模式启动器：claude --plugin-dir ./plugin
+├── .claude/
+│   ├── settings.json          # 项目级 Claude Code 配置（hooks 由 plugin 提供）
+│   └── settings.local.json    # 本地权限（.gitignore）
+├── plugin/                    # ★ Harness 资产权威源（M8' 后）
+│   ├── .claude-plugin/plugin.json    # manifest
+│   ├── skills/harness-guidelines/    # 通用行为准则 SKILL
+│   ├── agents/ commands/ hooks/      # 8 agent + 5 command + 6 hook
+│   ├── rules/engineering-practices.md
+│   ├── scripts/ + .mcp.json + .env.example
+│   └── README.md
+└── docs/                      # 路线 / ADR / 设计文档
 ```
+
+注：本仓库**没有** `src/main/java/...`（M8 已废弃，详见 ADR-0005/0006）。下面的 DDD 分层规则是给 **plugin 用户**（Java 项目）的约定，不约束本仓库自身。
 
 DDD 依赖方向 **严格单向**：interfaces → application → domain ← infrastructure。**domain 层不允许依赖任何外层**。
 
@@ -170,7 +172,7 @@ git status --porcelain
 
 - 后端 agent 设计：`docs/AGENTS.backend.md`
 - DDD 约定（实例化后）：`docs/ddd-conventions.md`
-- 工程化规则：`.claude/rules/engineering-practices.md`
+- 工程化规则：`plugin/rules/engineering-practices.md`
 - 路线图：`docs/roadmap.md`（M4-M8 六维度计划）
 - 决策记录：`docs/adr/`（公开追溯）
 

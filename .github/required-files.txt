@@ -1,4 +1,4 @@
-# Required files for myHarness Harness layer (M1–M7)
+# Required files for myHarness (M8' plugin 化后)
 # Sourced by .github/workflows/lint.yml (structure-check) and
 # .github/workflows/scheduled.yml (daily-structure-audit).
 #
@@ -11,6 +11,9 @@
 #   1. Add the path here (alphabetical within its section is nice but not required)
 #   2. Commit alongside the file it lists
 #   3. No workflow edit needed — both workflows read this file
+#
+# 注：ADR-0006 已实施。原 .claude/{agents,commands,hooks,rules,scripts}/* 资产
+# 由 plugin/ 提供，本清单不再列。.claude/settings.json 保留作为项目级配置占位。
 
 # --- Root manifests ---
 CLAUDE.md
@@ -24,31 +27,8 @@ package.json
 .prettierrc.json
 .tool-versions
 
-# --- Harness config (.claude/) ---
+# --- Project-level Claude Code config ---
 .claude/settings.json
-.claude/rules/engineering-practices.md
-
-# --- Hooks ---
-.claude/hooks/format.sh
-.claude/hooks/stop-check.sh
-.claude/hooks/pre-tool-use.sh
-.claude/hooks/session-start.sh
-.claude/hooks/subagent-stop.sh
-.claude/hooks/user-prompt-submit.sh
-.claude/hooks/tests/test_pre_tool_use.sh
-.claude/hooks/tests/test_secret_detection.sh
-.claude/hooks/tests/test_user_prompt_submit.sh
-
-# --- Commands ---
-.claude/commands/audit-practices.md
-.claude/commands/audit-context.md
-.claude/commands/commit.md
-.claude/commands/onboard.md
-.claude/commands/sync-docs.md
-
-# --- Scripts ---
-.claude/scripts/audit-context-cost.py
-.claude/scripts/audit-log-summary.py
 
 # --- Docs ---
 docs/AGENTS.backend.md
@@ -67,10 +47,13 @@ docs/adr/README.md
 .github/workflows/plugin-validate.yml
 .github/required-files.txt
 
-# --- Plugin manifest (M8' Plugin 化) ---
+# --- Plugin manifest (M8' plugin 化产物，由 plugin-validate.yml 校验) ---
 plugin/.claude-plugin/plugin.json
 plugin/hooks/hooks.json
 plugin/.mcp.json
 plugin/.env.example
 plugin/skills/harness-guidelines/SKILL.md
 plugin/README.md
+
+# --- Dev tooling ---
+scripts/dev.sh

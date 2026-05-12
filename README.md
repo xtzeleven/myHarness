@@ -21,8 +21,8 @@
   在 LLM 行动**之前**注入规则与禁忌，让"错误的代码写不出来"。
 
   - `CLAUDE.md`：每次会话自动注入的行为准则（项目重定位 + 技术栈 + DDD 禁忌 + 测试命令 + gitnexus 路由）
-  - `.claude/rules/engineering-practices.md`：15 节工程化规则（11 通用 + DDD 分层 / Java&Spring / MCP 治理 + Policy 机制化）
-  - `.claude/hooks/pre-tool-use.sh`：黑名单（直接拦：`rm -rf /`、强推主分支、写敏感文件）+ 灰名单（人工授权：DDD 边界改动、主依赖升级、DDL/DML、`mvn deploy`）
+  - `plugin/rules/engineering-practices.md`：15 节工程化规则（11 通用 + DDD 分层 / Java&Spring / MCP 治理 + Policy 机制化）
+  - `plugin/hooks/pre-tool-use.sh`：黑名单（直接拦：`rm -rf /`、强推主分支、写敏感文件）+ 灰名单（人工授权：DDD 边界改动、主依赖升级、DDL/DML、`mvn deploy`）
 
 - **Layer 2：反馈循环层（Feedback Loop）**
   在 LLM 行动**期间与之后**给出即时信号，让"错的能立刻被纠"。
@@ -66,58 +66,67 @@ git clone <repo> && cd myHarness
 
 # 1. 看准则与规则
 cat CLAUDE.md
-cat .claude/rules/engineering-practices.md
+cat plugin/rules/engineering-practices.md
 
 # 2. 配 MCP（可选，需 MySQL 只读账号）
-cp .env.example .env && vi .env
+cp plugin/.env.example .env && vi .env
 
-# 3. 跑自检
-/audit-practices
+# 3. 启动 Claude Code（自举模式：用本仓库的 plugin/）
+bash scripts/dev.sh                      # 一行启动；等价于 claude --plugin-dir ./plugin
 
-# 4. 新人路径
-/onboard backend
+# 4. 进入 Claude 后跑
+/harness:audit-practices                 # 工程自检
+/harness:onboard                         # 项目摘要
 ```
+
+> **为什么要自举（ADR-0006）**：ADR-0006 后本仓库自身的 hooks/agents/commands 全在 `plugin/` 下，**不再**有 `.claude/{hooks,agents,...}`。开发期用 `bash scripts/dev.sh` 启动 = 用本仓库自己的 plugin 加载，等于每次会话都做一次回归测试。
 
 ## 📁 目录速览
 
 ```
-CLAUDE.md                            行为准则（11 节，每会话自动注入）
+CLAUDE.md                            行为准则（项目专属上下文，每会话自动注入）
 README.md                            本文件
-AGENTS.md                            Agent 索引（路由表 + 8 agent）
+AGENTS.md                            Agent 索引（路由表，链接到 plugin/agents/）
 CHANGELOG.md                         发布变更记录
-.gitignore .env.example .mcp.json    Git / 环境 / MCP 配置
+.gitignore .env.example .mcp.json    Git / 环境 / MCP 配置（项目根级）
 
 .claude/
-  settings.json                      共享配置（hooks 注册）
+  settings.json                      项目级 Claude Code 配置（hooks 由 plugin 提供）
   settings.local.json                本地权限（已 .gitignore，不入仓库）
-  rules/engineering-practices.md     15 节工程化规则
-  hooks/
-    pre-tool-use.sh                  黑+灰双层防御 + 审计日志 + 按需 hint
-    format.sh                        PostToolUse 格式化
-    session-start.sh                 注入 git 态 / memory / 工具就绪
-    stop-check.sh                    会话结束摘要 + 写 .session.state
+
+plugin/                              ★ Harness 资产权威源（M8' 后唯一）
+  .claude-plugin/plugin.json         plugin manifest（name=harness）
+  .mcp.json + .env.example           MySQL 只读 MCP 配置
+  skills/harness-guidelines/         通用行为准则 SKILL（model-invoked）
   agents/                            8 个：tdd-cycle-driver / code-reviewer
-                                    / ddd-architect / spring-boot-reviewer
-                                    / maven-build-doctor / schema-analyst
-                                    / migration-author / docs-keeper
+                                     / ddd-architect / spring-boot-reviewer
+                                     / maven-build-doctor / schema-analyst
+                                     / migration-author / docs-keeper
   commands/                          5 个：audit-practices / audit-context
-                                    / commit / onboard / sync-docs
-  scripts/
-    audit-context-cost.py            token 注入审计
-    audit-log-summary.py             .audit.log 摘要
+                                     / commit / onboard / sync-docs
+  hooks/                             6 个 hook + hooks.json + 4 套 smoke test
+  rules/engineering-practices.md     15 节工程化规则
+  scripts/                           audit-context-cost.py / audit-log-summary.py
+  README.md                          plugin 用法 / 安装 / 已知限制
+
+scripts/
+  dev.sh                             一行启动 plugin 自举模式
 
 docs/
-  roadmap.md                         六维度路线（M4-M8）
+  roadmap.md                         六维度路线（M4-M8'）
   loop-architecture.md               Driver/Worker 调度
   context-management.md              token 预算与按需注入
   tools-fallback.md                  工具降级链
   memory-conventions.md              memory 与 ADR 分工
   periodic-tasks.md                  /loop + GH Actions schedule
   AGENTS.backend.md                  后端 agent 索引（Java/DDD 扩展套件）
-  adr/                               架构决策记录
+  g13-external-validation.md         plugin 外部验证 runbook
+  g13-findings.md                    G13 验证结果
+  adr/                               架构决策记录（含 ADR-0006 .claude/ 清理）
 
 .github/workflows/
-  lint.yml                           push/PR 质量门禁
+  lint.yml                           顶层质量门禁（prettier + 必需文件 + secrets）
+  plugin-validate.yml                plugin 自身校验（manifest + smoke + bypass）
   scheduled.yml                      每日结构 + 每周 stale 自检
 ```
 
@@ -130,7 +139,7 @@ docs/
 | **Plugin 化决策** | [docs/adr/0005-pivot-to-plugin.md](docs/adr/0005-pivot-to-plugin.md)             |
 | Agent 用哪个      | [AGENTS.md](AGENTS.md) 路由速查                                                  |
 | 后端 Agent 协作   | [docs/AGENTS.backend.md](docs/AGENTS.backend.md)                                 |
-| 工程化规则        | [.claude/rules/engineering-practices.md](.claude/rules/engineering-practices.md) |
+| 工程化规则        | [plugin/rules/engineering-practices.md](plugin/rules/engineering-practices.md) |
 | 六维度路线        | [docs/roadmap.md](docs/roadmap.md)                                               |
 | Loop 架构         | [docs/loop-architecture.md](docs/loop-architecture.md)                           |
 | Context 治理      | [docs/context-management.md](docs/context-management.md)                         |

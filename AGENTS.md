@@ -1,6 +1,6 @@
 # AGENTS.md — Agent 索引
 
-> 本项目所有自定义 agent 与可用 skill 的总索引。Agent 文件存放在 `.claude/agents/`。
+> 本项目所有自定义 agent 与可用 skill 的总索引。Agent 文件存放在 `plugin/agents/`。
 
 ## 路由速查（"我该用哪个"）
 
@@ -27,18 +27,18 @@
 
 | Agent                  | 文件                                                              | 触发关键词                                                        | 模型     | 工具范围                                       |
 | ---------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------- | -------- | ---------------------------------------------- |
-| `tdd-cycle-driver`     | [tdd-cycle-driver.md](.claude/agents/tdd-cycle-driver.md)         | 新功能 / 修 bug / TDD / 红绿重构                                  | sonnet   | Bash, Edit, Write, Read, Glob, Grep            |
-| `code-reviewer`        | [code-reviewer.md](.claude/agents/code-reviewer.md)               | review PR / 当前分支 / 指定文件 / 安全审查                        | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
-| `ddd-architect`        | [ddd-architect.md](.claude/agents/ddd-architect.md)               | 限界上下文 / 聚合边界 / Entity vs VO / 领域事件 / Repository 设计 | **opus** | Read, Glob, Grep, Bash（**只读**）             |
-| `spring-boot-reviewer` | [spring-boot-reviewer.md](.claude/agents/spring-boot-reviewer.md) | @Transactional / 循环依赖 / N+1 / Bean 作用域 / Lombok 滥用       | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
-| `maven-build-doctor`   | [maven-build-doctor.md](.claude/agents/maven-build-doctor.md)     | mvn 编译失败 / 依赖冲突 / NoSuchMethodError / scope / profile     | sonnet   | Read, Glob, Grep, Bash                         |
-| `schema-analyst`       | [schema-analyst.md](.claude/agents/schema-analyst.md)             | 表结构 / 索引 / 慢 SQL / EXPLAIN / N+1 / ER 图                    | sonnet   | Read, Glob, Grep, Bash + MySQL MCP（**只读**） |
-| `migration-author`     | [migration-author.md](.claude/agents/migration-author.md)         | Flyway / Liquibase / 加列 / 改字段 / 迁移脚本 / 回滚              | sonnet   | Read, Glob, Grep, Bash, Edit, Write            |
-| `docs-keeper`          | [docs-keeper.md](.claude/agents/docs-keeper.md)                   | 文档漂移 / sync docs / README 过期 / 新人看不懂                   | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
+| `tdd-cycle-driver`     | [tdd-cycle-driver.md](plugin/agents/tdd-cycle-driver.md)         | 新功能 / 修 bug / TDD / 红绿重构                                  | sonnet   | Bash, Edit, Write, Read, Glob, Grep            |
+| `code-reviewer`        | [code-reviewer.md](plugin/agents/code-reviewer.md)               | review PR / 当前分支 / 指定文件 / 安全审查                        | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
+| `ddd-architect`        | [ddd-architect.md](plugin/agents/ddd-architect.md)               | 限界上下文 / 聚合边界 / Entity vs VO / 领域事件 / Repository 设计 | **opus** | Read, Glob, Grep, Bash（**只读**）             |
+| `spring-boot-reviewer` | [spring-boot-reviewer.md](plugin/agents/spring-boot-reviewer.md) | @Transactional / 循环依赖 / N+1 / Bean 作用域 / Lombok 滥用       | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
+| `maven-build-doctor`   | [maven-build-doctor.md](plugin/agents/maven-build-doctor.md)     | mvn 编译失败 / 依赖冲突 / NoSuchMethodError / scope / profile     | sonnet   | Read, Glob, Grep, Bash                         |
+| `schema-analyst`       | [schema-analyst.md](plugin/agents/schema-analyst.md)             | 表结构 / 索引 / 慢 SQL / EXPLAIN / N+1 / ER 图                    | sonnet   | Read, Glob, Grep, Bash + MySQL MCP（**只读**） |
+| `migration-author`     | [migration-author.md](plugin/agents/migration-author.md)         | Flyway / Liquibase / 加列 / 改字段 / 迁移脚本 / 回滚              | sonnet   | Read, Glob, Grep, Bash, Edit, Write            |
+| `docs-keeper`          | [docs-keeper.md](plugin/agents/docs-keeper.md)                   | 文档漂移 / sync docs / README 过期 / 新人看不懂                   | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
 
 ## 可用 Skills（外部，已在环境中）
 
-gitnexus 系列 skill 由本机 Claude Code 环境直接提供，**不在 `.claude/agents/` 目录下**。详见 CLAUDE.md 第 8 节"gitnexus 路由"：
+gitnexus 系列 skill 由本机 Claude Code 环境直接提供，**不在 `plugin/agents/` 目录下**。详见 CLAUDE.md 第 8 节"gitnexus 路由"：
 
 - `gitnexus-cli` / `gitnexus-exploring` / `gitnexus-debugging` / `gitnexus-impact-analysis` / `gitnexus-refactoring` / `gitnexus-pr-review` / `gitnexus-guide`
 
@@ -48,9 +48,9 @@ gitnexus 系列 skill 由本机 Claude Code 环境直接提供，**不在 `.clau
 | ------------------- | -------------------------------------------------------------------------------- |
 | 后端 agent 详细约定 | [docs/AGENTS.backend.md](docs/AGENTS.backend.md)                                 |
 | 行为准则            | [CLAUDE.md](CLAUDE.md)                                                           |
-| 工程化规则（15 节） | [.claude/rules/engineering-practices.md](.claude/rules/engineering-practices.md) |
-| Slash 命令          | [.claude/commands/](.claude/commands/)                                           |
-| Hook 脚本           | [.claude/hooks/](.claude/hooks/)                                                 |
+| 工程化规则（15 节） | [plugin/rules/engineering-practices.md](plugin/rules/engineering-practices.md) |
+| Slash 命令          | [plugin/commands/](plugin/commands/)                                           |
+| Hook 脚本           | [plugin/hooks/](plugin/hooks/)                                                 |
 | MCP 配置            | [.mcp.json](.mcp.json) + [.env.example](.env.example)                            |
 
 ## 触发约定
@@ -62,7 +62,7 @@ gitnexus 系列 skill 由本机 Claude Code 环境直接提供，**不在 `.clau
 
 ## 新增 agent 清单
 
-1. 在 `.claude/agents/<name>.md` 写文件，frontmatter 必含：
+1. 在 `plugin/agents/<name>.md` 写文件，frontmatter 必含：
    - `name`：与文件名一致
    - `description`：职责 + **触发场景示例**（关键词要具体到主 Claude 能路由）
    - `tools`：最小权限集
@@ -87,7 +87,7 @@ gitnexus 系列 skill 由本机 Claude Code 环境直接提供，**不在 `.clau
 | `ddd-architect` 给出聚合设计           | `docs-keeper`    | 主 Worker 输出含"建议"或"草图"     | 设计是否完整文档化、是否含落地路径                                                               |
 | `migration-author` 写完 migration 文件 | `schema-analyst` | 写文件后立即触发                   | migration 在已有 schema 上是否安全（兼容性 / 索引影响）                                          |
 | `tdd-cycle-driver` 完成 GREEN 步       | `code-reviewer`  | 进入 REFACTOR 前                   | 实现是否符合通用 quality（命名 / 安全 / 异常）                                                   |
-| 任一 Worker 改 `domain/` 边界          | `ddd-architect`  | PreToolUse 灰名单触发 + 用户授权后 | 改动是否符合 DDD 分层准入（[engineering-practices §12](.claude/rules/engineering-practices.md)） |
+| 任一 Worker 改 `domain/` 边界          | `ddd-architect`  | PreToolUse 灰名单触发 + 用户授权后 | 改动是否符合 DDD 分层准入（[engineering-practices §12](plugin/rules/engineering-practices.md)） |
 
 自反馈 ≠ 串行链：反馈 Worker **审**主 Worker 的输出，发现问题 → escalate 给 Driver；不在主 Worker 输出基础上"继续工作"。
 
@@ -129,7 +129,7 @@ prettier (npx) → 跳过格式化（注明 "未格式化"）
 
 ## Model Selection Policy（M7 新增）
 
-> 详见 [engineering-practices.md §15](.claude/rules/engineering-practices.md)。本表给每个 Worker 的默认模型与升级路径，对应 frontmatter 的 `model:` 字段。
+> 详见 [engineering-practices.md §15](plugin/rules/engineering-practices.md)。本表给每个 Worker 的默认模型与升级路径，对应 frontmatter 的 `model:` 字段。
 
 | Agent                  | 默认模型 | 选这个的原因                        | 升级路径                                         |
 | ---------------------- | -------- | ----------------------------------- | ------------------------------------------------ |
@@ -170,9 +170,9 @@ CI 与本地用同一版本（CI 通过 `npm ci` 装；本地通过 `npm install
 跑摘要：
 
 ```bash
-python .claude/scripts/audit-log-summary.py             # 全量
-python .claude/scripts/audit-log-summary.py --tail 20   # 最近 20 条
-python .claude/scripts/audit-log-summary.py --bypass    # 仅 bypass 记录
+python plugin/scripts/audit-log-summary.py             # 全量
+python plugin/scripts/audit-log-summary.py --tail 20   # 最近 20 条
+python plugin/scripts/audit-log-summary.py --bypass    # 仅 bypass 记录
 ```
 
 详见 [docs/tools-fallback.md §7](docs/tools-fallback.md)。

@@ -1,6 +1,6 @@
 # ADR 0006 — 共存期收尾：清空 `.claude/`，仓库根 = pure plugin
 
-**Status**: Proposed（待用户拍板）
+**Status**: Accepted（已实施，详见 commit history on plugin-branch）
 **Date**: 2026-05-12
 **Driver**: improvement-backlog G15
 **Depends on**: [ADR-0005](0005-pivot-to-plugin.md)
