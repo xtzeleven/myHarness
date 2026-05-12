@@ -26,6 +26,7 @@ cd "$TMPDIR"
 
 # 清干净干扰 env
 unset HARNESS_BYPASS
+unset CLAUDE_PLUGIN_HARNESS_BYPASS
 
 PASS=0
 FAIL=0
@@ -149,6 +150,28 @@ run_case "bypass-write-env-old-name" 0 "BYPASS ACTIVE" \
 run_case "bypass-rm-rf-new-name" 0 "BYPASS ACTIVE" \
   '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' \
   "CLAUDE_PLUGIN_HARNESS_BYPASS=1"
+
+# --- F1 回归：audit log reason 字段反映实际触发的 env 名字 ---
+# 不能用 run_case（它只看 stderr 关键字），单独检查 audit log
+echo ""
+echo "## F1 audit log reason 动态化"
+_audit_check() {
+  local name="$1" env_setting="$2" expected_reason="$3"
+  rm -f "$TMPDIR/.claude/.audit.log"
+  printf '%s' '{"tool_name":"Write","tool_input":{"file_path":".env","content":"X=1"}}' \
+    | env "$env_setting" bash "$HOOK" >/dev/null 2>&1
+  if [ -f "$TMPDIR/.claude/.audit.log" ] && grep -qF "\"reason\": \"$expected_reason\"" "$TMPDIR/.claude/.audit.log"; then
+    PASS=$((PASS + 1))
+    echo "  ✅ $name"
+  else
+    FAIL=$((FAIL + 1))
+    FAIL_CASES+=("$name")
+    echo "  ❌ $name (expected reason=\"$expected_reason\")"
+    [ -f "$TMPDIR/.claude/.audit.log" ] && echo "     got: $(cat "$TMPDIR/.claude/.audit.log")"
+  fi
+}
+_audit_check "audit-reason-new-name" "CLAUDE_PLUGIN_HARNESS_BYPASS=1" "CLAUDE_PLUGIN_HARNESS_BYPASS=1 in env"
+_audit_check "audit-reason-old-name" "HARNESS_BYPASS=1" "HARNESS_BYPASS=1 in env"
 
 # --- 汇总 ---
 echo ""
