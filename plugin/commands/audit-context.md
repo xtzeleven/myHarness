@@ -5,30 +5,30 @@ argument-hint: "[--top N | --auto | --json]"
 
 # /audit-context
 
-跑 `.claude/scripts/audit-context-cost.py` 估算项目内上下文文件的 token 成本。
+跑 `${CLAUDE_PLUGIN_ROOT}/scripts/audit-context-cost.py` 估算项目内上下文文件的 token 成本。
 
 ## 用法
 
 ```bash
 # 全部文件按 token 排序
-python .claude/scripts/audit-context-cost.py
+python "${CLAUDE_PLUGIN_ROOT}/scripts/audit-context-cost.py"
 
 # 只看每会话自动注入部分
-python .claude/scripts/audit-context-cost.py --auto
+python "${CLAUDE_PLUGIN_ROOT}/scripts/audit-context-cost.py" --auto
 
 # Top 15
-python .claude/scripts/audit-context-cost.py --top 15
+python "${CLAUDE_PLUGIN_ROOT}/scripts/audit-context-cost.py" --top 15
 
 # JSON 机器可读（接入 CI / dashboard）
-python .claude/scripts/audit-context-cost.py --json
+python "${CLAUDE_PLUGIN_ROOT}/scripts/audit-context-cost.py" --json
 ```
 
 ## 步骤
 
-1. 跑 `python .claude/scripts/audit-context-cost.py $ARGUMENTS`
+1. 跑 `python "${CLAUDE_PLUGIN_ROOT}/scripts/audit-context-cost.py" $ARGUMENTS`
 2. 看 **自动注入** 是否 ≤ 8K（每会话付费的预算上限）
 3. 看 Top 5 token 消费者，判断哪些可以拆 / 精简
-4. 把基线数字记到 [docs/context-management.md §2](.claude/../docs/context-management.md) 的"当前估算"列
+4. 把基线数字记到项目自己的 context 管理文档（如有）的"当前估算"列
 
 ## 何时跑
 
@@ -48,12 +48,12 @@ Tokenizer: tiktoken-cl100k_base 或 char/4 approx
 
 ## 减重原则（如超预算）
 
-参考 [docs/context-management.md §3-§5](.claude/../docs/context-management.md)：
+通用减重原则：
 
-- CLAUDE.md > 4K → 拆出 §9 / §11 到引用文档
+- CLAUDE.md > 4K → 拆出"参考材料"性段落到按需文档
 - MEMORY.md 索引 > 1K → 检查每行 ≤ 150 字符
-- AGENTS.md > 3K → 自反馈 + 升级链拆出去
-- 不动 RULES / DOCS / AGENTS（按需加载，不计预算）
+- AGENTS.md > 3K → 把自反馈表 / 升级链拆出去
+- 不动 rules / docs / agents 正文（按需加载，不计预算）
 
 ## 反模式
 

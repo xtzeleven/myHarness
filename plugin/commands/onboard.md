@@ -77,7 +77,7 @@ java -version 2>&1
 
 ## 你的第一周建议（角色：<role>）
 
-1. 读 `CLAUDE.md` 全部 + `.claude/rules/engineering-practices.md` 第 12 节（DDD 分层）
+1. 读 `CLAUDE.md` 全部 + `${CLAUDE_PLUGIN_ROOT}/rules/engineering-practices.md` 第 12 节（DDD 分层）
 2. 用 gitnexus-exploring 浏览 `domain/<bc>/` —— 从聚合根开始
 3. <根据角色定制>
 4. 跑通一个完整流程（在哪发请求 → 进哪个 Controller → 走哪个用例）
@@ -93,8 +93,8 @@ java -version 2>&1
 ## 阅读路径（按优先级）
 
 1. `README.md`、`CLAUDE.md`
-2. `.claude/rules/engineering-practices.md`
-3. `AGENTS.md`、`docs/AGENTS.backend.md`
+2. `${CLAUDE_PLUGIN_ROOT}/rules/engineering-practices.md`
+3. 项目自带 `AGENTS.md`（如有）
 4. `src/main/java/<base>/domain/`（领域核心）
 5. `src/main/java/<base>/application/`（用例编排）
 

@@ -5,7 +5,8 @@
 
 set -uo pipefail
 
-cd "$(dirname "$0")/../.." 2>/dev/null || exit 0
+# plugin 模式 Claude Code 注入 CLAUDE_PROJECT_DIR；standalone 模式 fallback 到 cwd
+cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}" 2>/dev/null || exit 0
 
 separator="──────────────────────────────────────────"
 
@@ -63,31 +64,28 @@ except Exception as e:
 " 2>/dev/null || echo "<.session.state 解析失败>"
 fi
 
-# 3. Memory 索引摘要
+# 3. Memory 索引摘要（如果当前项目用了 Claude Code memory 系统）
+# Claude Code 把 cwd 编码为目录名存到 ~/.claude/projects/<encoded>/memory/MEMORY.md
+# 我们不复刻编码规则，改为 glob 查所有项目 memory，匹配 basename 命中
 memory_index=""
+project_base="$(basename "$(pwd)")"
 home_dir="${HOME:-}"
-user_name="${USER:-${USERNAME:-rw135}}"
-for candidate in \
-  "${home_dir}/.claude/projects/D--myGithub-myHarness/memory/MEMORY.md" \
-  "/c/Users/${user_name}/.claude/projects/D--myGithub-myHarness/memory/MEMORY.md" \
-  "/c/Users/rw135/.claude/projects/D--myGithub-myHarness/memory/MEMORY.md"; do
-  if [ -f "$candidate" ]; then
-    memory_index="$candidate"
-    break
-  fi
-done
+if [ -n "$home_dir" ] && [ -d "${home_dir}/.claude/projects" ]; then
+  # 优先匹配 basename 出现在路径里的（如 D--myGithub-myHarness 含 myHarness）
+  for candidate in "${home_dir}/.claude/projects/"*"${project_base}"*"/memory/MEMORY.md"; do
+    if [ -f "$candidate" ]; then
+      memory_index="$candidate"
+      break
+    fi
+  done
+fi
 
 if [ -n "$memory_index" ]; then
   print_section "Memory 索引（按需查阅）"
   decision_count="$(grep -c '^- \[decision_' "$memory_index" 2>/dev/null || echo 0)"
   pitfall_count="$(grep -c '^- \[pitfall_' "$memory_index" 2>/dev/null || echo 0)"
   echo "决策类: ${decision_count} 条；踩坑类: ${pitfall_count} 条"
-  echo ""
-  echo "常用查阅场景（详见 CLAUDE.md §11）："
-  echo "  写/调 hook → pitfall_jq_not_in_path / pitfall_hook_self_block"
-  echo "  加 PreToolUse 规则 → pitfall_sql_detection_overscan"
-  echo "  加 .gitignore → pitfall_settings_local_already_tracked"
-  echo "  Bash 路径问题 → pitfall_windows_path_d_drive"
+  echo "索引: ${memory_index/${home_dir}/~}"
 fi
 
 # 4. 工具就绪状态
@@ -100,6 +98,14 @@ for cmd in git python npx mvn java; do
   fi
 done
 [ -f .env ] && echo "  ✅ .env" || echo "  ⚠️  .env 缺失（MCP 不可用，详见 .env.example）"
+
+# 检查用户项目 .gitignore 是否已忽略 plugin 产物（audit log / session state）
+# 不忽略会导致这些文件被误 commit 到用户仓库
+if [ -d .git ] && [ -f .gitignore ]; then
+  if ! grep -qE '(\.claude/\.audit\.log|\.claude/\.session\.state|^\.claude/$|^\.claude$)' .gitignore 2>/dev/null; then
+    echo "  ⚠️  .gitignore 未排除 .claude/.audit.log（plugin 会写此文件，建议加 .gitignore）"
+  fi
+fi
 
 echo "$separator"
 echo ""

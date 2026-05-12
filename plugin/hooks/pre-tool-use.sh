@@ -54,10 +54,11 @@ _audit_log() {
   local target="${file_path:-${cmd:-}}"
   # 截断 target 到 200 字符，避免 log 爆炸
   target="${target:0:200}"
-  python - "$action" "$reason" "$bypass" "${tool_name:-}" "$target" <<'PY' 2>/dev/null || true
+  python - "$action" "$reason" "$bypass" "${tool_name:-}" "$target" "${CLAUDE_PROJECT_DIR:-}" <<'PY' 2>/dev/null || true
 import json, sys, os, datetime
-action, reason, bypass, tool, target = sys.argv[1:6]
-log_dir = ".claude"
+action, reason, bypass, tool, target, project_dir = sys.argv[1:7]
+# 优先用 Claude Code 注入的项目根；fallback 到 cwd
+log_dir = os.path.join(project_dir, ".claude") if project_dir else ".claude"
 os.makedirs(log_dir, exist_ok=True)
 entry = {
     "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
@@ -68,7 +69,7 @@ entry = {
     "reason": reason,
     "bypass": bypass == "true",
 }
-with open(f"{log_dir}/.audit.log", "a", encoding="utf-8") as f:
+with open(os.path.join(log_dir, ".audit.log"), "a", encoding="utf-8") as f:
     f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 PY
 }
@@ -228,8 +229,8 @@ if [ -n "${file_path:-}" ]; then
     */CLAUDE.md|CLAUDE.md)
       hint "改 CLAUDE.md 后跑 /audit-context 看 token 数（每会话付费）"
       ;;
-    */.claude/agents/*.md)
-      hint "改 agent 后须同步 AGENTS.md 路由速查表 + 升级链表（M5 引入）"
+    */agents/*.md)
+      hint "改 agent 文件后须同步项目 AGENTS.md 路由速查表 + 升级链表（如有）"
       ;;
     */.gitignore|.gitignore)
       hint "加 ignore 条目后跑 git ls-files 检查是否需要 git rm --cached（参考 memory: pitfall_settings_local_already_tracked）"

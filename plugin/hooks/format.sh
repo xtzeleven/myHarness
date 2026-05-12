@@ -47,10 +47,12 @@ _audit_log() {
   AUDIT_TOOL="${tool_name:-}" \
   AUDIT_TARGET="$target" \
   AUDIT_BYPASS="${HARNESS_BYPASS:-0}" \
+  CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-}" \
   python - <<'PY' 2>/dev/null || true
 import json, os, datetime
 
-log_dir = ".claude"
+project_dir = os.environ.get("CLAUDE_PROJECT_DIR", "")
+log_dir = os.path.join(project_dir, ".claude") if project_dir else ".claude"
 os.makedirs(log_dir, exist_ok=True)
 entry = {
     "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
@@ -61,7 +63,7 @@ entry = {
     "reason": os.environ.get("AUDIT_REASON", ""),
     "bypass": os.environ.get("AUDIT_BYPASS", "0") == "1",
 }
-with open(f"{log_dir}/.audit.log", "a", encoding="utf-8") as f:
+with open(os.path.join(log_dir, ".audit.log"), "a", encoding="utf-8") as f:
     f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 PY
 }
@@ -169,7 +171,8 @@ if not hits:
     sys.exit(0)
 
 # 写 audit log（每个命中独立一行，便于按 reason 聚合）
-log_dir = ".claude"
+project_dir = os.environ.get("CLAUDE_PROJECT_DIR", "")
+log_dir = os.path.join(project_dir, ".claude") if project_dir else ".claude"
 try:
     os.makedirs(log_dir, exist_ok=True)
     for label, snip in hits:
@@ -182,7 +185,7 @@ try:
             "reason": f"{label}: {snip}",
             "bypass": False,
         }
-        with open(f"{log_dir}/.audit.log", "a", encoding="utf-8") as f:
+        with open(os.path.join(log_dir, ".audit.log"), "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 except Exception:
     pass

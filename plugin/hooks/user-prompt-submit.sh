@@ -75,7 +75,8 @@ if not hits:
     sys.exit(0)
 
 # 写 audit log
-log_dir = ".claude"
+project_dir = os.environ.get("CLAUDE_PROJECT_DIR", "")
+log_dir = os.path.join(project_dir, ".claude") if project_dir else ".claude"
 try:
     os.makedirs(log_dir, exist_ok=True)
     entry = {
@@ -87,7 +88,7 @@ try:
         "target": prompt[:200],
         "bypass": False,
     }
-    with open(f"{log_dir}/.audit.log", "a", encoding="utf-8") as f:
+    with open(os.path.join(log_dir, ".audit.log"), "a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 except Exception:
     pass

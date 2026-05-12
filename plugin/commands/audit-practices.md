@@ -7,7 +7,7 @@ argument-hint: "[focus] 可选：聚焦某一节名（如 ddd / java / mcp / hoo
 
 对当前项目工程化实践做一次自检，按 **15 维度** 逐项打 ✅ / ⚠️ / ❌ 并给一句话依据 + 改进建议。
 
-**优先**对照 `.claude/rules/engineering-practices.md`（含 §1-§11 通用 + §12-§14 领域专项 + §15 Policy）；该文件不存在时退回下方通用清单。
+**优先**对照 `${CLAUDE_PLUGIN_ROOT}/rules/engineering-practices.md`（含 §1-§11 通用 + §12-§14 领域专项 + §15 Policy）；该文件不存在时退回下方通用清单。
 
 ## 15 维度自检清单
 
@@ -20,8 +20,8 @@ argument-hint: "[focus] 可选：聚焦某一节名（如 ddd / java / mcp / hoo
 ### Layer 2 反馈循环层
 
 4. **Hooks** — PostToolUse 格式化 + Stop 提醒 + PreToolUse 防御 至少三件齐
-5. **Agents** — `.claude/agents/` 覆盖项目高频场景；description 含触发关键词；最小权限
-6. **Commands** — `.claude/commands/` 含日常重复动作（提交 / 评审 / 自检 / 上手 / 同步）
+5. **Agents** — 项目 `.claude/agents/` 或安装 plugin 提供的 agents，覆盖高频场景；description 含触发关键词；最小权限
+6. **Commands** — 项目 `.claude/commands/` 或 plugin 提供的 commands，含日常重复动作（提交 / 评审 / 自检 / 上手 / 同步）
 
 ### Layer 3 质量门禁层
 
@@ -49,13 +49,13 @@ argument-hint: "[focus] 可选：聚焦某一节名（如 ddd / java / mcp / hoo
 1. **采集**（用 Bash + Read 一次跑完）：
 
    ```bash
-   ls -la CLAUDE.md README.md AGENTS.md docs/AGENTS.backend.md
-   ls .claude/{settings.json,rules,hooks,agents,commands}
-   ls .github/workflows/
-   cat .gitignore | head -30
+   ls -la CLAUDE.md README.md AGENTS.md 2>/dev/null
+   ls .claude/ 2>/dev/null || echo "no project-local .claude/ (可能用 plugin 提供)"
+   ls .github/workflows/ 2>/dev/null
+   cat .gitignore 2>/dev/null | head -30
    git ls-files | grep -E 'settings.local|\.env$'  # 应为空
    git status --porcelain
-   ls .mcp.json .env.example
+   ls .mcp.json .env.example 2>/dev/null
    ```
 
 2. **打分**：逐维度判定，**用证据说话**（引用文件路径或具体行）。

@@ -6,7 +6,8 @@
 
 set -uo pipefail
 
-cd "$(dirname "$0")/../.." 2>/dev/null || exit 0
+# plugin 模式 Claude Code 注入 CLAUDE_PROJECT_DIR；standalone 模式 fallback
+cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}" 2>/dev/null || exit 0
 
 command -v git >/dev/null 2>&1 || exit 0
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0

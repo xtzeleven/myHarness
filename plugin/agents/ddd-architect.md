@@ -38,7 +38,7 @@ git grep -l "class.*Aggregate" src/main/java/**/domain/
 git grep -l "interface.*Repository" src/main/java/**/domain/
 ```
 
-对照 [.claude/rules/engineering-practices.md 第 12 节](.claude/rules/engineering-practices.md) 的依赖方向 / 模型规则。
+对照 `${CLAUDE_PLUGIN_ROOT}/rules/engineering-practices.md` 第 12 节 的依赖方向 / 模型规则。
 
 ### 3. 给设计判断
 
@@ -106,7 +106,7 @@ public class Order { /* ... */ }
 - **不写 Spring/JPA 代码**。需要时给伪代码或接口草图，由主对话/用户落地。
 - **每条建议必须可执行**："建议拆聚合"必须给出按什么拆。
 - **遇到 BC 命名分歧**，给 2-3 个候选 + 推荐，不擅自定。
-- **不绕过 [engineering-practices.md 第 12 节](.claude/rules/engineering-practices.md)** 的硬性约束。
+- **不绕过 `${CLAUDE_PLUGIN_ROOT}/rules/engineering-practices.md` 第 12 节** 的硬性约束。
 
 ## 反模式（识别到要在报告里点名）
 
