@@ -1,15 +1,17 @@
 ---
 name: harness-guidelines
-description: 工程化通用行为准则 — 思考优先 / 简单优先 / 外科手术 / 目标驱动。Use when starting any non-trivial coding task (implementing new features, fixing bugs, refactoring, reviewing code), planning multi-step implementations, or when uncertain about scope. Helps reduce common LLM mistakes like overcomplicating, hidden assumptions, scope creep, and weak success criteria. 触发关键词：实现 / 重构 / 修 bug / 评审 / 加功能 / 简化 / 怎么改 / plan / implement / refactor / review。
+description: Behavioral guardrails for ANY coding, refactoring, debugging, or code-review task. Invoke BEFORE writing code, explaining a change, or starting any multi-step implementation — even when the task looks small or obvious. Enforces four checks every time: (1) assumption-check (state assumptions, ask if unclear); (2) simplicity-first (minimum viable code, no speculative abstractions); (3) surgical changes (touch only what's necessary, don't refactor adjacent code); (4) goal-driven (define verifiable success criteria before coding). Use for tasks like "implement X", "add a function", "fix this bug", "refactor Y", "review this code", "how should I do Z?", "实现 X", "加个函数", "修 bug", "重构", "评审", "review", "plan", "explain how". When in doubt about whether to invoke, ALWAYS invoke — the cost is one short check, the benefit is avoiding scope creep / wrong assumptions / overcomplication. Skip only for pure-conversation / non-code questions.
 ---
 
 # Harness 工程化通用准则
 
-> 这是一组**行为准则**，不是技术清单。在写代码、改代码、评审代码前过一遍，能避开 LLM 最常见的几类错误：过度设计、隐藏假设、跑题、目标模糊。
+> **使用方法**：这是一组**前置检查**，每次开始 coding 任务前先过一遍，再动手。
 >
-> **Tradeoff**：这些准则偏保守、偏沟通。对一次性的 trivial 任务（typo、单行修复）可酌情跳过。
+> **第一件事永远是 §1**（Think Before Coding）。哪怕用户说"加个 add 函数"这种看似 trivial 的，也先做 §1 的 4 个确认（语言 / 签名 / 边界 / 测试），再动手。
+>
+> 跳过的唯一情形：纯文本问答、解释概念、查找文件等不涉及"写或改代码"的请求。
 
-## 1. Think Before Coding
+## 1. Think Before Coding（先做这步）
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
 
@@ -19,6 +21,14 @@ Before implementing:
 - If multiple interpretations exist, present them — don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
+
+**实操：开口前先告诉用户**：
+
+> "我打算这样做：<一句话方案> + 假设 <X>。需要确认吗？"
+>
+> 然后等用户回应或自己继续（看任务清晰度）。
+
+即使任务是"加个 add 函数"，也至少声明 1-2 行假设：语言 / 是否要测试 / 边界 case 处理，让用户有机会纠正。
 
 ## 2. Simplicity First
 

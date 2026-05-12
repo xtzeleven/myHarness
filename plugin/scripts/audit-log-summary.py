@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timezone, timedelta
@@ -36,7 +37,19 @@ if sys.platform.startswith("win"):
     except Exception:
         pass
 
-LOG = Path(__file__).resolve().parent.parent.parent / ".claude" / ".audit.log"
+
+def _resolve_log_path() -> Path:
+    # 优先 CLAUDE_PROJECT_DIR (Claude Code 注入)；fallback cwd；最后 plugin 父父父（standalone）
+    env_dir = os.environ.get("CLAUDE_PROJECT_DIR")
+    if env_dir and Path(env_dir).is_dir():
+        return Path(env_dir) / ".claude" / ".audit.log"
+    cwd = Path.cwd()
+    if any((cwd / m).exists() for m in (".git", "CLAUDE.md", "README.md")):
+        return cwd / ".claude" / ".audit.log"
+    return Path(__file__).resolve().parent.parent.parent / ".claude" / ".audit.log"
+
+
+LOG = _resolve_log_path()
 
 
 def parse_since(s: str) -> datetime | None:

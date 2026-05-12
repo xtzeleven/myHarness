@@ -44,7 +44,21 @@ def get_token_counter():
         return ("char/4 approx", lambda s: max(1, len(s) // 4))
 
 # ===== 文件分类 =====
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+# 项目根优先级：(1) CLAUDE_PROJECT_DIR env (Claude Code 注入用户项目根)
+#               (2) cwd (从用户项目调用时)
+#               (3) 脚本所在 plugin 的父父父目录 (standalone fallback)
+def _resolve_project_root() -> Path:
+    env_dir = os.environ.get("CLAUDE_PROJECT_DIR")
+    if env_dir and Path(env_dir).is_dir():
+        return Path(env_dir).resolve()
+    cwd = Path.cwd()
+    # 简单启发式：cwd 看起来是项目根（含 .git 或 CLAUDE.md 或 README.md）就用它
+    if any((cwd / m).exists() for m in (".git", "CLAUDE.md", "README.md", "pyproject.toml", "package.json", "pom.xml")):
+        return cwd.resolve()
+    return Path(__file__).resolve().parent.parent.parent
+
+
+PROJECT_ROOT = _resolve_project_root()
 
 def files_in(globs: list[str]) -> list[Path]:
     out = []
@@ -93,24 +107,24 @@ def audit():
                 "lines": content.count("\n") + 1,
             })
 
-    # 加 MEMORY.md 索引（在 ~/.claude/projects/<id>/memory/）
-    memory_index_paths = [
-        Path.home() / ".claude/projects/D--myGithub-myHarness/memory/MEMORY.md",
-        Path("/c/Users/rw135/.claude/projects/D--myGithub-myHarness/memory/MEMORY.md"),
-    ]
-    for mi in memory_index_paths:
-        if mi.exists():
-            try:
-                content = mi.read_text(encoding="utf-8")
-                rows.append({
-                    "category": "AUTO_memory_index",
-                    "path": str(mi),
-                    "tokens": count(content),
-                    "lines": content.count("\n") + 1,
-                })
-                break
-            except Exception:
-                pass
+    # 加 MEMORY.md 索引（在 ~/.claude/projects/<encoded-cwd>/memory/）
+    # 不硬编码项目名，按 basename 匹配
+    project_base = PROJECT_ROOT.name
+    home_claude = Path.home() / ".claude" / "projects"
+    if home_claude.is_dir():
+        for candidate in home_claude.glob(f"*{project_base}*/memory/MEMORY.md"):
+            if candidate.exists():
+                try:
+                    content = candidate.read_text(encoding="utf-8")
+                    rows.append({
+                        "category": "AUTO_memory_index",
+                        "path": str(candidate),
+                        "tokens": count(content),
+                        "lines": content.count("\n") + 1,
+                    })
+                    break
+                except Exception:
+                    pass
     return name, rows
 
 def fmt_table(rows, top=None):
