@@ -5,9 +5,58 @@
 
 由于本项目是工程化方法论项目而非软件包，"版本"对应 **里程碑（M0–MN）**。
 
-## [Unreleased] — M7 后置 / M8 启动前清账
+## [Unreleased]
 
-### Added
+> **分支说明**：本 CHANGELOG 对应 `plugin-branch`（活分支）。`main` 分支冻结于 M7 后置 / M8 启动前状态（standalone 形态，仓库根 `.claude/{hooks,agents,...}` 仍在），不合回。详见 [README "🌿 分支模型"](README.md#-分支模型) 与 [ADR-0006](docs/adr/0006-cleanup-claude-dir.md)。
+
+### M8' Plugin 化（B 阶段 → ADR-0006 实施）
+
+**战略**：M8 Java DDD 实例化 → 废弃（[ADR-0005](docs/adr/0005-pivot-to-plugin.md)）；B 阶段完成后清空仓库根 `.claude/{agents,commands,hooks,rules,scripts}/`，仓库根 = pure plugin（[ADR-0006](docs/adr/0006-cleanup-claude-dir.md)）。
+
+#### Added
+
+- [ADR-0005](docs/adr/0005-pivot-to-plugin.md) plugin 化战略转向 / [ADR-0006](docs/adr/0006-cleanup-claude-dir.md) `.claude/` 清空决策
+- `plugin/` 完整骨架：`.claude-plugin/plugin.json` manifest + agents (8) + commands (5) + hooks (6 + 4 tests) + skills (1) + rules (1) + scripts (2) + `.mcp.json` + `.env.example` + README
+- `plugin/skills/harness-guidelines/SKILL.md`:通用准则 §1-4 拆为 model-invoked skill（G8）
+- `plugin/hooks/hooks.json`:hook 注册（用 `${CLAUDE_PLUGIN_ROOT}` + `${CLAUDE_PROJECT_DIR}`，去 cwd 假设）
+- `plugin/commands/onboard.md` 双模式（summary / init）：G9 改写，init 模式产 CLAUDE.md 模板让用户手贴
+- `scripts/dev.sh`:自举模式启动器（`claude --plugin-dir ./plugin "$@"`）
+- `.github/workflows/plugin-validate.yml`:plugin 自身 5 job 校验（manifest schema / bash 语法 / agent frontmatter / env-vars-aligned / smoke / bypass-guard）
+- `.github/required-files.txt`:CI 必需文件清单单点真源（lint.yml + scheduled.yml 共用）
+- `docs/g13-external-validation.md` + `docs/g13-findings.md`:plugin 外部验证 runbook + 结果
+- bypass env namespace：`CLAUDE_PLUGIN_HARNESS_BYPASS`（兼容旧名 `HARNESS_BYPASS`）
+
+#### Changed
+
+- 仓库根 `.claude/{agents,commands,hooks,rules,scripts}/` 全部清空（ADR-0006 选项 B 实施于 `plugin-branch`）；保留 `settings.json`（去 hooks 段）/ `settings.local.json`（.gitignore）/ 运行时产物
+- `.github/workflows/lint.yml` 简化：`.claude/agents` 必需文件 / hook shebang+x 等 job 转 `plugin-validate.yml`；trigger 加 `plugin-branch`；AGENTS.md 链接校验改查 `plugin/agents/*.md`
+- `.github/workflows/plugin-validate.yml` trigger 加 `plugin-branch`（避免活分支 CI 裸奔）
+- `.github/workflows/scheduled.yml` stale-check 取 `main` + `plugin-branch` 两分支最新 commit，避免 main 冻结误告 stale
+- `README.md` / `CLAUDE.md` / `AGENTS.md` 措辞从"Java DDD 后端实战"改为"plugin 仓库 + Java/DDD 扩展套件"（G14）；README 加"🌿 分支模型"节
+- 8 个 agent 加"适用：Java/JVM 项目"等限定；SKILL description 加中英双语 + ALWAYS invoke 关键词强化召唤率
+- `pre-tool-use.sh` hint 6 处去掉 `.claude/agents/` 硬路径，改语义化（G6）
+- audit log 位置定为 `${CLAUDE_PROJECT_DIR}/.claude/.audit.log`（G7），plugin 目录不污染
+
+#### Removed
+
+- `.claude/agents/` `.claude/commands/` `.claude/hooks/` `.claude/rules/` `.claude/scripts/`（语义已迁 `plugin/`；ADR-0006 commit d895862）
+
+#### Fixed
+
+- **F1**:bypass audit log `reason` 反映实际触发的 env 名（旧名 `HARNESS_BYPASS` 触发时不再误写 `CLAUDE_PLUGIN_HARNESS_BYPASS`）
+- **H1-H5 / M1/M2/M4/M5 / S2-S5 / F2-F4** 共 16 项跨"装上就坏 / 功能性退化 / 结构性缺陷"修复（详见 plugin-branch commit history：b62c63c H 级 / 7ff7d9c M+S 级 / 7fba6ca F1 / 64314ed SKILL / 260ccc1 G14）
+- npm cache key 缺失：加 `package-lock.json`（dcb26eb）
+- `.session.state` / `.claude/settings.local.json` 误 tracked：`git rm --cached`（091848b）
+
+#### 验证
+
+- plugin smoke test 69 case 全过（含 F1 audit-reason 回归用例 2 case）
+- G13 自动验证 18/18 ✅:空仓库基线 5 / Java 灰名单 3 / Python 静默 5 / Bypass 3 / 审计日志 2
+- G13 手工 H1-H7 待跑（详见 [docs/g13-findings.md](docs/g13-findings.md)）
+
+### M7 后置 / M8 启动前清账
+
+#### Added
 
 - `docs/agent-output-schema.md`：sub-agent 输出 schema 契约（`status` / `degraded_from` / `escalate_to` / `risks`），让 SubagentStop hook 能解析"成败/降级/升级"信号
 - `.claude/hooks/subagent-stop.sh`：SubagentStop hook，解析 sub-agent 输出末尾的 `<!-- harness:agent-output -->` 块，写 audit log + 非 ok 状态 stderr 提示
@@ -15,7 +64,7 @@
 - `docs/adr/0004-deprecate-bypass-once.md`：废弃 `.bypass-once` 单次授权机制（5/9 实验残留），统一走 `HARNESS_BYPASS=1` + commit marker + CI 拒合三道
 - `docs/improvement-backlog.md`：完整 follow-up 清单（A/B/C/D/E 5 类，含工作量与修法）
 
-### Changed
+#### Changed
 
 - `.claude/hooks/format.sh`：PostToolUse 加 audit log（记录 `executed` 事件含 tool/target/ext），不仅做格式化；带 `HARNESS_BYPASS=1` 时记 `bypass: true`
 - `.claude/scripts/audit-log-summary.py`：加 6 个聚合参数（`--by-hook/tool/action/agent/ext/day`）+ `--hook` 过滤；`by-ext` 只统计 PostToolUse，`by-agent` 只统计 SubagentStop
@@ -26,20 +75,20 @@
 - `README.md`：修复 8 处漂移（badge / 当前状态 / 节数 / Hooks 描述 / commands 数 / 阶段表 M3→M8 / 文档导航 / 目录速览），M4-M7 全部打 ✅，M8 标当前
 - `CLAUDE.md §7`：M3 → M7 完成；`/audit-practices` 14 维度 → 15 维度
 
-### Fixed
+#### Fixed
 
 - README 多处过期描述（M3 实际已是 M7 完成；`.claude/commands/` 4 个 → 5 个）
 
-### 验证
+#### 验证
 
 - SubagentStop hook 4 case 通过（ok / degraded / escalate / 无 schema 静默 skip）
 - PostToolUse audit log 4 case 通过（Edit / Write / 空 file_path 不记 / bypass 标记）
 - pre-tool-use 26 case smoke test 仍全过（未破坏现有）
 - audit-log-summary 6 聚合视角输出干净（PreToolUse / PostToolUse 不混淆）
 
-### 计划中
+#### 计划中（已废弃）
 
-- M8：Java DDD 实例化（pom.xml + src/，六维度回归测试）—— 详见 [docs/improvement-backlog.md](docs/improvement-backlog.md) §B "M8 启动前必修"
+- ~~M8：Java DDD 实例化（pom.xml + src/，六维度回归测试）~~ — 由 [ADR-0005](docs/adr/0005-pivot-to-plugin.md) 转为 M8' Plugin 化
 
 ## [M7] - 2026-05-09 — Tools 治理 + Policy 机制化
 

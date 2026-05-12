@@ -66,22 +66,29 @@ jobs:
         id: signals
         run: |
           set -e
-          last_commit_ts=$(git log -1 --pretty=%ct main)
+          # 双分支模型（ADR-0006）：main 冻结、plugin-branch 活跃，取两者最新 commit
+          main_ts=$(git log -1 --pretty=%ct origin/main 2>/dev/null || echo 0)
+          plugin_ts=$(git log -1 --pretty=%ct origin/plugin-branch 2>/dev/null || echo 0)
+          if [ "$main_ts" -ge "$plugin_ts" ]; then
+            last_commit_ts=$main_ts
+          else
+            last_commit_ts=$plugin_ts
+          fi
           now_ts=$(date +%s)
           days_since=$(( (now_ts - last_commit_ts) / 86400 ))
-          echo "days_since_main_commit=$days_since" >> $GITHUB_OUTPUT
+          echo "days_since_any_commit=$days_since" >> $GITHUB_OUTPUT
       - name: Open issue if stale
-        if: steps.signals.outputs.days_since_main_commit > 7
+        if: steps.signals.outputs.days_since_any_commit > 7
         uses: actions/github-script@v7
         with:
           script: |
-            const days = '${{ steps.signals.outputs.days_since_main_commit }}';
+            const days = '${{ steps.signals.outputs.days_since_any_commit }}';
             const today = new Date().toISOString().slice(0, 10);
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `[scheduled] ${today} 仓库 ${days} 天无 main 提交`,
-              body: `main 分支已 ${days} 天无新 commit。\n\n如果是有意停滞（如等设计），关掉本 issue 即可。\n如果只是漏了 push，建议跑 \`/audit-practices\` + \`/sync-docs\` 后再决定。`,
+              title: `[scheduled] ${today} 仓库 ${days} 天无活跃分支提交`,
+              body: `main 与 plugin-branch 均已 ${days} 天无新 commit（取两者最新）。\n\n如果是有意停滞（如等设计），关掉本 issue 即可。\n如果只是漏了 push，建议跑 \`/audit-practices\` + \`/sync-docs\` 后再决定。\n\n注：双分支模型见 [ADR-0006](../blob/plugin-branch/docs/adr/0006-cleanup-claude-dir.md)。`,
               labels: ['harness-health', 'auto-generated', 'stale']
             });
 

@@ -13,6 +13,25 @@
 
 > **当前状态**：M7 完成（六维度 Harness 框架就绪）+ M8' Plugin 化进行中（plugin 资产已就位 + 外部验证通过自动部分，详见 [ADR-0005](docs/adr/0005-pivot-to-plugin.md) / [plugin/README.md](plugin/README.md)）。
 
+## 🌿 分支模型
+
+本仓库**双分支永久分叉，不计划合回**：
+
+| 分支                | 形态                                                   | 状态                            | 用途                    |
+| ------------------- | ------------------------------------------------------ | ------------------------------- | ----------------------- |
+| `main`              | Standalone（仓库根含 `.claude/{hooks,agents,...}`）    | 🧊 冻结（M0-M7 历史快照）       | 阅读旧形态 / 历史追溯   |
+| **`plugin-branch`** | Plugin 化（`.claude/` 已清空 + `scripts/dev.sh` 自举） | 🟢 活分支（M8' 起所有改动入此） | **安装来源 / 持续开发** |
+
+**为什么不合回**：两分支语义不等价（standalone vs plugin runtime），同步成本 > 价值。详见 [ADR-0006](docs/adr/0006-cleanup-claude-dir.md)。
+
+**外部用户安装**：
+
+```bash
+git clone -b plugin-branch <repo> && cd myHarness
+claude --plugin-dir ./plugin              # 在任意目标项目下加载
+# 或仓库根自举（开发期）：bash scripts/dev.sh
+```
+
 ## 🛠️ 技术路线
 
 ### 三层 Harness 架构
@@ -132,17 +151,17 @@ docs/
 
 ## 🧭 关键文档导航
 
-| 想了解            | 看                                                                               |
-| ----------------- | -------------------------------------------------------------------------------- |
-| 行为准则          | [CLAUDE.md](CLAUDE.md)                                                           |
-| **Plugin 用法**   | [plugin/README.md](plugin/README.md)                                             |
-| **Plugin 化决策** | [docs/adr/0005-pivot-to-plugin.md](docs/adr/0005-pivot-to-plugin.md)             |
-| Agent 用哪个      | [AGENTS.md](AGENTS.md) 路由速查                                                  |
-| 后端 Agent 协作   | [docs/AGENTS.backend.md](docs/AGENTS.backend.md)                                 |
+| 想了解            | 看                                                                             |
+| ----------------- | ------------------------------------------------------------------------------ |
+| 行为准则          | [CLAUDE.md](CLAUDE.md)                                                         |
+| **Plugin 用法**   | [plugin/README.md](plugin/README.md)                                           |
+| **Plugin 化决策** | [docs/adr/0005-pivot-to-plugin.md](docs/adr/0005-pivot-to-plugin.md)           |
+| Agent 用哪个      | [AGENTS.md](AGENTS.md) 路由速查                                                |
+| 后端 Agent 协作   | [docs/AGENTS.backend.md](docs/AGENTS.backend.md)                               |
 | 工程化规则        | [plugin/rules/engineering-practices.md](plugin/rules/engineering-practices.md) |
-| 六维度路线        | [docs/roadmap.md](docs/roadmap.md)                                               |
-| Loop 架构         | [docs/loop-architecture.md](docs/loop-architecture.md)                           |
-| Context 治理      | [docs/context-management.md](docs/context-management.md)                         |
-| 工具降级链        | [docs/tools-fallback.md](docs/tools-fallback.md)                                 |
-| 关键决策记录      | [docs/adr/](docs/adr/)                                                           |
-| 变更历史          | [CHANGELOG.md](CHANGELOG.md)                                                     |
+| 六维度路线        | [docs/roadmap.md](docs/roadmap.md)                                             |
+| Loop 架构         | [docs/loop-architecture.md](docs/loop-architecture.md)                         |
+| Context 治理      | [docs/context-management.md](docs/context-management.md)                       |
+| 工具降级链        | [docs/tools-fallback.md](docs/tools-fallback.md)                               |
+| 关键决策记录      | [docs/adr/](docs/adr/)                                                         |
+| 变更历史          | [CHANGELOG.md](CHANGELOG.md)                                                   |

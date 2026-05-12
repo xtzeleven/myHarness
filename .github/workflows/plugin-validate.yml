@@ -5,12 +5,12 @@ name: plugin-validate
 
 on:
   push:
-    branches: [main]
+    branches: [main, plugin-branch]
     paths:
       - "plugin/**"
       - ".github/workflows/plugin-validate.yml"
   pull_request:
-    branches: [main]
+    branches: [main, plugin-branch]
     paths:
       - "plugin/**"
       - ".github/workflows/plugin-validate.yml"
