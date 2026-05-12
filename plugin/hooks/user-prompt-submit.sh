@@ -57,7 +57,7 @@ patterns = [
     (r"\bgit\s+push\s+(--force|-f)\b", "git 强推（force push）"),
     (r"\bchmod\s+-R?\s*777\b", "chmod 777"),
     (r"\bcurl\b[^|]*\|\s*(sh|bash)\b", "curl|sh 远程脚本"),
-    (r"\bHARNESS_BYPASS=1\b", "用户提及 HARNESS_BYPASS（请确认场景）"),
+    (r"\b(?:CLAUDE_PLUGIN_)?HARNESS_BYPASS=1\b", "用户提及 HARNESS_BYPASS（请确认场景）"),
     (r"\bsudo\s+rm\b", "sudo rm"),
     (r"\bgit\s+reset\s+--hard\s+origin/(main|master|prod)", "git reset --hard 远端主分支"),
     (r":\(\)\s*\{\s*:\|:&\s*\}\s*;:", "fork bomb"),

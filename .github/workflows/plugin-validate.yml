@@ -1,0 +1,189 @@
+name: plugin-validate
+
+# Plugin 自身校验：manifest schema / hook 语法 / agent frontmatter / smoke test
+# 与 lint.yml 并行（lint.yml 检查 myHarness 根工程；本 workflow 检查 plugin/ 自身）
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "plugin/**"
+      - ".github/workflows/plugin-validate.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "plugin/**"
+      - ".github/workflows/plugin-validate.yml"
+  workflow_dispatch:
+
+jobs:
+  manifest:
+    name: Plugin manifest schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: manifest is valid JSON
+        run: |
+          python3 -c "import json; m=json.load(open('plugin/.claude-plugin/plugin.json')); assert 'name' in m, 'missing name'; print('manifest OK:', m['name'])"
+      - name: .mcp.json is valid JSON
+        run: python3 -c "import json; json.load(open('plugin/.mcp.json')); print('.mcp.json OK')"
+      - name: hooks/hooks.json is valid JSON
+        run: python3 -c "import json; json.load(open('plugin/hooks/hooks.json')); print('hooks.json OK')"
+
+  bash-syntax:
+    name: Hook + script bash syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: bash -n on all *.sh
+        run: |
+          set -e
+          fail=0
+          while IFS= read -r f; do
+            if ! bash -n "$f" 2>&1; then
+              echo "::error file=$f::bash syntax error"
+              fail=$((fail+1))
+            fi
+          done < <(find plugin -type f -name "*.sh")
+          [ "$fail" -eq 0 ] || exit 1
+      - name: shebang + git +x bit on hooks
+        run: |
+          set -e
+          fail=0
+          while IFS= read -r h; do
+            head -1 "$h" | grep -q '^#!/usr/bin/env bash' || {
+              echo "::error file=$h::missing bash shebang"
+              fail=$((fail+1))
+              continue
+            }
+            mode="$(git ls-files -s "$h" | awk '{print $1}')"
+            if [ "$mode" != "100755" ]; then
+              echo "::error file=$h::git mode is $mode, expected 100755"
+              fail=$((fail+1))
+            fi
+          done < <(find plugin/hooks -type f -name "*.sh")
+          [ "$fail" -eq 0 ] || exit 1
+          echo "All plugin hook scripts have shebang + git +x bit."
+
+  agent-frontmatter:
+    name: Agent frontmatter required fields
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: every agent has name + description
+        run: |
+          python3 - <<'PY'
+          import os, sys, re
+          fail = 0
+          for root, _, files in os.walk("plugin/agents"):
+              for f in files:
+                  if not f.endswith(".md"):
+                      continue
+                  path = os.path.join(root, f)
+                  with open(path, encoding="utf-8") as fh:
+                      head = fh.read(2000)
+                  # 提取首个 frontmatter 块
+                  m = re.match(r"^---\n(.*?)\n---", head, re.S)
+                  if not m:
+                      print(f"::error file={path}::missing YAML frontmatter")
+                      fail += 1
+                      continue
+                  fm = m.group(1)
+                  for k in ("name", "description"):
+                      if not re.search(rf"^{k}\s*:\s*\S", fm, re.M):
+                          print(f"::error file={path}::frontmatter missing required field: {k}")
+                          fail += 1
+          if fail:
+              sys.exit(1)
+          print("All agent frontmatters have name + description.")
+          PY
+      - name: every skill has SKILL.md with description
+        run: |
+          python3 - <<'PY'
+          import os, sys, re
+          skills_dir = "plugin/skills"
+          if not os.path.isdir(skills_dir):
+              print("no plugin/skills/ — skipping")
+              sys.exit(0)
+          fail = 0
+          for entry in os.listdir(skills_dir):
+              skill_path = os.path.join(skills_dir, entry, "SKILL.md")
+              if not os.path.isfile(skill_path):
+                  print(f"::error file={skills_dir}/{entry}::missing SKILL.md")
+                  fail += 1
+                  continue
+              with open(skill_path, encoding="utf-8") as fh:
+                  head = fh.read(2000)
+              m = re.match(r"^---\n(.*?)\n---", head, re.S)
+              if not m or not re.search(r"^description\s*:\s*\S", m.group(1), re.M):
+                  print(f"::error file={skill_path}::missing frontmatter description")
+                  fail += 1
+          if fail:
+              sys.exit(1)
+          print("All SKILL.md files have description.")
+          PY
+
+  env-vars-aligned:
+    name: .mcp.json vars documented in .env.example
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: every ${VAR} in plugin/.mcp.json is in plugin/.env.example
+        run: |
+          set -e
+          missing=0
+          mcp_vars=$(grep -oE '\$\{[A-Z_]+' plugin/.mcp.json | sed 's/\${//' | sort -u)
+          for v in $mcp_vars; do
+            if ! grep -q "^${v}=" plugin/.env.example; then
+              echo "::error file=plugin/.env.example::missing variable: $v (referenced in plugin/.mcp.json)"
+              missing=$((missing+1))
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 1
+          echo "All plugin/.mcp.json variables documented in plugin/.env.example."
+
+  smoke-tests:
+    name: Plugin hook smoke tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: chmod +x for tests
+        run: find plugin/hooks -type f -name "*.sh" -exec chmod +x {} \;
+      - name: pre-tool-use suite
+        run: bash plugin/hooks/tests/test_pre_tool_use.sh
+      - name: secret detection suite
+        run: bash plugin/hooks/tests/test_secret_detection.sh
+      - name: user-prompt-submit suite
+        run: bash plugin/hooks/tests/test_user_prompt_submit.sh
+      - name: external cwd integration
+        run: bash plugin/hooks/tests/test_external_cwd.sh
+
+  bypass-guard:
+    name: Reject BYPASS in plugin/-touching commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: No BYPASS marker
+        run: |
+          set -e
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            range="HEAD~10..HEAD"
+          fi
+          if git log --format='%s%n%b' "$range" | grep -Eq '^BYPASS:|(CLAUDE_PLUGIN_)?HARNESS_BYPASS=1'; then
+            echo "::error::Found commit with BYPASS marker in $range"
+            git log --format='  %h %s' "$range" | grep -E 'BYPASS|HARNESS_BYPASS' || true
+            exit 1
+          fi
+      - name: No BYPASS env in CI
+        run: |
+          for v in HARNESS_BYPASS CLAUDE_PLUGIN_HARNESS_BYPASS; do
+            if [ -n "$(eval echo \"\${$v:-}\")" ]; then
+              echo "::error::$v is set in CI environment"
+              exit 1
+            fi
+          done
+          echo "No bypass env vars set in CI ✅"

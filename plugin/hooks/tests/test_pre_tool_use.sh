@@ -137,15 +137,18 @@ run_case "ask-pom-spring-boot" 2 "依赖升级" \
 run_case "ask-pom-bare-rewrite" 2 "整文件改写" \
   '{"tool_name":"Write","tool_input":{"file_path":"pom.xml","content":""}}'
 
-# --- Bypass（HARNESS_BYPASS=1）---
+# --- Bypass（CLAUDE_PLUGIN_HARNESS_BYPASS=1 新名 / HARNESS_BYPASS=1 旧名兼容）---
 echo ""
 echo "## Bypass 放行"
-run_case "bypass-rm-rf" 0 "BYPASS ACTIVE" \
+run_case "bypass-rm-rf-old-name" 0 "BYPASS ACTIVE" \
   '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' \
   "HARNESS_BYPASS=1"
-run_case "bypass-write-env" 0 "BYPASS ACTIVE" \
+run_case "bypass-write-env-old-name" 0 "BYPASS ACTIVE" \
   '{"tool_name":"Write","tool_input":{"file_path":".env","content":"X=1"}}' \
   "HARNESS_BYPASS=1"
+run_case "bypass-rm-rf-new-name" 0 "BYPASS ACTIVE" \
+  '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' \
+  "CLAUDE_PLUGIN_HARNESS_BYPASS=1"
 
 # --- 汇总 ---
 echo ""

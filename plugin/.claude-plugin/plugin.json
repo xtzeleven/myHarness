@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin.json",
   "name": "harness",
-  "description": "工程化 Harness — 6 hooks / 8 agents / 5 commands / MCP-ready，含 Java DDD 扩展套件。三层防御（约束 / 反馈 / 门禁），让 LLM 写出工程级代码。",
+  "description": "工程化 Harness — 行为准则 SKILL / 多类 hook / 多个 sub-agent / 工程自检命令 / MCP-ready，含 Java/Spring/DDD 扩展套件。三层防御（约束 / 反馈 / 门禁），让 LLM 写出工程级代码。",
   "version": "0.1.0",
   "author": {
     "name": "rw"

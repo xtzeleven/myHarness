@@ -64,4 +64,13 @@ docs/adr/README.md
 # --- CI ---
 .github/workflows/lint.yml
 .github/workflows/scheduled.yml
+.github/workflows/plugin-validate.yml
 .github/required-files.txt
+
+# --- Plugin manifest (M8' Plugin 化) ---
+plugin/.claude-plugin/plugin.json
+plugin/hooks/hooks.json
+plugin/.mcp.json
+plugin/.env.example
+plugin/skills/harness-guidelines/SKILL.md
+plugin/README.md

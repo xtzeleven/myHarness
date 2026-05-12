@@ -318,14 +318,16 @@ interfaces  →  application  →  domain  ←  infrastructure
 
 ### Bypass policy（M7-T5 引入）
 
-`HARNESS_BYPASS=1` 环境变量下 hook 放行黑+灰名单，但：
+`CLAUDE_PLUGIN_HARNESS_BYPASS=1` 环境变量下 hook 放行黑+灰名单，但：
 
 1. **强制写审计日志**（`.claude/.audit.log`）含 `bypass: true` 标记
 2. **本地可用**（开发者紧急情况下手动 export）
 3. **CI 拒合**：commit message 含 `BYPASS:` 或环境变量传到 CI runner 时 lint.yml 直接 fail
 4. **hook 输出红色警告**到 stderr 提醒主对话不要常用
 
-**注**：早期（2026-05-09 M8 第一次尝试）实验过 `.bypass-once` 文件式单次授权机制（audit.log 有 3 条残留记录），现已废弃。统一只走 `HARNESS_BYPASS=1` env 变量 + commit message marker + CI 拒合三道。废弃理由见 [ADR-0004](../../docs/adr/0004-deprecate-bypass-once.md)。
+**兼容**：旧名 `HARNESS_BYPASS=1` 仍生效（fallback），但因无 namespace 易跨 plugin 撞名，**推荐用新名** `CLAUDE_PLUGIN_HARNESS_BYPASS=1`。
+
+**注**：早期（2026-05-09 M8 第一次尝试）实验过 `.bypass-once` 文件式单次授权机制（audit.log 有 3 条残留记录），现已废弃。统一只走 env 变量 + commit message marker + CI 拒合三道。废弃理由见 [ADR-0004](../../docs/adr/0004-deprecate-bypass-once.md)。
 
 ### 审计 policy
 

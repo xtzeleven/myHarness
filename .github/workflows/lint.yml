@@ -157,20 +157,22 @@ jobs:
           else
             range="HEAD~10..HEAD"
           fi
-          if git log --format='%s%n%b' "$range" | grep -Eq '^BYPASS:|HARNESS_BYPASS=1'; then
+          if git log --format='%s%n%b' "$range" | grep -Eq '^BYPASS:|(CLAUDE_PLUGIN_)?HARNESS_BYPASS=1'; then
             echo "::error::Found commit with BYPASS marker in $range"
             git log --format='  %h %s' "$range" | grep -E 'BYPASS|HARNESS_BYPASS' || true
-            echo "::error::HARNESS_BYPASS is for emergency local use only; remove the commit or revert before merging"
+            echo "::error::HARNESS_BYPASS / CLAUDE_PLUGIN_HARNESS_BYPASS is for emergency local use only; remove the commit or revert before merging"
             exit 1
           fi
           echo "No BYPASS markers found in commit messages."
       - name: HARNESS_BYPASS env var must not be set in CI
         run: |
-          if [ -n "${HARNESS_BYPASS:-}" ]; then
-            echo "::error::HARNESS_BYPASS is set in CI environment — this should never happen"
-            exit 1
-          fi
-          echo "HARNESS_BYPASS is unset in CI ✅"
+          for v in HARNESS_BYPASS CLAUDE_PLUGIN_HARNESS_BYPASS; do
+            if [ -n "$(eval echo \"\${$v:-}\")" ]; then
+              echo "::error::$v is set in CI environment — this should never happen"
+              exit 1
+            fi
+          done
+          echo "No bypass env vars set in CI ✅"
 
   hook-test:
     name: Pre-tool-use hook smoke test

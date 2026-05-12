@@ -46,7 +46,7 @@ _audit_log() {
   AUDIT_REASON="$reason" \
   AUDIT_TOOL="${tool_name:-}" \
   AUDIT_TARGET="$target" \
-  AUDIT_BYPASS="${HARNESS_BYPASS:-0}" \
+  AUDIT_BYPASS="${CLAUDE_PLUGIN_HARNESS_BYPASS:-${HARNESS_BYPASS:-0}}" \
   CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-}" \
   python - <<'PY' 2>/dev/null || true
 import json, os, datetime

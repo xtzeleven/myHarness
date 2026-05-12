@@ -74,9 +74,11 @@ with open(os.path.join(log_dir, ".audit.log"), "a", encoding="utf-8") as f:
 PY
 }
 
-# Bypass 检查（M7-T5）：HARNESS_BYPASS=1 时绕过黑+灰名单，但仍记录审计
-if [ "${HARNESS_BYPASS:-}" = "1" ]; then
-  _audit_log "bypass" "HARNESS_BYPASS=1 in env" true
+# Bypass 检查（M7-T5）：CLAUDE_PLUGIN_HARNESS_BYPASS=1 绕过黑+灰名单，仍记录审计
+# 兼容旧名 HARNESS_BYPASS（无 namespace 易跨 plugin 冲突，推荐用新名）
+_bypass_flag="${CLAUDE_PLUGIN_HARNESS_BYPASS:-${HARNESS_BYPASS:-}}"
+if [ "$_bypass_flag" = "1" ]; then
+  _audit_log "bypass" "CLAUDE_PLUGIN_HARNESS_BYPASS=1 in env" true
   echo "[pre-tool-use] ⚠️⚠️⚠️ BYPASS ACTIVE — 黑+灰名单全部放行，仅记录审计 ⚠️⚠️⚠️" >&2
   echo "[pre-tool-use] 这不应是常态。CI 检测到 commit message 含 'BYPASS:' 会拒合。" >&2
   exit 0
