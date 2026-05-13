@@ -75,8 +75,55 @@ m = re.search(
     output,
     re.DOTALL,
 )
+
+# F9: 失败信号检测 — 检测 sub-agent 沉默失败（new-api / 类似代理 panic / 上游 500）
+# 触发条件：无 schema 块 + 输出为空或极短或含错误关键词
+# 应对：写 audit log + stderr 提示主 Claude 降级到主对话
+def _detect_silent_failure(text):
+    if not text:
+        return "empty_output"
+    text_lower = text.lower()
+    # 常见上游错误关键词
+    err_kws = ["panic", "nil pointer", "internal server error",
+               "upstream error", "timeout", "connection reset",
+               "500 error", "service unavailable", "rate limit"]
+    for kw in err_kws:
+        if kw in text_lower:
+            return f"error_keyword:{kw}"
+    # 极短输出（< 50 字符）多半是错误信息或空响应
+    if len(text.strip()) < 50:
+        return "output_too_short"
+    return ""
+
+
 if not m:
-    # 无 schema 块：silently skip（不强制 agent 加 schema）
+    failure = _detect_silent_failure(output)
+    if failure:
+        # 写 audit log + 提示主 Claude
+        project_dir = os.environ.get("CLAUDE_PROJECT_DIR", "")
+        log_dir = os.path.join(project_dir, ".claude") if project_dir else ".claude"
+        try:
+            os.makedirs(log_dir, exist_ok=True)
+            entry = {
+                "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+                "hook": "SubagentStop",
+                "agent": str(agent_name),
+                "status": "silent_failure",
+                "failure_signal": failure,
+                "output_len": len(output),
+                "bypass": False,
+            }
+            with open(os.path.join(log_dir, ".audit.log"), "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        except Exception:
+            pass
+
+        print(f"[subagent-stop] ⚠️ Agent {agent_name} 疑似沉默失败 (signal={failure})", file=sys.stderr)
+        print("[subagent-stop] 常见原因：API 代理（new-api / one-api 等）处理 sub-agent 调用时上游错误。", file=sys.stderr)
+        print(f"[subagent-stop] 主 Claude：考虑直接以主对话回答用户请求，不再 retry {agent_name}。", file=sys.stderr)
+        sys.exit(0)
+
+    # 无 schema 块且看起来正常 — silently skip（不强制 agent 加 schema）
     sys.exit(0)
 
 schema_text = m.group(1)

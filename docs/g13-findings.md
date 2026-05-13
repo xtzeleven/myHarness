@@ -108,9 +108,14 @@ $ CLAUDE_PROJECT_DIR=/tmp/g13-empty CLAUDE_PLUGIN_ROOT=<plugin> bash session-sta
 
 - **场景**：H2 ddd-architect 调用 / H4 code-reviewer 强触发
 - **症状**：`harness:<agent>(...)` 委派块出现 ✅（plugin 路由正确），但 `Done (0 tool uses · 0 tokens · 3m)` + Claude 内置错误信息 "上游 new-api panic / nil pointer"
-- **结论**：用户使用 OpenAI-compatible 代理网关（如 new-api / one-api）转发 Anthropic 调用；该网关在处理 plugin sub-agent 委派调用时上游 panic，**不是 plugin 缺陷**
+- **确认**：用户侧 API 端点 = new-api / one-api（OpenAI-compatible Go 代理网关），代理在转发 Claude Code 的 sub-agent 多轮会话或工具调用流式响应时上游 panic
 - **plugin 职责边界**：在"正确路由 + 委派"这步 PASS；sub-agent 实际执行依赖底层 API 链路
-- **缓解**：用户直连 Anthropic API 或换稳定代理时该问题消失
+- **F9 mitigation（已实施 ✅）**：`plugin/hooks/subagent-stop.sh` 加沉默失败检测
+  - 触发条件：无 schema 块 + (空输出 / 含 panic/timeout/500/connection-reset/rate-limit 关键词 / 极短输出 <50 字符)
+  - 应对：写 audit log `status: silent_failure` + `failure_signal: <类型>` + stderr 提示"主 Claude 考虑直接以主对话回答，不再 retry 该 agent"
+  - 回归测试：`plugin/hooks/tests/test_subagent_stop.sh` 10 case（6 失败检测 + 3 既有 schema 解析 + 1 长输出无 schema 不强制）
+  - commit: TBD（F9 fix）
+- **缓解（用户侧）**：直连 `api.anthropic.com` 或升级代理；F9 让 plugin 在代理抖动时不致 hang
 
 ---
 

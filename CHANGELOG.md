@@ -43,6 +43,7 @@
 
 #### Fixed
 
+- **F9**:Sub-agent 沉默失败检测（应对 API 代理 panic / new-api nil pointer 等基础设施抖动）— `subagent-stop.sh` 加 `_detect_silent_failure()`：无 schema 块 + (空输出 / 错误关键词 panic/timeout/500/connection-reset/rate-limit / 短输出 <50 字符) → 写 audit log `status: silent_failure` + stderr 提示主 Claude 降级到主对话；新增 `test_subagent_stop.sh` 10 case；plugin-validate.yml 注册新测试
 - **F8**:Windows 反斜杠路径让 PreToolUse 灰名单全失效（H2 验证发现，致命跨平台 bug）— `pre-tool-use.sh` 提取 file_path 后立即 `${file_path//\\//}` 规范化；新增 5 case 回归测试覆盖反斜杠 domain 路径 / 带盘符前缀 / secrets 路径 / 不误伤 application 层；commit ce6ff49
 - **F1**:bypass audit log `reason` 反映实际触发的 env 名（旧名 `HARNESS_BYPASS` 触发时不再误写 `CLAUDE_PLUGIN_HARNESS_BYPASS`）
 - **H1-H5 / M1/M2/M4/M5 / S2-S5 / F2-F4** 共 16 项跨"装上就坏 / 功能性退化 / 结构性缺陷"修复（详见 plugin-branch commit history：b62c63c H 级 / 7ff7d9c M+S 级 / 7fba6ca F1 / 64314ed SKILL / 260ccc1 G14）
@@ -51,7 +52,7 @@
 
 #### 验证
 
-- plugin smoke test **74 case 全过**（含 F1 audit-reason 回归 2 case + F8 反斜杠路径回归 5 case）
+- plugin smoke test **84 case 全过**（含 F1 audit-reason 回归 2 case + F8 反斜杠路径回归 5 case + F9 沉默失败检测 10 case）
 - G13 自动验证 18/18 ✅:空仓库基线 5 / Java 灰名单 3 / Python 静默 5 / Bypass 3 / 审计日志 2
 - **G13 手工 H1-H7 全 ✅**（2026-05-13 用户交互验证，详见 [docs/g13-findings.md](docs/g13-findings.md)）
 

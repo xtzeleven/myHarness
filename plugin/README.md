@@ -66,6 +66,13 @@ plugin/
 | L4  | pre-tool-use 灰名单含 `src/main/java/*/domain/*` 和 `pom.xml`，对非 Java 项目静默无副作用；agent description 已加"适用：Java 项目"限定 | G13 — 用非 Java demo 项目实测（路径不匹配 = 静默 no-op，已设计好） |
 | L5  | ~~MCP 凭据 `.env` 在用户项目侧维护，本 plugin 提供 `.env.example` 模板~~ ✅ 已修：`plugin/.env.example` 已就位                         | 已完成（G11）                                                      |
 
+### 环境兼容性
+
+| #   | 现象                                                                                                                                                                  | plugin 应对                                                                                                       |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| E1  | **OpenAI-compatible 代理网关**（new-api / one-api 等）在转发 Claude Code 的 sub-agent 调用时上游 panic（`nil pointer` / `500` / `0 tool uses 0 tokens`）。非 plugin bug | F9：SubagentStop hook 检测沉默失败（空输出 / panic / timeout / 500 / 短输出）→ stderr 提示主 Claude 降级到主对话回答 |
+|     | **缓解**                                                                                                                                                              | 直连 `api.anthropic.com`，或确认代理版本支持 Claude Code 的 sub-agent invocation；F9 让 plugin 在代理抖动时不致 hang |
+
 ## 路线 / 文档
 
 - 战略决策：[ADR-0005](../docs/adr/0005-pivot-to-plugin.md)

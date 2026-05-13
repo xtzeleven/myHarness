@@ -157,6 +157,8 @@ jobs:
         run: bash plugin/hooks/tests/test_user_prompt_submit.sh
       - name: external cwd integration
         run: bash plugin/hooks/tests/test_external_cwd.sh
+      - name: subagent-stop suite
+        run: bash plugin/hooks/tests/test_subagent_stop.sh
 
   bypass-guard:
     name: Reject BYPASS in plugin/-touching commits
