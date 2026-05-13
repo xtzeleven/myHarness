@@ -1,23 +1,23 @@
 # G13 — Plugin 外部项目端到端验证结果
 
-**Date**: 2026-05-12
-**Runner**: 主对话（非交互部分） + 待用户跑（交互部分）
-**Plugin commit**: HEAD（含 S2/S3/S4/M1-M5/H1-H5 全部修复）
+**Date**: 2026-05-12 / 更新 2026-05-13（H1-H7 手工验证完成）
+**Runner**: 主对话（非交互部分） + 用户（交互部分 H1-H7）
+**Plugin commit**: HEAD（含 S2/S3/S4/M1-M5/H1-H5 全部修复 + F1 + **F8**）
 
 ---
 
 ## 总览
 
-| 节             | 类型              | 自动   | 手工   | 状态         |
-| -------------- | ----------------- | ------ | ------ | ------------ |
-| §1 空仓库基线  | hook 行为         | 5/5 ✅ | 1/1 待 | 自动部分全过 |
-| §2 Java 项目   | PreToolUse 灰名单 | 3/3 ✅ | 1/1 待 | 自动部分全过 |
-| §3 Python 项目 | 静默无副作用      | 5/5 ✅ | 4/5 待 | 自动部分全过 |
-| §4 Bypass      | env 兼容          | 3/3 ✅ | 1/1 待 | 自动部分全过 |
-| §5 审计日志    | 路径隔离          | 2/2 ✅ | —      | 全过         |
+| 节             | 类型              | 自动   | 手工   | 状态        |
+| -------------- | ----------------- | ------ | ------ | ----------- |
+| §1 空仓库基线  | hook 行为         | 5/5 ✅ | 1/1 ✅ | 全过        |
+| §2 Java 项目   | PreToolUse 灰名单 | 3/3 ✅ | 1/1 ✅ | 全过（F8） |
+| §3 Python 项目 | 静默无副作用      | 5/5 ✅ | 4/4 ✅ | 全过        |
+| §4 Bypass      | env 兼容          | 3/3 ✅ | 1/1 ✅ | 全过        |
+| §5 审计日志    | 路径隔离          | 2/2 ✅ | —      | 全过        |
 
 **自动验证**：18/18 ✅
-**手工待跑**：7 项（详见末节）
+**手工 H1-H7**：7/7 ✅（H2 暴露 F8，已修复并加 5 case 回归测试）
 
 ---
 
@@ -86,25 +86,58 @@ $ CLAUDE_PROJECT_DIR=/tmp/g13-empty CLAUDE_PLUGIN_ROOT=<plugin> bash session-sta
 
 ---
 
-## 待用户手工跑（需真 Claude CLI 加载 plugin）
+### F8 — Windows 反斜杠路径让 PreToolUse 灰名单全失效（已修复 ✅）
 
-下列项必须在外部项目跑 `claude --plugin-dir D:/myGithub/myHarness/plugin` 后交互验证。我（主对话）无法用 bash 直接模拟"主 Claude 解析 command markdown 并路由 agent"。
-
-| #   | 节/步骤 | 验证内容                                                                      | 提示                                                                                                                        |
-| --- | ------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| H1  | §1.6    | 在空仓库说 "实现一个简单的 add 函数" 看 `harness-guidelines` SKILL 是否被召唤 | SKILL 是 model-invoked；在 `/help` 看是否列出，或在 Claude 思考输出中看是否提及"思考优先 / 简单优先"                        |
-| H2  | §2.1    | 在 Java 项目说"设计一个 Order 聚合" 看是否路由 `ddd-architect`                | 看 `/agents` 列表；输出顶部应出现 `ddd-architect:` 前缀或类似                                                               |
-| H3  | §3.1    | 在 Python 项目跑 `/harness:onboard`                                           | 输出应识别 Python（不提 JDK/Maven）；按"模式 A 默认"格式                                                                    |
-| H4  | §3.2    | 在 Python 项目说"review 这段 Python 代码"                                     | 路由 `code-reviewer`（通用），**不**路由 `spring-boot-reviewer`                                                             |
-| H5  | §3.4    | 在 Python 项目说"这个项目的 BC 怎么分？"                                      | 关键测：`ddd-architect` description 标"适用：Java/JVM"；主 Claude 理想情况应拒绝路由或先确认。若仍误路由 → 加强 description |
-| H6  | §3.5    | 在 Python 项目跑 `/harness:audit-practices`                                   | §12-§13（DDD/Java）维度应标 `N/A`，非"❌ 缺失"                                                                              |
-| H7  | §4.3    | 创建带 `BYPASS:` 前缀的 commit + push                                         | CI `bypass-guard` job 应 fail                                                                                               |
-
-**完成后**：每项打 ✅/❌/部分，失败的按 F<n> 格式补到本文末，由我后续修。
+- **场景**：H2 在 Windows 上让 Claude 写 `src\main\java\com\example\domain\OrderAggregate.java`
+- **预期**：PreToolUse 灰名单触发 `⚠️ 待人工授权: DDD 边界改动`
+- **实际**（修复前）：Write 直接放行 102 行写入，**没有任何拦截**
+- **根因**：Windows Claude Code 透传给 hook 的 `file_path` 用反斜杠，但 `pre-tool-use.sh` 的 `case` glob 用正斜杠 → 所有路径模式（DDD 灰名单 / secrets / .aws / .ssh / 所有 M6 hint）在 Windows 一律失配
+- **验证根因**：
+  - 反斜杠 payload 喂 hook → exit=0（误放行）
+  - 正斜杠 payload 喂 hook → exit=2 + "DDD 边界改动" 提示
+- **影响等级**：🔴 **黑+灰防御层在 Windows 上部分失效**（致命漏洞，跨平台 plugin 必修）
+- **修复**：`plugin/hooks/pre-tool-use.sh:34-35` 提取 `file_path` 后立即 `${file_path//\\//}` 规范化反斜杠 → 正斜杠
+- **回归测试**：`plugin/hooks/tests/test_pre_tool_use.sh` 新增 5 case (`ask-domain-aggregate-backslash` / `ask-domain-repository-backslash` / `ask-domain-aggregate-mixed-drive` / `deny-secrets-path-backslash` / `allow-application-handler-backslash`) → 74/74 全过（旧 69 + 新 5）
+- **commit**: `ce6ff49 fix(hooks): F8 — Windows 反斜杠路径让 PreToolUse 灰名单全失效`
 
 ---
 
-## 推荐外部跑法（最少代价）
+## 已知环境限制（非 plugin 缺陷）
+
+### E1 — API 代理（new-api / one-api 网关）panic on sub-agent invocations
+
+- **场景**：H2 ddd-architect 调用 / H4 code-reviewer 强触发
+- **症状**：`harness:<agent>(...)` 委派块出现 ✅（plugin 路由正确），但 `Done (0 tool uses · 0 tokens · 3m)` + Claude 内置错误信息 "上游 new-api panic / nil pointer"
+- **结论**：用户使用 OpenAI-compatible 代理网关（如 new-api / one-api）转发 Anthropic 调用；该网关在处理 plugin sub-agent 委派调用时上游 panic，**不是 plugin 缺陷**
+- **plugin 职责边界**：在"正确路由 + 委派"这步 PASS；sub-agent 实际执行依赖底层 API 链路
+- **缓解**：用户直连 Anthropic API 或换稳定代理时该问题消失
+
+---
+
+## H1-H7 手工验证结果（2026-05-13）
+
+外部项目交互验证：`D:\tmp\g13\{empty,java,py}` + myHarness 仓库本身（H7）。
+
+| #   | 节/步骤 | 验证内容 | 结果 | 证据 |
+| --- | ------- | -------- | ---- | ---- |
+| H1  | §1.6    | 空仓库说"实现工程化方案" → `harness-guidelines` SKILL 召唤 | ✅ | 显式 `Skill(harness:harness-guidelines)` + "Successfully loaded skill" + 引用 SKILL.md §1 "先 surface 状态" + 主动 AskUserQuestion 验证假设 |
+| H2  | §2.1    | Java 项目说"设计 Order 聚合" → 路由 `ddd-architect` + 写文件触发 DDD 灰名单 | ✅ | `harness:ddd-architect(Design Order aggregate with DDD)` 委派块出现；但首次写 `OrderAggregate.java` 因 **F8** 未拦截 → hook 层已修，回归 5 case 全过 |
+| H3  | §3.1    | Python 项目跑 `/harness:onboard` | ✅ | 识别为 Python 项目；建议 pip/ruff/pytest/uv；末尾主动声明 "maven-build-doctor / spring-boot-reviewer / ddd-architect 不适用"（超预期）|
+| H4  | §3.2    | Python 项目说"review 代码" → 路由 `code-reviewer`，**不**路由 `spring-boot-reviewer` | ✅ | 显式触发后出现 `harness:code-reviewer(...)` 委派块 2 次；sub-agent 执行被 **E1**（API 代理 500）挡住，路由层 PASS |
+| H5  | §3.4    | Python 项目说"BC 怎么分？" → DDD agent 应拒绝路由 | ✅ | 第一句即"这个问题在当前项目上不成立"；显式引 agent description "适用：Java/JVM 项目"；无委派块；引 Eric Evans 反驳"为分层而分层"（教科书级别）|
+| H6  | §3.5    | Python 项目跑 `/harness:audit-practices` → §12/§13 标 N/A | ✅ | §12 DDD 标 N/A + "非 JVM 项目"；§13 Java/Spring 标 N/A + "纯 Python"；bonus §14 MCP 标 "N/A（暂）"；备注"维度 12、13 永久 N/A" |
+| H7  | §4.3    | 带 `BYPASS:` 前缀 commit + PR → CI `bypass-guard` fail | ✅ | "Found commit with BYPASS marker in ce6ff49..9812446" + "9812446 BYPASS: testing CI guard (H7 verification)" + exit code 1 |
+
+**操作细节**：
+- H1-H6 用 `claude --plugin-dir D:\myGithub\myHarness\plugin` 在 3 个 demo 仓库交互
+- H7 走 PR（`h7-test-bypass-guard` → `plugin-branch`），lint.yml 触发 bypass-guard job
+- workflow trigger 仅在 `[main, plugin-branch]` 上 fire；feature branch push 不触发 CI，必须经 PR
+
+**清理**：H7 测试 PR + 分支已删除（本地 + 远程）。
+
+---
+
+## 推荐外部跑法（保留作历史参考）
 
 ```bash
 # 一次性建三个 demo 仓库

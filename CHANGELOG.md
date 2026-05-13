@@ -43,6 +43,7 @@
 
 #### Fixed
 
+- **F8**:Windows 反斜杠路径让 PreToolUse 灰名单全失效（H2 验证发现，致命跨平台 bug）— `pre-tool-use.sh` 提取 file_path 后立即 `${file_path//\\//}` 规范化；新增 5 case 回归测试覆盖反斜杠 domain 路径 / 带盘符前缀 / secrets 路径 / 不误伤 application 层；commit ce6ff49
 - **F1**:bypass audit log `reason` 反映实际触发的 env 名（旧名 `HARNESS_BYPASS` 触发时不再误写 `CLAUDE_PLUGIN_HARNESS_BYPASS`）
 - **H1-H5 / M1/M2/M4/M5 / S2-S5 / F2-F4** 共 16 项跨"装上就坏 / 功能性退化 / 结构性缺陷"修复（详见 plugin-branch commit history：b62c63c H 级 / 7ff7d9c M+S 级 / 7fba6ca F1 / 64314ed SKILL / 260ccc1 G14）
 - npm cache key 缺失：加 `package-lock.json`（dcb26eb）
@@ -50,9 +51,9 @@
 
 #### 验证
 
-- plugin smoke test 69 case 全过（含 F1 audit-reason 回归用例 2 case）
+- plugin smoke test **74 case 全过**（含 F1 audit-reason 回归 2 case + F8 反斜杠路径回归 5 case）
 - G13 自动验证 18/18 ✅:空仓库基线 5 / Java 灰名单 3 / Python 静默 5 / Bypass 3 / 审计日志 2
-- G13 手工 H1-H7 待跑（详见 [docs/g13-findings.md](docs/g13-findings.md)）
+- **G13 手工 H1-H7 全 ✅**（2026-05-13 用户交互验证，详见 [docs/g13-findings.md](docs/g13-findings.md)）
 
 ### M7 后置 / M8 启动前清账
 
