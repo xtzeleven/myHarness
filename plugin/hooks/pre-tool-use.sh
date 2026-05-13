@@ -31,6 +31,9 @@ file_path="$(printf '%s' "$payload" | _extract tool_input.file_path)"
 new_content="$(printf '%s' "$payload" | _extract tool_input.new_string)"
 [ -z "$new_content" ] && new_content="$(printf '%s' "$payload" | _extract tool_input.content)"
 
+# F8: Windows 反斜杠路径 → 正斜杠规范化（让 case glob 跨平台一致；audit log 也用规范化路径以便聚合）
+file_path="${file_path//\\//}"
+
 deny() {
   _audit_log "deny" "$1" false
   echo "[pre-tool-use] BLOCKED: $1" >&2

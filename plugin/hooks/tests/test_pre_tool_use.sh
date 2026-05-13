@@ -138,6 +138,20 @@ run_case "ask-pom-spring-boot" 2 "依赖升级" \
 run_case "ask-pom-bare-rewrite" 2 "整文件改写" \
   '{"tool_name":"Write","tool_input":{"file_path":"pom.xml","content":""}}'
 
+# --- F8 回归：Windows 反斜杠路径规范化 ---
+echo ""
+echo "## F8 Windows 反斜杠路径规范化"
+run_case "ask-domain-aggregate-backslash" 2 "DDD 边界" \
+  '{"tool_name":"Write","tool_input":{"file_path":"src\\main\\java\\com\\x\\domain\\order\\OrderAggregate.java","content":"package x;"}}'
+run_case "ask-domain-repository-backslash" 2 "DDD 边界" \
+  '{"tool_name":"Edit","tool_input":{"file_path":"src\\main\\java\\com\\x\\domain\\order\\OrderRepository.java","new_string":"// repo"}}'
+run_case "ask-domain-aggregate-mixed-drive" 2 "DDD 边界" \
+  '{"tool_name":"Write","tool_input":{"file_path":"D:\\proj\\src\\main\\java\\com\\x\\domain\\OrderAggregate.java","content":"..."}}'
+run_case "deny-secrets-path-backslash" 2 "凭据" \
+  '{"tool_name":"Write","tool_input":{"file_path":"app\\secrets\\db.conf","content":"..."}}'
+run_case "allow-application-handler-backslash" 0 "" \
+  '{"tool_name":"Write","tool_input":{"file_path":"src\\main\\java\\com\\x\\application\\PlaceOrderHandler.java","content":"..."}}'
+
 # --- Bypass（CLAUDE_PLUGIN_HARNESS_BYPASS=1 新名 / HARNESS_BYPASS=1 旧名兼容）---
 echo ""
 echo "## Bypass 放行"
