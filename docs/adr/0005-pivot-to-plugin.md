@@ -1,8 +1,10 @@
 # ADR 0005 — 项目重定位：M8 Java DDD 实例化 → Plugin 化
 
-**Status**: Accepted
+**Status**: Superseded by [ADR-0007](0007-revoke-plugin-pivot.md)（2026-05-14 撤销 plugin 化转向）
 **Date**: 2026-05-11
-**Stage**: M7 完成后战略转向
+**Stage**: M7 完成后战略转向（已撤销）
+
+> ⚠️ **状态变更**：本 ADR 的"M8 → Plugin 化"决定已于 2026-05-14 被 [ADR-0007](0007-revoke-plugin-pivot.md) 撤销，项目回归 [ADR-0002](0002-java-ddd-backend.md) 原计划。下文内容作为决策追溯保留。
 
 ## 背景
 

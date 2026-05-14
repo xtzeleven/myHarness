@@ -4,13 +4,15 @@
 
 ## 阅读顺序
 
-| #                                     | 主题                                 | 状态                                          |
-| ------------------------------------- | ------------------------------------ | --------------------------------------------- |
-| [0001](0001-three-layer-harness.md)   | 三层 Harness 架构                    | Accepted                                      |
-| [0002](0002-java-ddd-backend.md)      | Java + DDD 作为后端实战载体          | Superseded by [0005](0005-pivot-to-plugin.md) |
-| [0003](0003-mcp-and-gitnexus.md)      | MySQL 只读 MCP + gitnexus skill 接入 | Accepted                                      |
-| [0004](0004-deprecate-bypass-once.md) | 废弃 `.bypass-once` 单次授权机制     | Accepted                                      |
-| [0005](0005-pivot-to-plugin.md)       | 项目重定位：M8 → Plugin 化           | Accepted                                      |
+| #                                     | 主题                                 | 状态                                              |
+| ------------------------------------- | ------------------------------------ | ------------------------------------------------- |
+| [0001](0001-three-layer-harness.md)   | 三层 Harness 架构                    | Accepted                                          |
+| [0002](0002-java-ddd-backend.md)      | Java + DDD 作为后端实战载体          | Accepted（曾被 0005 超越，0007 恢复）             |
+| [0003](0003-mcp-and-gitnexus.md)      | MySQL 只读 MCP + gitnexus skill 接入 | Accepted                                          |
+| [0004](0004-deprecate-bypass-once.md) | 废弃 `.bypass-once` 单次授权机制     | Accepted                                          |
+| [0005](0005-pivot-to-plugin.md)       | 项目重定位：M8 → Plugin 化           | Superseded by [0007](0007-revoke-plugin-pivot.md) |
+| [0006](0006-cleanup-claude-dir.md)    | 共存期收尾：清空 `.claude/`          | Superseded by [0007](0007-revoke-plugin-pivot.md) |
+| [0007](0007-revoke-plugin-pivot.md)   | 撤销 plugin 化转向，回归 M8 原计划   | Accepted                                          |
 
 ## 何时写 ADR
 

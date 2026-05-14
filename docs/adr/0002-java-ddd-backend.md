@@ -1,9 +1,9 @@
 # ADR 0002 — Java + DDD 作为后端实战载体
 
-**Status**: Superseded by [ADR-0005](0005-pivot-to-plugin.md)（2026-05-11 战略转向 plugin 化）
+**Status**: Accepted
 **Date**: 2026-05-09
 
-> ⚠️ **状态变更**：本 ADR 中"实例化 Java DDD 骨架作为 Harness 实战验证载体"的决定已被 ADR-0005 超越。Java/DDD 相关资产（5 个后端 agent / engineering-practices §12-§14 / pre-tool-use 灰名单 Java 路径规则）**保留**作为 plugin 的"Java/DDD 扩展套件"。下文内容作为决策追溯保留。
+> ℹ️ **状态历史**：本 ADR 曾于 2026-05-11 被 [ADR-0005](0005-pivot-to-plugin.md) 超越（转向 plugin 化），后于 2026-05-14 经 [ADR-0007](0007-revoke-plugin-pivot.md) 撤销转向、恢复 Accepted 状态。项目继续以 M8（实例化 Java DDD 骨架）为后端实战载体。
 
 ---
 

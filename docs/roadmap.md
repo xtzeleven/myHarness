@@ -182,71 +182,55 @@ M6 (context) ◄───── M7 (tools+policy) ─► M8 (Java DDD 实例化)
 
 ---
 
-## 7. M8' — Plugin 化（取代 M8 Java DDD 实例化）
+## 7. M8 — 实例化 Java DDD 骨架（六维度回归测试场）
 
-> ⚠️ **路线变更**：原 M8（实例化 Java DDD 骨架）已超越 by [ADR-0005](adr/0005-pivot-to-plugin.md)。新目标是把已稳定的 Harness 框架封装为 **Claude Code plugin**，让任何语言栈的项目都可直接安装使用。
+> **载体决策**：参见 [ADR-0002](adr/0002-java-ddd-backend.md)。Java/Spring/Maven/DDD 栈最容易踩坑（Lombok / `@Transactional` / N+1 / 循环依赖），在最容易出错的栈上验证 Harness 有效性最具说服力。
 
 ### 目标
 
-把 myHarness 当前所有就位的 Harness 资产（11 节 CLAUDE.md / 15 节 engineering-practices / 6 类 hook / 8 agent / 5 命令 / 2 脚本 / MCP）打包为单一 Claude Code plugin，本地 `claude --plugin-dir` 验证通过。
+真起 `pom.xml` + `src/`，让 M4-M7 建立的六维度框架在真实 Java 代码上跑一遍，把"框架就位"升级为"框架在真实工程中证明可用"。
 
 ### 范围
 
-- **同仓库子目录**：新建 `plugin/`；原 `.claude/` 在迁移期共存，M8' 完成后再决策是否清空
-- **单一 plugin**：通用 + Java/DDD 一体；非 Java 项目自动静默 Java 路径检查（不匹配即跳过）
-- **暂不发布到公开 marketplace**：先私有 / 团队用，后续视情况
+- 最小 Spring Boot 3 项目 + 一个示例限界上下文（拟用 `order` 作为 BC）
+- DDD 战略分层落地：`interfaces / application / domain / infrastructure` 严格单向依赖
+- 5 个后端 agent（`ddd-architect` / `spring-boot-reviewer` / `maven-build-doctor` / `schema-analyst` / `migration-author`）各跑一遍真实任务
+- M6 子目录 CLAUDE.md 落到 `domain/` / `application/` 等关键层
+- M5 周期任务挂上：每 PR 跑 `docs-keeper`
 
-### 子任务（详见 [improvement-backlog.md §G](improvement-backlog.md)）
+### 子任务
 
-| 编号   | 子任务                                                                           |
-| ------ | -------------------------------------------------------------------------------- |
-| M8'-T1 | ADR-0005 + roadmap 改向 + backlog §G 落地（本里程碑首步，本次会话完成）          |
-| M8'-T2 | 新建 `plugin/` + `.claude-plugin/plugin.json` + 复制 agents / commands / scripts |
-| M8'-T3 | 重写 `plugin/hooks/hooks.json`（迁 `.claude/settings.json` hooks 段）            |
-| M8'-T4 | hook 内部路径替换为 `${CLAUDE_PLUGIN_ROOT}` + smoke test 全过                    |
-| M8'-T5 | CLAUDE.md 拆分：通用准则 §1-4 → skill；项目模板 §5-10 → `/harness:onboard` 命令  |
-| M8'-T6 | 审计日志位置决策（plugin 私有 vs 用户项目根）                                    |
-| M8'-T7 | `plugin/README.md` + 用户手册 + 安装指引                                         |
-| M8'-T8 | `claude --plugin-dir ./plugin` 端到端验证（空 demo 项目 + 一个非 Java 项目）     |
+| 编号  | 子任务                                                                                                |
+| ----- | ----------------------------------------------------------------------------------------------------- |
+| M8-T1 | `pom.xml` + 基础结构（Spring Boot 3 / Java 17+ / Maven Wrapper）                                      |
+| M8-T2 | 落地 DDD 四层目录骨架 `src/main/java/<base>/{interfaces,application,domain,infrastructure}/`          |
+| M8-T3 | 第一个 BC（`order`）的最小聚合：聚合根 + 值对象 + Repository 接口（domain）+ Repository 实现（infra） |
+| M8-T4 | interfaces 层最小 Controller + application 层 CommandHandler（接收 DTO，调 domain，调 Repository）    |
+| M8-T5 | Flyway/Liquibase migration + 与 schema-analyst / migration-author 联调                                |
+| M8-T6 | 5 个后端 agent 各跑一遍真实任务，记录效果与漏检                                                       |
+| M8-T7 | M6 子目录 CLAUDE.md：`domain/CLAUDE.md`（聚合规则）+ `application/CLAUDE.md`（事务/编排规则）         |
+| M8-T8 | `docs-keeper` 接入 CI（PR-level 自动跑）                                                              |
 
 ### 成功标准
 
-- [ ] 本地 `claude --plugin-dir ./plugin` 在一个**全新空目录**中跑通：
-  - `/harness:audit-practices` 输出合理（按 plugin 内 rules）
-  - 改 `.env` 时 pre-tool-use 黑名单生效
-  - PostToolUse format hook 跑通
-- [ ] hook smoke test（≥ 26 case + 新增 plugin-path 用例）全部在 plugin 路径下通过
-- [ ] CLAUDE.md / README.md / AGENTS.md 中"项目性质 = Java DDD 后端实战"段落更新为"plugin 仓库"视角
-- [ ] roadmap / backlog / README 一致，不留漂移
+- [ ] `mvn verify` 在干净仓库上全过（单测 + 集成测 + 静态检查）
+- [ ] PreToolUse 灰名单在 `domain/` 改动上**真的拦下**并要求人工授权（覆盖 ADR-0001 灰名单设计）
+- [ ] 5 个后端 agent 各被实际任务激活至少一次，输出可执行建议
+- [ ] M6 子目录 CLAUDE.md 在编辑相应层时**自动注入**生效
+- [ ] gitnexus 索引建立完成，调用链 / 影响面查询可用
 
 ### 关键挑战
 
-详见 [ADR-0005 §"关键挑战"](adr/0005-pivot-to-plugin.md)：
-
-1. **CLAUDE.md 硬注入丢失**（最大挑战，T5 解决）
-2. **hook 路径硬编码**（T4 解决）
-3. **DDD/Java 上下文与通用 Harness 耦合**（验证阶段用非 Java demo 测）
-4. **审计日志位置**（T6 待决策）
-5. **MCP 凭据** `.env` 仍在用户侧维护，plugin 提供 `.env.example` 模板
+1. **DDD 边界自动检测的准确率**：灰名单当前只识别路径前缀（`domain/`），改动是否真的"破坏边界"需要 agent 二次判断
+2. **Lombok / `@Transactional` 隐式行为**：spring-boot-reviewer 能否识别常见反模式（事务传播失效 / setter 注入 / 异常吞噬）
+3. **MCP schema 与代码 Entity 漂移**：schema-analyst 走只读 MySQL MCP 查实际表结构 vs JPA Entity 注解，漂移如何呈现
+4. **测试覆盖度不足以触发的边界**：需要在示例代码里**故意**埋一些反模式，验证各 agent 是否发现
 
 ### 风险
 
-- CLAUDE.md 等价机制缺失，可能让 plugin 用户失去"硬注入硬规则"体验 — 通过 onboard 命令半自动化缓解
-- hook 路径重写后破坏现有 26 case smoke test — T4 必须全过才进入 T7
-- DDD/Java 上下文对非 Java 用户产生"概念噪声"（即使路径不匹配，agent 描述里仍含 Java 关键词）— 验证时用一个非 Java demo 项目实测
-
-### 历史：原 M8 计划（已废弃 by ADR-0005，保留作历史快照）
-
-**原目标**：真起 `pom.xml` + `src/`，让 M4-M7 建立的六维度框架在真实 Java 代码上验证。
-
-**原子任务**：
-
-- 起最小 Spring Boot 3 + 一个示例 BC（如 `order` 限界上下文）
-- 让 5 个后端 agent（ddd-architect / spring-boot-reviewer / maven-build-doctor / schema-analyst / migration-author）各跑一遍真实任务
-- M6 子目录 CLAUDE.md 落到 `domain/` / `application/` 等
-- M5 周期任务挂上：每 PR 跑 docs-keeper
-
-**废弃理由**：见 [ADR-0005 §"决定"与"替代方案 C"](adr/0005-pivot-to-plugin.md)。简言之：Harness 框架自身已完整，plugin 化的边际价值（任何项目可用）大于再加一个 Java 工程样本。后端 agent 与 §12-§14 规则**保留**为 plugin 的 Java/DDD 扩展套件。
+- pom 依赖冲突导致首日编译不过 — `maven-build-doctor` 先行体检
+- DDD 教科书化 over-engineering — 严守"最小一个 BC"，不为了演示而堆叠
+- 后端 agent 在没有真实代码时只能空跑，验证不充分 — T6 必须建立在 T3-T5 完成的真实代码之上
 
 ---
 

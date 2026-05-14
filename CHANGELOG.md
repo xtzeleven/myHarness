@@ -135,7 +135,7 @@
 ### Fixed
 
 - `.claude/settings.local.json` 之前已被 git 跟踪，现 `git rm --cached` 移出
-- 删除根级空 `skills/` 目录（plugin skill 不在此）
+- 删除根级空 `skills/` 目录
 - CLAUDE.md gitnexus 死链 `https://github.com/` 移除
 
 ## [M2] - 2026-05-08 — Layer 2 反馈循环

@@ -1,9 +1,11 @@
 # ADR 0006 — 共存期收尾：清空 `.claude/`，仓库根 = pure plugin
 
-**Status**: Proposed（待用户拍板）
+**Status**: Superseded by [ADR-0007](0007-revoke-plugin-pivot.md)（2026-05-14 plugin 化方向已撤销，本 ADR 失去前提）
 **Date**: 2026-05-12
 **Driver**: improvement-backlog G15
-**Depends on**: [ADR-0005](0005-pivot-to-plugin.md)
+**Depends on**: [ADR-0005](0005-pivot-to-plugin.md)（已被 ADR-0007 撤销）
+
+> ⚠️ **状态变更**：本 ADR 依赖 ADR-0005 的 plugin 化决定。ADR-0005 已被 [ADR-0007](0007-revoke-plugin-pivot.md) 撤销，"清空 `.claude/`、仓库根 = pure plugin"的前提不再成立。`.claude/` 恢复为本仓库唯一权威源，本 ADR 内容作为决策追溯保留。
 
 ## 背景
 
