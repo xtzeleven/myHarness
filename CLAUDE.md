@@ -73,9 +73,11 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 - 实战载体：Java 17+ / Spring Boot / Maven
 - 架构：DDD 战略分层（限界上下文 BC + 严格分层）
-- 数据：MySQL 只读 MCP（通过 `.mcp.json` 接入）
+- 数据：MySQL 只读 MCP（通过 `.mcp.json` 接入，版本锁 `@benborla29/mcp-server-mysql@2.0.8`）
 - Harness 资产：Bash hooks / Markdown agents+commands / Python 脚本（位于 `.claude/`）
 - 文档：Markdown，配 gitnexus 做代码索引
+
+**平台前置**：hook 用 `bash` + `python`。Windows 用户必须用 **Git Bash** 或 **WSL** 跑 Claude Code，否则 hook 静默失败（PowerShell / cmd 下不触发）。
 
 **目录结构：**
 
@@ -176,7 +178,7 @@ git status --porcelain
 
 ## 11. 项目记忆（Memory）
 
-本项目启用了 Claude Code 内置 memory 系统，索引在 `~/.claude/projects/D--myGithub-myHarness/memory/MEMORY.md`，含两类条目：
+本项目启用了 Claude Code 内置 memory 系统，索引文件名为 `MEMORY.md`，存放路径由 Claude Code 客户端按用户与项目自动派生（通常在 `~/.claude/projects/<derived>/memory/`，**不入 git**，因此本仓库不固化绝对路径）。条目含两类：
 
 - **决策原因**（`decision_*`）：补充 ADR 写不下的"为什么没选 Y"、"何时该重审"
 - **项目踩坑**（`pitfall_*`）：jq 不可用、SQL 检测误伤、settings.local 已 tracked、hook 自我拦截、Windows 路径、格式 hook 幂等性等

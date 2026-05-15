@@ -38,6 +38,7 @@ package.json
 .claude/hooks/tests/test_pre_tool_use.sh
 .claude/hooks/tests/test_secret_detection.sh
 .claude/hooks/tests/test_user_prompt_submit.sh
+.claude/hooks/tests/test_subagent_stop.sh
 
 # --- Commands ---
 .claude/commands/audit-practices.md
@@ -59,18 +60,10 @@ docs/periodic-tasks.md
 docs/context-management.md
 docs/tools-fallback.md
 docs/agent-output-schema.md
+docs/policy-model-selection.md
 docs/adr/README.md
 
 # --- CI ---
 .github/workflows/lint.yml
 .github/workflows/scheduled.yml
-.github/workflows/plugin-validate.yml
 .github/required-files.txt
-
-# --- Plugin manifest (M8' Plugin 化) ---
-plugin/.claude-plugin/plugin.json
-plugin/hooks/hooks.json
-plugin/.mcp.json
-plugin/.env.example
-plugin/skills/harness-guidelines/SKILL.md
-plugin/README.md

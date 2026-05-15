@@ -101,6 +101,10 @@ for cmd in git python npx mvn java; do
 done
 [ -f .env ] && echo "  ✅ .env" || echo "  ⚠️  .env 缺失（MCP 不可用，详见 .env.example）"
 
+# 5. 清空 .session.hints（P2-I：每会话重置 hint 去重缓存）
+mkdir -p .claude 2>/dev/null || true
+: > .claude/.session.hints 2>/dev/null || true
+
 echo "$separator"
 echo ""
 

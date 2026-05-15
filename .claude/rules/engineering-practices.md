@@ -272,17 +272,16 @@ interfaces  →  application  →  domain  ←  infrastructure
 
 ### 模型选择 policy
 
-| 场景                               | 默认模型                | 升级触发               |
-| ---------------------------------- | ----------------------- | ---------------------- |
-| 主对话（Driver）                   | 沿用用户当前会话设置    | —                      |
-| 简单 review / 格式调整 / 小重构    | sonnet                  | 卡住 / 用户不满意      |
-| 长链路战略设计（DDD 边界 / 跨 BC） | **opus**                | 已是最高，无可升       |
-| 安全 / 合规审查                    | sonnet                  | 涉敏感数据→ opus       |
-| 调试 / 修 bug                      | sonnet                  | 复现失败/根因深 → opus |
-| 大量文件批改 / 文档批改            | haiku（如可用）/ sonnet | 出错 → sonnet          |
-| 路径明确的 TDD 红绿循环            | sonnet                  | —                      |
+> **单点真源**：[docs/policy-model-selection.md](../../docs/policy-model-selection.md)。本节不复述完整表格，仅给硬规则。
 
-**硬规则**：用户显式指定的优先；agent frontmatter 显式声明的次之；都没有则按本表。
+**硬规则**（按优先级，先匹配先用）：
+
+1. 用户显式指定
+2. agent frontmatter `model:`
+3. `policy-model-selection.md` §3 通用场景表
+4. Driver 当前模型
+
+每个 agent 的默认模型与升级路径见 `policy-model-selection.md` §2。
 
 ### 何时降级（degradation）
 

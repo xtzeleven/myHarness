@@ -60,6 +60,13 @@
 
 ## 🚀 快速上手
 
+### 前置要求
+
+- **Shell**：`bash`（Windows 用户用 **Git Bash** 或 **WSL**；PowerShell / cmd 下 hook 静默失败）
+- **Python 3**：hook 用 python 解析 JSON 与写审计日志
+- **Node 20+**：CI 与本地 prettier 走 `npm ci`
+- 工具版本锁见 `.tool-versions`
+
 ```bash
 git clone <repo> && cd myHarness
 

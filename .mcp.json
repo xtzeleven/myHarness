@@ -1,11 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/mcp.json",
-  "_comment": "MCP 服务配置。凭据走 .env，不写入本文件。新增 server 时在 .env.example 同步变量。",
+  "_comment": "MCP 服务配置。凭据走 .env，不写入本文件。新增 server 时在 .env.example 同步变量。版本号锁死，禁止用 @latest（参考 ADR-0003 / improvement-backlog P1-E）。",
   "mcpServers": {
     "mysql-readonly": {
       "_comment": "MySQL 只读连接 — 只用于 schema 分析与查询，绝不开写权限",
       "command": "npx",
-      "args": ["-y", "@benborla29/mcp-server-mysql"],
+      "args": ["-y", "@benborla29/mcp-server-mysql@2.0.8"],
       "env": {
         "MYSQL_HOST": "${MYSQL_HOST}",
         "MYSQL_PORT": "${MYSQL_PORT:-3306}",

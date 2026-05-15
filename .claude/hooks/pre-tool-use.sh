@@ -194,8 +194,16 @@ fi
 
 # === M6 按需注入 hint（建议性，不阻塞）===
 # 主 Claude 看到 stderr 的 "💡 提示:" 前缀应当主动 prefetch 对应文档/agent
+# 同一会话内同一 hint 只触发一次（C4 / P2-I），通过 .claude/.session.hints 去重
 hint() {
-  echo "💡 提示: $1" >&2
+  local msg="$1"
+  local hints_file=".claude/.session.hints"
+  mkdir -p .claude 2>/dev/null || true
+  if [ -f "$hints_file" ] && grep -qxF "$msg" "$hints_file" 2>/dev/null; then
+    return  # 本会话已提示过，跳过
+  fi
+  echo "💡 提示: $msg" >&2
+  printf '%s\n' "$msg" >> "$hints_file" 2>/dev/null || true
 }
 
 # 基于 file_path 的 hint

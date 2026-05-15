@@ -7,6 +7,57 @@
 
 ## [Unreleased] — M7 后置 / M8 启动前清账
 
+### 2026-05-15 — P0-P3 系统性清账（架构 + CI 残留 + telemetry 闭环）
+
+#### Added
+
+- `docs/policy-model-selection.md`：模型选择策略单点真源（agent 默认表 + 通用场景表 + 优先级与升级规则）。**P1-B**
+- `.claude/hooks/tests/test_subagent_stop.sh`：6 case smoke test（ok / degraded / escalate / blocked / 无 schema 静默 skip / 非法 JSON 不崩）。**P2-H**
+- `.github/workflows/lint.yml` 新 job `agent-schema-check`：每个 agent .md 必含 `harness:agent-output` 示例。**P2-G**
+- `.github/workflows/lint.yml` 新 job `commit-lint`：commit 消息走 Conventional Commits 正则强制。**P3-K**
+- `.github/workflows/scheduled.yml` 新 job `weekly-audit-reminder`：每周一开 issue 提醒本机跑 `audit-log-summary.py`（audit log 是 .gitignored 本地文件，CI 看不到，改用 reminder 模式）。**P2-F / B6**
+
+#### Changed
+
+- **ADR-0007 残留清扫**（**P0**）：
+  - `.github/required-files.txt` 删 6 个 `plugin/*` 条目 + 删 `.github/workflows/plugin-validate.yml` 条目
+  - `git rm .github/workflows/plugin-validate.yml`（plugin/ 已撤，workflow 僵尸化）
+- `.mcp.json`：`@benborla29/mcp-server-mysql` 钉版本 `@2.0.8`，注释加禁用 @latest 提示。**P1-E**
+- `AGENTS.md` Model Selection Policy 章：从完整表改为指向 policy-model-selection.md 的摘要。**P1-B**
+- `.claude/rules/engineering-practices.md §15`：模型选择 policy 子节由表改为指针。**P1-B**
+- `README.md`：加"前置要求"段（bash / python / Node 20+ / Windows 须 Git Bash 或 WSL）。**P1-D**
+- `CLAUDE.md §5`：加平台前置说明（Windows 非 git-bash 终端 hook 静默失败）。**P1-D**
+- `CLAUDE.md §11`：MEMORY 硬路径（`~/.claude/projects/D--myGithub-myHarness/memory/`）→ 改为"客户端自动派生，不固化到仓库"。**P3-N**
+- `.claude/hooks/pre-tool-use.sh:hint()`：加 `.claude/.session.hints` 去重，每会话同一 hint 只输出一次。**P2-I / C4**
+- `.claude/hooks/session-start.sh`：每会话开始时清空 `.session.hints`。**P2-I**
+- `.github/workflows/lint.yml`：
+  - `npm ci || npm install` → `npm ci`（移除 fallback，强制 lockfile 一致）。**P3-M**
+  - `hook-test` job 接入 `test_subagent_stop.sh`
+- `.github/workflows/scheduled.yml` `weekly-tool-versions`：移除 "(Future M7)" placeholder，落地为 `locked vs latest` 比较 + 漂移开 issue（含升级命令）。**P3-L**
+- `.github/required-files.txt`：加 `docs/policy-model-selection.md` + `test_subagent_stop.sh`。
+
+#### Fixed
+
+- ADR-0007（撤销 plugin 化）执行不彻底导致 `lint.yml structure-check` 必 fail；本批清扫后恢复 CI 红→绿。
+
+#### 验证
+
+- pre-tool-use 26 case smoke test 仍全过
+- subagent-stop 6 case smoke test 全过（新增）
+- hint 去重手动验证：同 file_path 第 2 次 Edit 不输出 hint
+- prettier --check：本批触动的文件全部合规（pre-existing warns 不在本批范围）
+
+#### M8 启动前剩余 follow-up
+
+- **F1 / P1-A**：规则数据外移到 yaml（待方案确认）
+- **F2 / P1-C**：session 状态恢复落地（待方案确认）
+
+详见 [docs/improvement-backlog.md](docs/improvement-backlog.md) "本批新引入的 follow-up"。
+
+---
+
+### 此前 [Unreleased] 项
+
 ### Added
 
 - `docs/agent-output-schema.md`：sub-agent 输出 schema 契约（`status` / `degraded_from` / `escalate_to` / `risks`），让 SubagentStop hook 能解析"成败/降级/升级"信号

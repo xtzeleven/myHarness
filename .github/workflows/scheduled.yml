@@ -94,13 +94,61 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Check prettier latest vs locked
+      - name: Compare locked vs latest prettier
         id: pretty
         run: |
-          # lint.yml 当前用 prettier@3，简单检测最新 3.x
+          set -e
+          locked=$(node -p "require('./package.json').devDependencies.prettier || require('./package.json').dependencies?.prettier || ''" | tr -d "^~")
           latest=$(npm view prettier@^3 version 2>/dev/null | tail -1 | tr -d "'")
+          echo "locked_prettier=$locked" >> $GITHUB_OUTPUT
           echo "latest_prettier=$latest" >> $GITHUB_OUTPUT
-          echo "Latest prettier 3.x: $latest"
-      - name: (Future M7) compare against locked version
-        run: |
-          echo "M7 后此处对比 .prettierrc / package.json 锁定版本，目前仅记录"
+          echo "Locked: $locked  |  Latest 3.x: $latest"
+          if [ -n "$locked" ] && [ -n "$latest" ] && [ "$locked" != "$latest" ]; then
+            echo "drift=true" >> $GITHUB_OUTPUT
+          else
+            echo "drift=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Open issue if drifted
+        if: steps.pretty.outputs.drift == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const locked = '${{ steps.pretty.outputs.locked_prettier }}';
+            const latest = '${{ steps.pretty.outputs.latest_prettier }}';
+            const today = new Date().toISOString().slice(0, 10);
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[scheduled] ${today} prettier 版本漂移 ${locked} → ${latest}`,
+              body: `package.json 锁定 prettier@\`${locked}\`，npm 最新 3.x 是 \`${latest}\`。\n\n如确认升级：\n\n\`\`\`bash\nnpm i -D -E prettier@${latest}\nnpx prettier --write .\ngit commit -am "chore: bump prettier to ${latest}"\n\`\`\`\n\n如保持锁定，关闭本 issue 即可。`,
+              labels: ['harness-health', 'auto-generated', 'tool-drift']
+            });
+
+  weekly-audit-reminder:
+    name: Weekly audit-log reminder
+    if: github.event.schedule == '17 3 * * 1' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Open weekly reminder issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toISOString().slice(0, 10);
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[scheduled] ${today} 本周 audit log 摘要待审`,
+              body: `**.audit.log 是本地 .gitignored 文件**，CI 看不到。请在本机跑：\n\n` +
+                    `\`\`\`bash\n` +
+                    `python .claude/scripts/audit-log-summary.py --tail 200\n` +
+                    `python .claude/scripts/audit-log-summary.py --bypass\n` +
+                    `python .claude/scripts/audit-log-summary.py --by-hook --by-action\n` +
+                    `\`\`\`\n\n` +
+                    `**审查重点**：\n` +
+                    `- bypass 次数：上周是否非零？若是，每次是否有正当理由？\n` +
+                    `- deny / ask_user 高频项：是否暗示规则过紧或工作流不顺？\n` +
+                    `- SubagentStop 非 ok 状态：哪些 agent 频繁 degraded / escalate？\n\n` +
+                    `审完关掉本 issue。如发现需修补规则，开新 issue 并附 audit.log 行号。`,
+              labels: ['harness-health', 'auto-generated', 'audit-review']
+            });
