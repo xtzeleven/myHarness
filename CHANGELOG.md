@@ -16,6 +16,10 @@
 - `.github/workflows/lint.yml` 新 job `agent-schema-check`：每个 agent .md 必含 `harness:agent-output` 示例。**P2-G**
 - `.github/workflows/lint.yml` 新 job `commit-lint`：commit 消息走 Conventional Commits 正则强制。**P3-K**
 - `.github/workflows/scheduled.yml` 新 job `weekly-audit-reminder`：每周一开 issue 提醒本机跑 `audit-log-summary.py`（audit log 是 .gitignored 本地文件，CI 看不到，改用 reminder 模式）。**P2-F / B6**
+- `.claude/rules/policies/{deny,ask-user,hints}.yaml`：所有 PreToolUse 规则数据（35 条）外移到 yaml；`README.md` 给 schema 与维护流程。**P1-A**
+- `.claude/scripts/policy-dispatch.py`：python 规则评估器（cmd_contains_any / cmd_matches / file_basename_in / new_content_present 等谓词，audit log + bypass + hint 去重三合一）。**P1-A**
+- `.claude/scripts/session-state.py`：`.session.state` CLI helper（`set-task` / `add-step` / `done-step` / `blocked` / `clear` / `show`），主对话长任务时自觉调用，让 SessionStart 显示"上次未完事项"。**P1-C**
+- `CLAUDE.md §12`：会话状态约定（M5-T6）。**P1-C**
 
 #### Changed
 
@@ -28,13 +32,14 @@
 - `README.md`：加"前置要求"段（bash / python / Node 20+ / Windows 须 Git Bash 或 WSL）。**P1-D**
 - `CLAUDE.md §5`：加平台前置说明（Windows 非 git-bash 终端 hook 静默失败）。**P1-D**
 - `CLAUDE.md §11`：MEMORY 硬路径（`~/.claude/projects/D--myGithub-myHarness/memory/`）→ 改为"客户端自动派生，不固化到仓库"。**P3-N**
-- `.claude/hooks/pre-tool-use.sh:hint()`：加 `.claude/.session.hints` 去重，每会话同一 hint 只输出一次。**P2-I / C4**
+- `.claude/hooks/pre-tool-use.sh`：从 256 行 bash 规则脚本退化为 6 行 dispatcher 转发器；规则全部在 yaml。**P1-A**
 - `.claude/hooks/session-start.sh`：每会话开始时清空 `.session.hints`。**P2-I**
+- `.prettierrc.json`：yaml 文件改用 `singleQuote: true`（避免 `\s` 在双引号下被解析为非法转义）。**P1-A**
 - `.github/workflows/lint.yml`：
   - `npm ci || npm install` → `npm ci`（移除 fallback，强制 lockfile 一致）。**P3-M**
-  - `hook-test` job 接入 `test_subagent_stop.sh`
+  - `hook-test` job 加 `pip install pyyaml` + yaml parse 校验 + 接入 `test_subagent_stop.sh`。**P1-A / P2-H**
 - `.github/workflows/scheduled.yml` `weekly-tool-versions`：移除 "(Future M7)" placeholder，落地为 `locked vs latest` 比较 + 漂移开 issue（含升级命令）。**P3-L**
-- `.github/required-files.txt`：加 `docs/policy-model-selection.md` + `test_subagent_stop.sh`。
+- `.github/required-files.txt`：加 `docs/policy-model-selection.md` + `test_subagent_stop.sh` + `policies/{README,deny,ask-user,hints}` + `policy-dispatch.py` + `session-state.py`。
 
 #### Fixed
 
@@ -42,17 +47,16 @@
 
 #### 验证
 
-- pre-tool-use 26 case smoke test 仍全过
+- pre-tool-use 26 case smoke test 仍全过（dispatcher 替换 bash case 后行为等价）
 - subagent-stop 6 case smoke test 全过（新增）
+- 3 个 policies yaml 文件 PyYAML 解析通过（35 条规则全部加载）
+- session-state.py 手动验 set-task / add-step / done-step / blocked / clear / show 全链路 OK
 - hint 去重手动验证：同 file_path 第 2 次 Edit 不输出 hint
-- prettier --check：本批触动的文件全部合规（pre-existing warns 不在本批范围）
+- prettier --check：本批触动文件全部合规（pre-existing warns 不在本批范围）
 
 #### M8 启动前剩余 follow-up
 
-- **F1 / P1-A**：规则数据外移到 yaml（待方案确认）
-- **F2 / P1-C**：session 状态恢复落地（待方案确认）
-
-详见 [docs/improvement-backlog.md](docs/improvement-backlog.md) "本批新引入的 follow-up"。
+_本批 P1-A / P1-C 已全部落地，无未完 follow-up。_
 
 ---
 

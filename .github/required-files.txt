@@ -27,6 +27,10 @@ package.json
 # --- Harness config (.claude/) ---
 .claude/settings.json
 .claude/rules/engineering-practices.md
+.claude/rules/policies/README.md
+.claude/rules/policies/deny.yaml
+.claude/rules/policies/ask-user.yaml
+.claude/rules/policies/hints.yaml
 
 # --- Hooks ---
 .claude/hooks/format.sh
@@ -50,6 +54,8 @@ package.json
 # --- Scripts ---
 .claude/scripts/audit-context-cost.py
 .claude/scripts/audit-log-summary.py
+.claude/scripts/policy-dispatch.py
+.claude/scripts/session-state.py
 
 # --- Docs ---
 docs/AGENTS.backend.md

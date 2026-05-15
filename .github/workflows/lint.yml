@@ -15,8 +15,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
       - name: Install pinned prettier
         run: npm ci
       - name: Run prettier --check
@@ -179,12 +179,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install PyYAML (policy dispatcher dep)
+        run: pip install pyyaml
       - name: Ensure hook + test are executable
         run: |
           chmod +x .claude/hooks/pre-tool-use.sh
           chmod +x .claude/hooks/subagent-stop.sh
           chmod +x .claude/hooks/tests/test_pre_tool_use.sh
           chmod +x .claude/hooks/tests/test_subagent_stop.sh
+      - name: Validate policy yaml files parse
+        run: |
+          python -c "import yaml; [yaml.safe_load(open(f, encoding='utf-8')) for f in ['.claude/rules/policies/deny.yaml', '.claude/rules/policies/ask-user.yaml', '.claude/rules/policies/hints.yaml']]; print('All policy yaml files parse OK')"
       - name: Run pre-tool-use smoke test
         run: bash .claude/hooks/tests/test_pre_tool_use.sh
       - name: Run subagent-stop smoke test

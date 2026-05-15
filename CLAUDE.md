@@ -192,3 +192,23 @@ git status --porcelain
 - 讨论技术选型替代方案 → 看 `decision_*` 系列
 
 载体分工详见 `docs/memory-conventions.md`：CLAUDE.md（每会话注入硬规则）/ ADR（公开决策追溯）/ Memory（协作偏好与踩坑）。
+
+## 12. 会话状态（M5-T6 / P1-C）
+
+主对话长任务时调用 `python .claude/scripts/session-state.py` 维护 `.claude/.session.state`，让下次会话 SessionStart 能显示"上次未完事项"。
+
+| 时机                | 命令                                   |
+| ------------------- | -------------------------------------- |
+| 接到新任务          | `set-task "<描述>"`                    |
+| 拆出步骤            | `add-step "<step>"`（可多次）          |
+| 完成一步            | `done-step "<step>"`                   |
+| 等用户授权 / 阻塞   | `blocked "<原因>"` / `blocked --clear` |
+| 任务全部完成 / 切换 | `clear`                                |
+| 查当前              | `show`                                 |
+
+**用法约定**：
+
+- 主对话**自觉调用**，不靠 hook 自动捕获（语义粒度 hook 无法判断）
+- `/commit` 命令完成时建议 `done-step` 当前 commit 描述
+- 失败永远静默吞掉，不阻断会话
+- `.session.state` 已 .gitignore，不入仓库

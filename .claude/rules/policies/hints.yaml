@@ -1,0 +1,93 @@
+# Hint rules — 建议性（exit 0 + 💡 提示 前缀）
+# 不阻塞工具执行；主对话看到 hint 时主动 prefetch 相关 agent / 文档。
+# 同一会话内同一 hint 只触发一次（dispatcher 通过 .session.hints 去重）。
+
+- id: hint-pom-xml
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_path_matches: '(/|^)pom\.xml$'
+  reason: '改 pom.xml 前建议调 maven-build-doctor agent + 看 rules §13'
+
+- id: hint-domain-layer
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_path_matches: 'src/main/java/.*/domain/'
+  reason: '改 domain 层前建议调 ddd-architect agent + 看 rules §12（DDD 分层）'
+
+- id: hint-infrastructure-layer
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_path_matches: 'src/main/java/.*/infrastructure/'
+  reason: '改 infrastructure 层前建议调 spring-boot-reviewer agent（Repository 实现 / 适配器）'
+
+- id: hint-application-layer
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_path_matches: 'src/main/java/.*/application/'
+  reason: '改 application 层前看 rules §12（事务边界仅在此层）+ 调 spring-boot-reviewer agent'
+
+- id: hint-migration-files
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_path_matches: '(db/migration/|db/changelog/)'
+  reason: '写 migration 前建议调 migration-author agent（向后兼容性 / 回滚预案）'
+
+- id: hint-spring-config
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_path_matches: '/application[^/]*\.(yml|yaml|properties)$'
+  reason: '改 application 配置前建议调 spring-boot-reviewer agent（配置 / Profile）'
+
+- id: hint-mcp-json
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_basename_in: ['.mcp.json']
+  reason: '改 .mcp.json 前必读 engineering-practices.md §14（MCP 治理 — 凭据走 .env、强制只读）'
+
+- id: hint-env-example
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_basename_in: ['.env.example']
+  reason: '改 .env.example 后须同步 .mcp.json 引用变量；CI lint.yml 会校验对齐'
+
+- id: hint-claude-md
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_basename_in: ['CLAUDE.md']
+  reason: '改 CLAUDE.md 后跑 /audit-context 看 token 数（每会话付费）'
+
+- id: hint-agent-md
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_path_matches: '/\.claude/agents/[^/]+\.md$'
+  reason: '改 agent 后须同步 AGENTS.md 路由速查表 + 升级链表（M5 引入）'
+
+- id: hint-gitignore
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_basename_in: ['.gitignore']
+  reason: '加 ignore 条目后跑 git ls-files 检查是否需要 git rm --cached（参考 memory: pitfall_settings_local_already_tracked）'
+
+- id: hint-mvn-cmd
+  tool: Bash
+  when:
+    cmd_matches: '^\s*mvn\s+(test|verify|compile|clean|package)'
+  reason: '跑 mvn 前可看 maven-build-doctor agent；若失败常见根因见 §速查表'
+
+- id: hint-mysql-select
+  tool: Bash
+  when:
+    cmd_matches: '^\s*(mysql|psql)\s.*\b(SELECT|EXPLAIN)\b'
+  reason: '查 DB schema / SQL 性能可走 schema-analyst agent（已配 mysql-readonly MCP）'
+
+- id: hint-git-commit-push
+  tool: Bash
+  when:
+    cmd_matches: '^\s*git\s+(commit|push)'
+  reason: '提交前考虑跑 /commit 命令（标准化 + 灰名单交互检查）；推送前 /audit-practices 自检'
+
+- id: hint-grep-find
+  tool: Bash
+  when:
+    cmd_matches: 'grep|find.*-name'
+  reason: '代码探索可优先用 gitnexus-exploring（结构化检索） / gitnexus-impact-analysis（影响面）'

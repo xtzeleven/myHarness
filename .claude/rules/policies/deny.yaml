@@ -1,0 +1,89 @@
+# Deny rules — 直接拦截（exit 2 + BLOCKED 前缀）
+# Schema: 见 .claude/rules/policies/README.md
+# 改这里就生效，无需碰 .claude/scripts/policy-dispatch.py。
+
+- id: bash-rm-rf-root
+  tool: Bash
+  when:
+    cmd_contains_any:
+      - 'rm -rf /'
+      - 'rm -rf /*'
+      - 'rm -fr /'
+  reason: 'rm -rf 根目录'
+
+- id: bash-rm-rf-home
+  tool: Bash
+  when:
+    cmd_contains_any:
+      - 'rm -rf ~'
+      - 'rm -rf $HOME'
+      - 'rm -rf /root'
+  reason: 'rm -rf 家目录'
+
+- id: bash-rm-rf-git
+  tool: Bash
+  when:
+    cmd_contains_any:
+      - 'rm -rf .git'
+  reason: 'rm -rf .git（仓库元数据）'
+
+- id: bash-force-push-protected
+  tool: Bash
+  when:
+    cmd_matches: 'git\s+push.*--force(\s|$).*\b(main|master|prod|production)\b'
+  reason: 'git push --force 到保护分支（main/master/prod）'
+
+- id: bash-force-push-refspec-protected
+  tool: Bash
+  when:
+    cmd_matches: 'git\s+push.*\+.*\b(main|master|prod|production)\b'
+  reason: 'git push +refspec 到保护分支'
+
+- id: bash-chmod-777-broad
+  tool: Bash
+  when:
+    cmd_contains_any:
+      - 'chmod -R 777'
+      - 'chmod 777 /'
+  reason: 'chmod 777 大范围或根'
+
+- id: bash-curl-pipe-sh
+  tool: Bash
+  when:
+    cmd_matches: '(curl|wget)[^|]*\|\s*(sh|bash|zsh)(\s|$)'
+  reason: 'curl|wget | sh（未审计的远程脚本直接执行）'
+
+- id: write-env-file
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_basename_glob: ['.env', '.env.*']
+    file_basename_not_in: ['.env.example', '.env.sample', '.env.template']
+  reason: '写入 .env 文件（敏感）'
+
+- id: write-key-cert
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_basename_glob: ['*.key', '*.pem', '*.p12', '*.pfx']
+  reason: '写入密钥/证书文件'
+
+- id: write-ssh-key
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_basename_in:
+      - 'id_rsa'
+      - 'id_rsa.pub'
+      - 'id_ed25519'
+      - 'id_ed25519.pub'
+  reason: '写入 SSH 密钥'
+
+- id: write-credential-file
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_basename_in: ['.npmrc', '.pypirc', '.netrc']
+  reason: '写入凭据文件'
+
+- id: write-credentials-dir
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_path_matches: '(secrets/|credentials/|/\.aws/|/\.ssh/id_)'
+  reason: '写入凭据目录路径'

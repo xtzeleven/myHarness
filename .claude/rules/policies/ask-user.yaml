@@ -1,0 +1,55 @@
+# Ask-user rules — 灰名单（exit 2 + ⚠️ 待人工授权 前缀）
+# 主对话识别后必须停下问用户，不可绕过。
+
+- id: bash-mysql-ddl-dml
+  tool: Bash
+  when:
+    # 仅在命令本身就是 mysql/psql 客户端时才扫；避免误伤 grep / cat 含 SQL 字面量
+    cmd_matches: '^\s*(mysql|mysqldump|psql)(\s|$)'
+    cmd_imatches: '\b(INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|GRANT|REVOKE|CREATE)\s+(INTO|FROM|TABLE|DATABASE|SCHEMA|VIEW|INDEX|ON|USER)?\b'
+  reason: '包含 DDL/DML（INSERT/UPDATE/DELETE/DROP/ALTER/...）的数据库命令'
+
+- id: bash-sql-file-pipe
+  tool: Bash
+  when:
+    cmd_matches: '(mysql|psql)(\s[^&|;]*)?\s*<\s*\S+\.sql'
+  reason: '通过 .sql 文件喂给 mysql/psql 执行'
+
+- id: bash-git-rewrite-history
+  tool: Bash
+  when:
+    cmd_matches: 'git\s+(rebase\s+-i|filter-branch|filter-repo)'
+  reason: 'git rebase -i / filter-branch / filter-repo（重写历史）'
+
+- id: bash-git-rm-recursive
+  tool: Bash
+  when:
+    cmd_matches: 'git\s+rm\s+-rf?\s'
+  reason: 'git rm -r 批量删除'
+
+- id: bash-mvn-deploy
+  tool: Bash
+  when:
+    cmd_matches: 'mvn\s+([^&|;]*\s)?(deploy|release:|gpg:sign)'
+  reason: 'mvn deploy / release（发布到仓库）'
+
+- id: ddd-aggregate-boundary
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_path_matches: 'src/main/java/.*/domain/'
+    file_basename_matches: '(Aggregate|AggregateRoot|Repository|Event|DomainEvent)\.java$'
+  reason: 'DDD 边界改动：聚合根 / Repository 接口 / 领域事件'
+
+- id: pom-major-deps
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_basename_in: ['pom.xml']
+    new_content_imatches: '<(artifactId|groupId)>(spring-boot|mybatis|hibernate|mysql-connector|mysql)\b'
+  reason: '主要依赖升级：pom.xml 涉及 spring-boot / MyBatis / Hibernate / MySQL 驱动'
+
+- id: pom-blank-rewrite
+  tool: [Write]
+  when:
+    file_basename_in: ['pom.xml']
+    new_content_present: false
+  reason: 'pom.xml 整文件改写（请确认未变更主要依赖版本）'
