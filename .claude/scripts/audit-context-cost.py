@@ -24,6 +24,7 @@ import argparse
 import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Windows console 编码兼容
@@ -143,11 +144,37 @@ def summarize(rows):
         "on_demand_docs_total": docs,
     }
 
+
+def write_baseline_to_audit_log(tokenizer: str, summary: dict) -> Path | None:
+    """追加一条 ContextAudit JSONL 到 .claude/.audit.log，与 hook 写入风格保持一致。"""
+    log_path = PROJECT_ROOT / ".claude" / ".audit.log"
+    try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        entry = {
+            "ts": ts,
+            "hook": "ContextAudit",
+            "tool": tokenizer,
+            "target": "context-cost-baseline",
+            "action": "baseline",
+            "reason": "audit-context-cost.py --audit-log",
+            "bypass": False,
+            **summary,
+        }
+        with log_path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        return log_path
+    except Exception as e:
+        print(f"[warn] 写 audit.log 失败：{e}", file=sys.stderr)
+        return None
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--auto", action="store_true", help="仅显示自动注入")
     ap.add_argument("--top", type=int, default=None, help="只显示 Top N")
     ap.add_argument("--json", action="store_true", help="JSON 机器可读")
+    ap.add_argument("--audit-log", action="store_true", help="追加一行 baseline JSONL 到 .claude/.audit.log（用于长期追踪 context 膨胀）")
     args = ap.parse_args()
 
     tokenizer, rows = audit()
@@ -156,6 +183,12 @@ def main():
         rows = [r for r in rows if r["category"] in (AUTO_INJECT | {"AUTO_memory_index"})]
 
     summary = summarize(rows)
+
+    if args.audit_log:
+        p = write_baseline_to_audit_log(tokenizer, summary)
+        if p and not args.json:
+            print(f"[ok] baseline 已追加到 {p.relative_to(PROJECT_ROOT)}")
+            print()
 
     if args.json:
         print(json.dumps({

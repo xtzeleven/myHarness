@@ -3,9 +3,9 @@ name: scheduled
 on:
   schedule:
     # 每天 09:00 UTC（约北京 17:00）
-    - cron: "13 9 * * *"
+    - cron: '13 9 * * *'
     # 每周一 03:00 UTC
-    - cron: "17 3 * * 1"
+    - cron: '17 3 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: "Required files check (manifest: .github/required-files.txt)"
+      - name: 'Required files check (manifest: .github/required-files.txt)'
         run: |
           set -e
           if [ ! -f .github/required-files.txt ]; then
@@ -93,7 +93,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
       - name: Compare locked vs latest prettier
         id: pretty
         run: |
@@ -151,4 +151,66 @@ jobs:
                     `- SubagentStop 非 ok 状态：哪些 agent 频繁 degraded / escalate？\n\n` +
                     `审完关掉本 issue。如发现需修补规则，开新 issue 并附 audit.log 行号。`,
               labels: ['harness-health', 'auto-generated', 'audit-review']
+            });
+
+  weekly-context-audit:
+    name: Weekly context-cost baseline
+    if: github.event.schedule == '17 3 * * 1' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install tiktoken (best-effort)
+        run: pip install tiktoken || true
+      - name: Run context-cost audit
+        id: audit
+        run: |
+          set -e
+          python .claude/scripts/audit-context-cost.py --json > /tmp/cost.json
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          d = json.load(open('/tmp/cost.json'))
+          s = d['summary']
+          tok = d['tokenizer'][0]
+          print(f"auto_inject={s['auto_inject']}")
+          print(f"rules={s['on_demand_rules']}")
+          print(f"agents={s['on_demand_agents_total']}")
+          print(f"docs={s['on_demand_docs_total']}")
+          print(f"tokenizer={tok}")
+          print(f"over_budget={'true' if s['auto_inject'] > 8000 else 'false'}")
+          PY
+      - name: Open issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const auto = '${{ steps.audit.outputs.auto_inject }}';
+            const rules = '${{ steps.audit.outputs.rules }}';
+            const agents = '${{ steps.audit.outputs.agents }}';
+            const docs = '${{ steps.audit.outputs.docs }}';
+            const tok = '${{ steps.audit.outputs.tokenizer }}';
+            const over = '${{ steps.audit.outputs.over_budget }}' === 'true';
+            const today = new Date().toISOString().slice(0, 10);
+            const status = over ? '⚠️ 超 8K 预算' : '✅ 在 8K 预算内';
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[scheduled] ${today} context-cost baseline: ${auto} tokens (auto_inject)`,
+              body: `**每会话自动注入 baseline**（tokenizer: \`${tok}\`）：\n\n` +
+                    `- 自动注入（每会话付费）：**${auto}** ${status}\n` +
+                    `- Rules（按需 Read）：${rules}\n` +
+                    `- Agents 总和（仅 spawn 时计入）：${agents}\n` +
+                    `- Docs 总和（按需 Read）：${docs}\n\n` +
+                    `**对比上次**：CI 看不到 \`.audit.log\`（本地 .gitignored），需在本机跑：\n\n` +
+                    `\`\`\`bash\n` +
+                    `python .claude/scripts/audit-context-cost.py --top 10\n` +
+                    `python .claude/scripts/audit-log-summary.py --hook ContextAudit\n` +
+                    `\`\`\`\n\n` +
+                    `**审查重点**：\n` +
+                    `- 若 auto_inject 超 8K：检查 CLAUDE.md / MEMORY.md 是否膨胀\n` +
+                    `- 若较上周明显增长：定位新增大文件（PR 引入？memory 失控？）\n` +
+                    `- 若长期稳定：关掉本 issue 即可\n\n` +
+                    `详见 [audit-context-cost.py](../blob/main/.claude/scripts/audit-context-cost.py) / [improvement-backlog B4 / E35](../blob/main/docs/improvement-backlog.md)`,
+              labels: ['harness-health', 'auto-generated', 'context-baseline']
             });

@@ -28,11 +28,7 @@ _全部完成。详见 §E（A1+A2→E11 / A3→E6 / A4→E7）。_
 
 ### 八维度 gap 中的 P1
 
-| #   | 维度            | 项                                                                                 | 工作量 | 关联                  |
-| --- | --------------- | ---------------------------------------------------------------------------------- | ------ | --------------------- |
-| B4  | Context Manager | `audit-context-cost.py` 加每会话 token baseline 入 audit log（每周 GH Actions 跑） | 1 h    | 长期追踪 context 膨胀 |
-
-_B1 / B2 / B3 / B5 / B6 已完成。详见 §E（B1→E14 / B2→E15 / B3→E16 / B5→E17 / B6→E25 weekly-audit-reminder）。_
+_B1–B6 全部完成。详见 §E（B1→E14 / B2→E15 / B3→E16 / B4→E35 / B5→E17 / B6→E25 weekly-audit-reminder）。_
 
 ### 前两轮 audit 剩余 P1
 
@@ -80,13 +76,14 @@ _F1 / F2 同批落地，详见 §E（F1→E33 / F2→E34）。_
 
 ## D. 设计判断点（P3，可商榷）
 
-| #   | 项                                                        | 讨论方向                                           |
-| --- | --------------------------------------------------------- | -------------------------------------------------- |
-| D1  | `.claude/policies/` 目录化 vs 散在 .md                    | 现状散在但可读；若要可程序解析则集中化             |
-| D2  | 三层 Harness vs 六维度视角并存                            | README 加"视角注解段"；或在 ADR 写明两套视角的关系 |
-| D3  | ADR-0001 "L1 工程化规则（14 节）" 历史快照是否更新        | ADR 通常不改；建议保留作为快照证据                 |
-| D4  | Hook 跨平台支持（PowerShell / fish 用户）                 | 当前要 bash；可在 README 声明前置要求              |
-| D5  | `output style` 配置（engineering-practices §11 提到可选） | 是否要项目专属 output style？未必必要              |
+| #   | 项                                                        | 讨论方向                                                                                                                                                                                                                                 |
+| --- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | `.claude/policies/` 目录化 vs 散在 .md                    | 现状散在但可读；若要可程序解析则集中化                                                                                                                                                                                                   |
+| D2  | 三层 Harness vs 六维度视角并存                            | README 加"视角注解段"；或在 ADR 写明两套视角的关系                                                                                                                                                                                       |
+| D3  | ADR-0001 "L1 工程化规则（14 节）" 历史快照是否更新        | ADR 通常不改；建议保留作为快照证据                                                                                                                                                                                                       |
+| D4  | Hook 跨平台支持（PowerShell / fish 用户）                 | 当前要 bash；可在 README 声明前置要求                                                                                                                                                                                                    |
+| D5  | `output style` 配置（engineering-practices §11 提到可选） | 是否要项目专属 output style？未必必要                                                                                                                                                                                                    |
+| D6  | worktree 引入 + audit log 跨 worktree 聚合                | 当前单分支够用；常态化前需先让 `.audit.log` 可聚合（dispatcher 改写到 `~/.claude/audit/<repo>.log` 或定期合并）+ `.env` 软链方案 + Maven `target/` 磁盘占用考量；触发条件：出现"边 hotfix 边长 feature"或多 Claude Code session 隔离需求 |
 
 ---
 
@@ -128,6 +125,7 @@ _F1 / F2 同批落地，详见 §E（F1→E33 / F2→E34）。_
 | E32 | **P3-N**: CLAUDE.md §11 MEMORY 硬路径 → 由 Claude Code 客户端派生的相对说明                                                                                               | 2026-05-15  |
 | E33 | **P1-A**: 规则数据外移到 `.claude/rules/policies/{deny,ask-user,hints}.yaml`；`policy-dispatch.py` 取代 bash case；26+6 case 通过；CI 加 pyyaml install + yaml parse 校验 | 2026-05-15  |
 | E34 | **P1-C**: `.claude/scripts/session-state.py` CLI（set-task / add-step / done-step / blocked / clear / show）；CLAUDE.md §12 约定调用时机                                  | 2026-05-15  |
+| E35 | **P1 B4**: `audit-context-cost.py --audit-log` 追加一行 ContextAudit JSONL 到 .audit.log；scheduled.yml 加 weekly-context-audit job 每周开 issue 报 baseline + 预算检查   | 2026-05-15  |
 
 ---
 
