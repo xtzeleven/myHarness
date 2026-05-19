@@ -190,6 +190,8 @@ jobs:
       - name: Validate policy yaml files parse
         run: |
           python -c "import yaml; [yaml.safe_load(open(f, encoding='utf-8')) for f in ['.claude/rules/policies/deny.yaml', '.claude/rules/policies/ask-user.yaml', '.claude/rules/policies/hints.yaml']]; print('All policy yaml files parse OK')"
+      - name: Validate policy rule schema (dispatcher --validate)
+        run: python .claude/scripts/policy-dispatch.py --validate
       - name: Run pre-tool-use smoke test
         run: bash .claude/hooks/tests/test_pre_tool_use.sh
       - name: Run subagent-stop smoke test

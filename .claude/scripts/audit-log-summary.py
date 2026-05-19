@@ -21,6 +21,7 @@ Usage:
   python .claude/scripts/audit-log-summary.py --by-ext            # 按文件后缀聚合（PostToolUse）
   python .claude/scripts/audit-log-summary.py --by-day            # 按日期聚合
   python .claude/scripts/audit-log-summary.py --by-permission-mode # 按权限模式聚合（auto/plan/默认...）
+  python .claude/scripts/audit-log-summary.py --by-secret-pattern # 按秘钥模式聚合（secret_suspect）
   python .claude/scripts/audit-log-summary.py --hook SubagentStop # 过滤 hook 类型
 """
 from __future__ import annotations
@@ -255,6 +256,7 @@ def main():
     ap.add_argument("--by-ext", action="store_true", help="按文件后缀聚合（PostToolUse）")
     ap.add_argument("--by-day", action="store_true", help="按日期聚合")
     ap.add_argument("--by-permission-mode", action="store_true", help="按 permission_mode 聚合（default/acceptEdits/plan/auto/bypassPermissions）")
+    ap.add_argument("--by-secret-pattern", action="store_true", help="按秘钥模式聚合（仅 secret_suspect 记录，按 reason 冒号前缀分组）")
     ap.add_argument("--log-path", type=str, help="覆盖 audit log 路径（默认 worktree-aware 自动解析）")
     args = ap.parse_args()
 
@@ -274,7 +276,7 @@ def main():
     # 聚合视角（可组合，分节输出）
     any_aggregate = any([args.by_hook, args.by_tool, args.by_action,
                           args.by_agent, args.by_ext, args.by_day,
-                          args.by_permission_mode])
+                          args.by_permission_mode, args.by_secret_pattern])
 
     if args.by_hook:
         by_field(entries, lambda e: e.get("hook"), "按 Hook")
@@ -302,6 +304,37 @@ def main():
         # 老记录无此字段 → 归类为 (legacy)，帮助识别字段引入前后切换点
         by_field(entries, lambda e: e.get("permission_mode") or "(legacy)", "按 Permission Mode")
         print()
+    if args.by_secret_pattern:
+        # 只看 secret_suspect 记录，按 reason 冒号前的"秘钥类型"分组
+        # 同时统计影响文件数（唯一 target），帮助判断是真泄漏候选还是测试样本
+        secrets = [e for e in entries if e.get("action") == "secret_suspect"]
+        if not secrets:
+            print("=== 按秘钥模式 (0 条 secret_suspect 记录) ===\n")
+        else:
+            def _pattern(e):
+                r = (e.get("reason") or "").strip()
+                # reason 形如 "GitHub personal access token: ghp_xxx..."
+                # 冒号前是模式名，后是采样值（不能用做分组，每次都不同）
+                return r.split(":", 1)[0].strip() if r else "(empty)"
+
+            patt_count: Counter = Counter()
+            patt_files: dict[str, set[str]] = {}
+            for e in secrets:
+                p = _pattern(e)
+                patt_count[p] += 1
+                patt_files.setdefault(p, set()).add(e.get("target") or "")
+            print(f"=== 按秘钥模式 (共 {len(secrets)} 条 secret_suspect) ===")
+            print(f"{'命中':>5}  {'文件数':>5}  模式")
+            for p, n in patt_count.most_common(20):
+                fc = len(patt_files.get(p, set()))
+                print(f"{n:>5}  {fc:>5}  {p}")
+            # 把唯一 target 列出来便于人工扫
+            all_targets = set().union(*patt_files.values()) if patt_files else set()
+            if all_targets:
+                print(f"\n涉及文件 ({len(all_targets)})：")
+                for t in sorted(all_targets):
+                    print(f"  {t}")
+            print()
 
     if not any_aggregate:
         summarize_default(entries)

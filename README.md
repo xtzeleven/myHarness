@@ -67,6 +67,16 @@
 - **Node 20+**：CI 与本地 prettier 走 `npm ci`
 - 工具版本锁见 `.tool-versions`
 
+> **Windows 注意**：CI 跑在 `ubuntu-latest`，但本地 hook 在 Git Bash 下处理 `D:\` 路径与 Linux 不同。**合并前必须本地跑**：
+>
+> ```bash
+> bash .claude/hooks/tests/test_pre_tool_use.sh   # 28 case
+> bash .claude/hooks/tests/test_subagent_stop.sh  # 6 case
+> python .claude/scripts/policy-dispatch.py --validate
+> ```
+>
+> CI 绿但 Windows 本地红的脱节用此组合堵住。
+
 ```bash
 git clone <repo> && cd myHarness
 

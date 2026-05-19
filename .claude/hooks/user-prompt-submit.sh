@@ -45,6 +45,61 @@ for k in ("prompt", "user_prompt", "message", "input", "content", "text"):
 if not prompt:
     sys.exit(0)
 
+# ---------- session-state 自调用提示（独立路径，不依赖敏感词命中）----------
+# 看到任务类动词 + .session.state 无 current_task + 本会话未提示过 → 给一句话提醒
+TASK_VERBS_RE = re.compile(
+    r"(实现|开发|重构|修复|新增|添加|实施|落地|做一个|加一个|"
+    r"\bimplement\b|\bbuild\b|\brefactor\b|\bfix\b|\badd\b)",
+    re.IGNORECASE,
+)
+SESSION_HINT_TAG = "session-state suggestion (verb prompt without current_task)"
+
+def _hint_already_fired(tag: str) -> bool:
+    p = ".claude/.session.hints"
+    if not os.path.exists(p):
+        return False
+    try:
+        with open(p, encoding="utf-8") as f:
+            for line in f:
+                if line.rstrip("\n") == tag:
+                    return True
+    except Exception:
+        pass
+    return False
+
+def _remember_hint(tag: str) -> None:
+    try:
+        os.makedirs(".claude", exist_ok=True)
+        with open(".claude/.session.hints", "a", encoding="utf-8") as f:
+            f.write(tag + "\n")
+    except Exception:
+        pass
+
+def _state_has_current_task() -> bool:
+    p = ".claude/.session.state"
+    if not os.path.exists(p):
+        return False
+    try:
+        with open(p, encoding="utf-8") as f:
+            s = json.load(f)
+        return bool(s.get("current_task"))
+    except Exception:
+        return False
+
+if (
+    TASK_VERBS_RE.search(prompt)
+    and not _state_has_current_task()
+    and not _hint_already_fired(SESSION_HINT_TAG)
+):
+    print(
+        "[user-prompt-submit] 💡 看到任务类动词且 .session.state 无 current_task。"
+        "建议登记：python .claude/scripts/session-state.py set-task \"<一句话任务描述>\""
+        "（让 SessionStart 在下次会话准确显示未完事项；本会话仅提示一次）",
+        file=sys.stderr,
+    )
+    _remember_hint(SESSION_HINT_TAG)
+
+# ---------- 敏感词检测（高危模式）----------
 # 高危模式（命中即警告）
 # 注意：使用 IGNORECASE；模式尽量精确避免误伤
 patterns = [

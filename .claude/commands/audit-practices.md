@@ -114,4 +114,22 @@ argument-hint: "[focus] 可选：聚焦某一节名（如 ddd / java / mcp / hoo
 - **以证据说话**，不允许"看着像 ✅ 就 ✅"。每条都引文件路径或行号
 - **N/A 也要写明原因**（如"项目无 src/，本维度待 M4 启用"）
 - **Top 3 改进必须可执行**，不写"建议提升质量"这种空话
-- 不动文件，**只产报告**
+- 不动文件，**只产报告**（写 audit log 是唯一例外，见下）
+
+## 末步：把评分写入 audit log（让趋势可追）
+
+产报告后**必须**追加一行到 `.claude/.audit.log`，方便后续追踪 ⚠️/❌ 数量随时间走势。
+把 15 维度的 ✅/⚠️/❌/N/A 压成单个 dict 传给 `--extra scores=`：
+
+```bash
+python .claude/scripts/audit-log-append.py \
+  --hook PracticesAudit \
+  --action scored \
+  --target "15-dim-$(date -u +%Y%m%d)" \
+  --reason "/audit-practices run" \
+  --extra scores='{"1":"✅","2":"✅","3":"✅","4":"✅","5":"✅","6":"✅","7":"✅","8":"✅","9":"⚠️","10":"✅","11":"⚠️","12":"N/A","13":"N/A","14":"✅","15":"✅"}' \
+  --extra top3='["<top1-id>","<top2-id>","<top3-id>"]'
+```
+
+`scores` 键名对应 §1-§15 节号；`top3` 用 backlog ID（B1/C3/...）或一句话描述。
+日后用 `python .claude/scripts/audit-log-summary.py --hook PracticesAudit` 即可看历史。

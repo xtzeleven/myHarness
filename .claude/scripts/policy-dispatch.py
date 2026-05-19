@@ -248,6 +248,59 @@ def tool_matches(rule_tool: Any, actual_tool: str) -> bool:
 
 # ---------- rule loading ----------
 
+# 顶层规则合法字段；多余字段记 audit log 但不阻断（dispatcher 不阻断 policy）
+RULE_TOP_KEYS = {"id", "tool", "when", "reason"}
+
+# when.* 合法谓词；写错（如 cmd_contain_any）会让规则 silent skip，必须告警
+WHEN_KEYS = {
+    "cmd_contains_any",
+    "cmd_matches",
+    "cmd_imatches",
+    "file_basename_in",
+    "file_basename_glob",
+    "file_basename_not_in",
+    "file_basename_matches",
+    "file_path_matches",
+    "new_content_imatches",
+    "new_content_present",
+}
+
+
+def validate_rule(rule: dict, source: str) -> list[str]:
+    """返回该规则的 schema 问题列表（空表示 OK）。"""
+    problems: list[str] = []
+    rid = str(rule.get("id") or "<no-id>")
+
+    # 必填
+    if not rule.get("id"):
+        problems.append(f"{source} rule missing 'id'")
+    if not rule.get("tool"):
+        problems.append(f"{source}[{rid}] missing 'tool'")
+    if not rule.get("reason"):
+        problems.append(f"{source}[{rid}] missing 'reason'")
+
+    # 顶层未知键
+    unknown_top = set(rule.keys()) - RULE_TOP_KEYS
+    if unknown_top:
+        problems.append(f"{source}[{rid}] unknown top-level keys: {sorted(unknown_top)}")
+
+    # when 校验
+    when = rule.get("when")
+    if when is None:
+        problems.append(f"{source}[{rid}] missing 'when' block")
+    elif not isinstance(when, dict):
+        problems.append(f"{source}[{rid}] 'when' must be a mapping, got {type(when).__name__}")
+    else:
+        unknown_when = set(when.keys()) - WHEN_KEYS
+        if unknown_when:
+            problems.append(
+                f"{source}[{rid}] unknown 'when' keys (typo?): {sorted(unknown_when)}; "
+                f"allowed: {sorted(WHEN_KEYS)}"
+            )
+
+    return problems
+
+
 def load_rules(filename: str) -> list[dict]:
     path = POLICIES_DIR / filename
     if not path.exists():
@@ -263,7 +316,12 @@ def load_rules(filename: str) -> list[dict]:
         if not isinstance(data, list):
             audit_log("error", f"{filename} top-level must be list", tool="-", target=str(path))
             return []
-        return [r for r in data if isinstance(r, dict)]
+        rules = [r for r in data if isinstance(r, dict)]
+        # schema 校验：runtime 不阻断（dispatcher 自身要兜底），但写 audit log 让 /doctor 看到
+        for r in rules:
+            for p in validate_rule(r, filename):
+                audit_log("schema_error", p, tool="-", target=str(path))
+        return rules
     except Exception as e:
         audit_log("error", f"failed to parse {filename}: {e}", tool="-", target=str(path))
         return []
@@ -350,6 +408,46 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    # 显式 validate 模式：CI / 本地手测用，不读 stdin payload，只校验 yaml schema
+    if len(sys.argv) > 1 and sys.argv[1] == "--validate":
+        try:
+            import yaml  # noqa: F401
+        except ImportError:
+            print("[policy-validate] PyYAML missing — install pyyaml first", file=sys.stderr)
+            sys.exit(2)
+        all_problems: list[str] = []
+        for fname in ("deny.yaml", "ask-user.yaml", "hints.yaml"):
+            path = POLICIES_DIR / fname
+            if not path.exists():
+                continue
+            try:
+                with open(path, encoding="utf-8") as f:
+                    data = yaml.safe_load(f) or []
+            except Exception as e:
+                all_problems.append(f"{fname}: yaml parse error: {e}")
+                continue
+            if not isinstance(data, list):
+                all_problems.append(f"{fname}: top-level must be list, got {type(data).__name__}")
+                continue
+            seen_ids: set[str] = set()
+            for r in data:
+                if not isinstance(r, dict):
+                    all_problems.append(f"{fname}: rule entry must be mapping")
+                    continue
+                rid = str(r.get("id") or "")
+                if rid:
+                    if rid in seen_ids:
+                        all_problems.append(f"{fname}[{rid}] duplicate id")
+                    seen_ids.add(rid)
+                all_problems.extend(validate_rule(r, fname))
+        if all_problems:
+            print(f"[policy-validate] {len(all_problems)} problem(s):", file=sys.stderr)
+            for p in all_problems:
+                print(f"  - {p}", file=sys.stderr)
+            sys.exit(1)
+        print("[policy-validate] all rules pass schema check", file=sys.stderr)
+        sys.exit(0)
+
     try:
         sys.exit(main())
     except SystemExit:
