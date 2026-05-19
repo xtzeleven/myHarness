@@ -7,6 +7,26 @@
 
 ## [Unreleased] — M7 后置 / M8 启动前清账
 
+### 2026-05-19 — Worktree 集成（E41 / D6 落地）
+
+#### Added
+
+- `docs/worktree-usage.md`：worktree 完整使用规范（何时用 / 怎么开 / 跨 worktree 状态聚合表 / 反模式 / 与现有机制协同）。
+- `.worktreeinclude`：列出新建 worktree 时自动复制的 untracked + gitignored 文件（`.env*` / `.claude/settings.local.json`）。
+- `CLAUDE.md §10`：加 worktree-usage.md 指针。
+- `docs/improvement-backlog.md §E`：追加 E41。
+
+#### Changed
+
+- `.claude/scripts/policy-dispatch.py`：新增 `_resolve_audit_log_path()` 函数 — 子 worktree（`git rev-parse --git-common-dir` 返回绝对路径时）写主仓库 `.claude/.audit.log`；主 worktree / 非 git 仓库走 cwd 相对原路径；`HARNESS_AUDIT_LOG_PATH` env var 显式覆盖。
+- `.claude/scripts/audit-log-summary.py`：同步实现 `_resolve_audit_log_path()`；`load_entries()` 接受 `log_path` 形参；CLI 加 `--log-path <path>` 覆盖默认解析。
+- `.gitignore`：加 `.claude/worktrees/`。
+
+#### 验证
+
+- 模拟主 + 子 worktree（`git worktree add`）：子 worktree 内 `_resolve_audit_log_path()` 返回主仓库 `.claude/.audit.log` 绝对路径；主 worktree 返回相对路径，老行为不变。
+- `bash .claude/hooks/tests/test_pre_tool_use.sh` 28 case 全过（tempdir 内非 git 仓库 → 自动 fallthrough 到 cwd 相对，与原 hook 行为一致）。
+
 ### 2026-05-19 — Auto mode 集成（E40）
 
 #### Added

@@ -177,6 +177,7 @@ git status --porcelain
 - 工程化规则：`.claude/rules/engineering-practices.md`
 - 路线图：`docs/roadmap.md`（M4-M8 六维度计划）
 - 决策记录：`docs/adr/`（公开追溯）
+- Worktree 使用：`docs/worktree-usage.md`（何时开 / 跨 worktree audit 聚合 / 反模式）
 
 ## 11. 项目记忆（Memory）
 

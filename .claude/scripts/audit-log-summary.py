@@ -37,7 +37,35 @@ if sys.platform.startswith("win"):
     except Exception:
         pass
 
-LOG = Path(__file__).resolve().parent.parent.parent / ".claude" / ".audit.log"
+def _resolve_audit_log_path() -> Path:
+    """Worktree-aware：与 policy-dispatch.py 保持一致的解析逻辑。
+
+    优先级：env var HARNESS_AUDIT_LOG_PATH > 子 worktree 内主仓库 > 脚本所在仓库根。
+    """
+    import os
+    import subprocess
+
+    env_p = os.environ.get("HARNESS_AUDIT_LOG_PATH")
+    if env_p:
+        return Path(env_p).expanduser()
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            capture_output=True, text=True, timeout=2, check=False,
+        )
+        common = (out.stdout or "").strip()
+        if common:
+            common_path = Path(common)
+            if common_path.is_absolute():
+                main_repo = common_path.resolve().parent
+                return main_repo / ".claude" / ".audit.log"
+    except Exception:
+        pass
+    # 主 worktree / 非 git：用脚本所在仓库根（保持原行为）
+    return Path(__file__).resolve().parent.parent.parent / ".claude" / ".audit.log"
+
+
+LOG = _resolve_audit_log_path()
 
 
 def parse_since(s: str) -> datetime | None:
@@ -60,11 +88,12 @@ def parse_since(s: str) -> datetime | None:
         return None
 
 
-def load_entries() -> list[dict]:
-    if not LOG.exists():
+def load_entries(log_path: Path | None = None) -> list[dict]:
+    p = log_path or LOG
+    if not p.exists():
         return []
     out = []
-    for line in LOG.read_text(encoding="utf-8").splitlines():
+    for line in p.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line:
             continue
@@ -185,9 +214,11 @@ def main():
     ap.add_argument("--by-ext", action="store_true", help="按文件后缀聚合（PostToolUse）")
     ap.add_argument("--by-day", action="store_true", help="按日期聚合")
     ap.add_argument("--by-permission-mode", action="store_true", help="按 permission_mode 聚合（default/acceptEdits/plan/auto/bypassPermissions）")
+    ap.add_argument("--log-path", type=str, help="覆盖 audit log 路径（默认 worktree-aware 自动解析）")
     args = ap.parse_args()
 
-    entries = load_entries()
+    log_path = Path(args.log_path).expanduser() if args.log_path else LOG
+    entries = load_entries(log_path)
     since = parse_since(args.since) if args.since else None
     entries = filter_entries(entries, since=since, only_bypass=args.bypass, only_hook=args.hook)
 

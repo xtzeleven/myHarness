@@ -35,11 +35,45 @@ if sys.platform.startswith("win"):
         pass
 
 ROOT = Path(".")  # 相对仓库根（settings.json 注册的 hook 由 Claude Code 在 cwd 执行）
-# audit / hints 走 cwd 相对，与原 hook 保持一致；测试在 tempdir 跑可天然隔离
-AUDIT_LOG = ROOT / ".claude" / ".audit.log"
 HINTS_FILE = ROOT / ".claude" / ".session.hints"
 # policies 走脚本相对，让测试能复用项目的 yaml 而不必复制到 tempdir
 POLICIES_DIR = Path(__file__).resolve().parent.parent / "rules" / "policies"
+
+
+def _resolve_audit_log_path() -> Path:
+    """Worktree-aware audit log 路径解析。
+
+    优先级：
+      1. env var HARNESS_AUDIT_LOG_PATH（用户显式覆盖）
+      2. 子 worktree 内 → 写主仓库的 .claude/.audit.log（让多 worktree 共享一份）
+      3. 主 worktree / 非 git 仓库 → cwd 相对 .claude/.audit.log（保持原行为）
+
+    判断依据：`git rev-parse --git-common-dir` 在子 worktree 内返回绝对路径
+    （指向主仓库的 .git/），在主 worktree 内返回相对 ".git"。
+    """
+    env_p = os.environ.get("HARNESS_AUDIT_LOG_PATH")
+    if env_p:
+        return Path(env_p).expanduser()
+    try:
+        import subprocess
+        out = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            capture_output=True, text=True, timeout=2, check=False,
+        )
+        common = (out.stdout or "").strip()
+        if common:
+            common_path = Path(common)
+            if common_path.is_absolute():
+                # 子 worktree：common 指向主仓库 .git/
+                main_repo = common_path.resolve().parent
+                return main_repo / ".claude" / ".audit.log"
+    except Exception:
+        pass
+    # 默认：cwd 相对（主 worktree 或非 git；保持与历史行为一致）
+    return ROOT / ".claude" / ".audit.log"
+
+
+AUDIT_LOG = _resolve_audit_log_path()
 
 
 # ---------- audit log ----------

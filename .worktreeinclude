@@ -1,0 +1,14 @@
+# .worktreeinclude — 新建 worktree 时自动复制的 untracked + gitignored 文件
+#
+# 语法同 .gitignore；只匹配的同时**也**在 .gitignore 里的文件才会被复制
+# （tracked 文件本来就在 worktree 里，不会重复）。
+#
+# 详见 https://code.claude.com/docs/en/worktrees#including-untracked-files
+
+# MCP / DB / API 连接配置（本机敏感，永不入 git）
+.env
+.env.local
+.env.*.local
+
+# settings.local.json：个人 IDE / 工具偏好（本机）
+.claude/settings.local.json

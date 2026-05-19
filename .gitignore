@@ -66,3 +66,4 @@ id_rsa.pub
 .claude/settings.local.json.bak
 .claude/.session*
 .claude/.audit.log
+.claude/worktrees/
