@@ -48,7 +48,29 @@
 - **跨 agent 转交时保留当前会话上下文**，不让接手 agent 从零开始
 - **三次以内必升到用户**（agent ≤ 2 次 / model 升 1 次 / 都失败 → 用户）
 
-## 5. 维护
+## 5. Fallback（向下降级）规则
+
+**升级 = 能力不足换更强；fallback = 模型不可用换可替代**。两个方向，触发条件不同。
+
+| 触发                                  | 当前模型 | Fallback 到     | 必须做的事                                                   |
+| ------------------------------------- | -------- | --------------- | ------------------------------------------------------------ |
+| opus API 报错（如下线 / 配额 / 网络） | opus     | sonnet          | 输出顶部声明 "**已降级**: opus 不可用 → sonnet"              |
+| sonnet API 报错                       | sonnet   | haiku（如可用） | 同上                                                         |
+| 所有 Claude 模型不可用                | 任意     | 转用户决策      | 不静默继续；问用户改本地操作或等服务恢复                     |
+| sub-agent 启动报 "模型已下线"         | opus-4-6 | opus-4-7        | 看实测案例：本仓库历史曾踩 4-6 → 4-7，处理方式见 `pitfall_*` |
+| 任务要求长链路推理但仅有 sonnet 可用  | sonnet   | sonnet + 拆任务 | 把单次大请求拆 2-3 个小请求，每个 < 30 步                    |
+
+**fallback 不可掩盖能力不足**：
+
+- 如果原任务要求 opus 的长链路推理（如 DDD 跨 BC 设计），fallback 到 sonnet 后**必须**先告知用户"已降级，结果可能保守"，再问是否继续
+- 不允许"opus 不可用 → 默默 sonnet → 输出降质方案" 不让用户知道
+- 对应 `loop-architecture.md §3 Degradation` 的具体执行；本节是**模型维度**的细化
+
+**实测踩坑**：
+
+- 2026-05-19 本会话尝试 spawn `claude-code-guide` sub-agent 返回 `claude-opus-4-6 已下线`。处理：主对话改用 WebSearch / WebFetch 直接查官方文档（degradation 一级），结果作 OK。说明 agent 选模型固定的话需要文档触发条件（见 §2 升级路径）。
+
+## 6. 维护
 
 - 新增 agent 时，在第 2 节 + agent frontmatter 加 1 行 `# model 选择: <reason>` 注释；其他位置不复述
 - 改动默认模型时只改本文，AGENTS.md / engineering-practices §15 自动随之生效

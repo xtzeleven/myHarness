@@ -89,6 +89,19 @@ git status
 - working tree 干净（如有意保留未 stage，明确告诉用户）
 - **不要 `git push`**，除非用户说了 push
 
+### 7. 同步 session-state（C1）
+
+如果当前 `.session.state` 有 task / pending_steps（`python .claude/scripts/session-state.py show` 能看到），把本次 commit 描述传给 `done-step` 让 SessionStart 下次正确反映进度：
+
+```bash
+# 仅当该 step 在 pending_steps 里才有效；不在则报 "step not found" 且无副作用
+python .claude/scripts/session-state.py done-step "<本次 commit 主题>"
+```
+
+若任务已完整结束 → `python .claude/scripts/session-state.py clear`。
+
+**判断标准**：commit message 的 subject 是否对应 `pending_steps` 中某条；不对应则跳过本步。
+
 ## 遇到 PreToolUse 灰名单提示
 
 如果 `git add` / `git commit` 过程中看到 stderr 含 `⚠️ 待人工授权: <动作>`：

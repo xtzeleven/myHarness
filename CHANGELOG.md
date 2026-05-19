@@ -7,6 +7,28 @@
 
 ## [Unreleased] — M7 后置 / M8 启动前清账
 
+### 2026-05-19 — P2 剩余低成本组合（C1 / C6 / C8 / C10 / C12 / C16 → E43-E48）
+
+#### Added
+
+- `.claude/hooks/pre-compact.sh` + settings.json `PreCompact` 注册：压缩前 stdout 输出 "必保留：CLAUDE.md 锚点 / 当前任务 / 用户授权 / 未提交改动"，避免 compaction 丢关键状态。**C12 / E47**
+- `.claude/scripts/memory-growth-summary.py`：扫 memory 目录按类型（decision/pitfall/pref/session/ref）统计 7/30 天新增 + 体积 + MEMORY.md 索引漂移检查；目录派生支持 `--memory-dir` / `CLAUDE_MEMORY_DIR` / 自动从 cwd 推算（实测 `D--myGithub-myHarness` 规则）。**C16 / E48**
+- `docs/prompt-caching-notes.md`（8 节）：Claude Code 内置 cache 行为 + 适合/不适合 cache 的内容 + 保 cache hit 的工程实践 + 反模式速查 + 度量信号。**C8 / E45**
+- `docs/policy-model-selection.md §5 Fallback`：opus → sonnet / sonnet → haiku / 全不可用 → 用户的降级规则，含本会话踩到的 `claude-opus-4-6 已下线` 实测案例。**C6 / E44**
+
+#### Changed
+
+- `.claude/commands/commit.md`：加 step 7 — commit 完成后调用 `session-state.py done-step` / `clear` 同步进度，让 SessionStart 准确反映未完事项。**C1 / E43**
+- `.claude/scripts/audit-log-summary.py`：新增 `--failures` 视角，聚合三类失败相关信号（PreToolUse dispatcher error / SubagentStop status=failed|blocked / SubagentStop degraded_from 非空）。**C10 / E46**
+- `docs/improvement-backlog.md`：C1/C6/C8/C10/C12/C16 改 ✅ E43-E48；§E 追加 6 条完成记录。
+
+#### 验证
+
+- `bash .claude/hooks/tests/test_pre_tool_use.sh` 28 case 全过。
+- `python .claude/scripts/audit-log-summary.py --failures`：自动识别历史 10 条 yaml 解析失败（已修复 / audit 留痕）。
+- `python .claude/scripts/memory-growth-summary.py`：5 decision + 6 pitfall = 11 条；MEMORY.md 索引与目录一致。
+- `bash .claude/hooks/pre-compact.sh`：4 段必保留提示输出正常（项目锚点 / 任务进展 / 用户授权 / 未提交改动）。
+
 ### 2026-05-19 — Worktree 集成（E41 / D6 落地）
 
 #### Added

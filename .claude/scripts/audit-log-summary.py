@@ -12,6 +12,7 @@ Usage:
   python .claude/scripts/audit-log-summary.py                     # 全量摘要
   python .claude/scripts/audit-log-summary.py --tail 20           # 最近 20 条原始
   python .claude/scripts/audit-log-summary.py --bypass            # 仅 bypass 记录
+  python .claude/scripts/audit-log-summary.py --failures          # 失败相关信号（C10）
   python .claude/scripts/audit-log-summary.py --since 24h         # 最近 24 小时
   python .claude/scripts/audit-log-summary.py --by-hook           # 按 hook 类型聚合
   python .claude/scripts/audit-log-summary.py --by-tool           # 按 tool 聚合
@@ -201,10 +202,50 @@ def show_tail(entries, n):
         print(json.dumps(e, ensure_ascii=False))
 
 
+def show_failures(entries) -> None:
+    """C10：基于现有 audit log 字段聚合"失败相关"信号。
+
+    覆盖：
+      - PreToolUse action=error  → dispatcher 自身异常
+      - SubagentStop status in {failed, blocked}
+      - SubagentStop degraded_from 非空（agent / 工具发生降级）
+    不计：
+      - deny / ask_user（规则拦截，是预期行为）
+      - bypass（机制性放行）
+    """
+    dispatcher_errors = [e for e in entries if e.get("hook") == "PreToolUse" and e.get("action") == "error"]
+    sub_failed = [e for e in entries if e.get("hook") == "SubagentStop" and e.get("status") in ("failed", "blocked")]
+    sub_degraded = [e for e in entries if e.get("hook") == "SubagentStop" and e.get("degraded_from")]
+
+    total = len(dispatcher_errors) + len(sub_failed) + len(sub_degraded)
+    print(f"=== 失败相关信号摘要 (共 {len(entries)} 条 audit，{total} 条失败相关) ===")
+    print()
+
+    print(f"PreToolUse dispatcher 异常: {len(dispatcher_errors)}")
+    if dispatcher_errors:
+        for k, v in Counter((e.get("reason") or "")[:80] for e in dispatcher_errors).most_common(5):
+            print(f"  {v:>3}  {k}")
+    print()
+
+    print(f"Sub-agent 失败 / 阻塞: {len(sub_failed)}")
+    if sub_failed:
+        by_agent = Counter(e.get("agent") or "(unknown)" for e in sub_failed)
+        for k, v in by_agent.most_common(10):
+            print(f"  {v:>3}  {k}")
+    print()
+
+    print(f"Sub-agent 降级（degraded_from 非空）: {len(sub_degraded)}")
+    if sub_degraded:
+        by_pair = Counter(f"{e.get('agent') or '?'}  ←  {e.get('degraded_from') or '?'}" for e in sub_degraded)
+        for k, v in by_pair.most_common(10):
+            print(f"  {v:>3}  {k}")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tail", type=int, help="显示最近 N 条原始记录")
     ap.add_argument("--bypass", action="store_true", help="仅 bypass 记录")
+    ap.add_argument("--failures", action="store_true", help="工具失败信号摘要（dispatcher error / sub-agent failed|blocked / degraded_from）")
     ap.add_argument("--since", type=str, help="仅 N (h|d|m) 内 / ISO 时间戳之后")
     ap.add_argument("--hook", type=str, help="过滤 hook 类型（PreToolUse/PostToolUse/SubagentStop）")
     ap.add_argument("--by-hook", action="store_true", help="按 hook 类型聚合")
@@ -224,6 +265,10 @@ def main():
 
     if args.tail:
         show_tail(entries, args.tail)
+        return
+
+    if args.failures:
+        show_failures(entries)
         return
 
     # 聚合视角（可组合，分节输出）
