@@ -147,6 +147,22 @@ run_case "bypass-write-env" 0 "BYPASS ACTIVE" \
   '{"tool_name":"Write","tool_input":{"file_path":".env","content":"X=1"}}' \
   "HARNESS_BYPASS=1"
 
+# --- permission_mode 落审计 ---
+echo ""
+echo "## permission_mode 字段"
+# auto 模式下的灰名单仍 escalate，并多一行 "permission_mode=auto" 提醒
+run_case "ask-auto-mode-extra-hint" 2 "permission_mode=auto" \
+  '{"tool_name":"Edit","tool_input":{"file_path":"src/main/java/x/domain/order/OrderAggregate.java","new_string":"foo"},"permission_mode":"auto"}'
+# audit log 应当含 "permission_mode": "auto" 字段
+if grep -q '"permission_mode": "auto"' "$TMPDIR/.claude/.audit.log" 2>/dev/null; then
+  echo "  ✅ audit-log-records-permission-mode"
+  PASS=$((PASS+1))
+else
+  echo "  ❌ audit-log-records-permission-mode (no permission_mode=auto in audit.log)"
+  FAIL=$((FAIL+1))
+  FAIL_CASES+=("audit-log-records-permission-mode")
+fi
+
 # --- 汇总 ---
 echo ""
 echo "──────────────────────────────────"

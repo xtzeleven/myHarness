@@ -325,6 +325,34 @@ interfaces  →  application  →  domain  ←  infrastructure
 
 **注**：早期（2026-05-09 M8 第一次尝试）实验过 `.bypass-once` 文件式单次授权机制（audit.log 有 3 条残留记录），现已废弃。统一只走 `HARNESS_BYPASS=1` env 变量 + commit message marker + CI 拒合三道。废弃理由见 [ADR-0004](../../docs/adr/0004-deprecate-bypass-once.md)。
 
+### Permission Mode policy（auto mode 集成）
+
+Claude Code 内置 5 种 permission mode：`default` / `acceptEdits` / `plan` / `auto` / `bypassPermissions`。Claude Code 的评估顺序是 **Hooks → deny rules → allow rules → ask rules → mode default**，所以本项目所有 PreToolUse 黑+灰名单在任何 mode 下都仍然先评估并拦截，**包括 auto 与 bypassPermissions**。
+
+**本项目立场**：
+
+| Mode                | 何时用                                      | 本项目态度                                                                |
+| ------------------- | ------------------------------------------- | ------------------------------------------------------------------------- |
+| `default`           | 一般开发                                    | ✅ 推荐默认                                                               |
+| `plan`              | 探索 / 设计 / 不确定改什么时                | ✅ 推荐复杂改动前先 plan                                                  |
+| `acceptEdits`       | 已有清晰 TODO 列表、连续小改、信任范围内    | ⚠️ 慎用，关注 `.git/` / `.claude/` 受保护提示                             |
+| `auto`              | 任务范围明确、Worker 已分解、信任分类器把关 | ⚠️ **不替代灰名单授权**：domain/ / pom.xml 改动仍必须显式问用户           |
+| `bypassPermissions` | 一次性紧急情况                              | ❌ **禁用**：本项目用 `HARNESS_BYPASS=1` 走 hook 内审计，不用 mode 级绕过 |
+
+**auto mode 落地规则**：
+
+1. **审计可见**：`policy-dispatch.py` 把 stdin payload 的 `permission_mode` 写入 `.claude/.audit.log` 每条记录；`audit-log-summary.py --by-permission-mode` 可看分布
+2. **灰名单不让步**：auto mode 下命中 `ask_user` 规则时，hook 额外输出 "↑ 当前 permission_mode=auto，分类器**不可**替代用户授权" 提醒主 Claude 不要把分类器决定当用户授权
+3. **黑名单照常**：所有 deny 规则在 auto 下仍然 exit 2 拦下
+4. **`.git/` / `.claude/` 保护**：Claude Code v2.1.78+ 把这两路径设为受保护，auto / bypassPermissions 也不能写入，本项目无须重复设防
+5. **不在 settings.json 里 `defaultMode: auto`**：把模式切换留给会话级（Shift+Tab）/ CLI flag（`--enable-auto-mode`），避免主仓库强制所有人 auto
+
+**反模式**：
+
+- ❌ 主 Claude 看到"已在 auto mode"就跳过 AskUserQuestion → auto 不等于用户授权
+- ❌ 把 `HARNESS_BYPASS=1` 当 `auto` 替代品 → 两个机制正交，bypass 是放行 hook，auto 是放宽 mode 默认 prompt
+- ❌ `defaultMode: bypassPermissions` 写进 `.claude/settings.json` → 配置级永久绕过，违反审计 policy
+
 ### 审计 policy
 
 所有 hook 拦截 / 灰名单触发 / bypass 使用 → 写 JSONL 到 `.claude/.audit.log`（已 .gitignore），格式：
@@ -337,9 +365,12 @@ interfaces  →  application  →  domain  ←  infrastructure
   "target": "rm -rf /",
   "action": "deny",
   "reason": "rm -rf 根目录",
-  "bypass": false
+  "bypass": false,
+  "permission_mode": "default"
 }
 ```
+
+`permission_mode` 取自 Claude Code PreToolUse payload，可能值：`default` / `acceptEdits` / `plan` / `auto` / `bypassPermissions` / `""`（早期版本不传）。老记录（字段引入前）该字段缺失，summary 工具归为 `(legacy)`。
 
 用 `python .claude/scripts/audit-log-summary.py` 跑摘要（M7-T4 引入）。
 

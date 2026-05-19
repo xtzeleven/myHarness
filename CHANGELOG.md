@@ -7,6 +7,30 @@
 
 ## [Unreleased] — M7 后置 / M8 启动前清账
 
+### 2026-05-19 — Auto mode 集成（E40）
+
+#### Added
+
+- `.claude/rules/engineering-practices.md §15`：新增 "Permission Mode policy（auto mode 集成）" 节，给 5 种 mode 的项目立场表 + auto 落地 5 条规则 + 3 条反模式。
+- `CLAUDE.md §9`：加一段说明 — 黑+灰名单在所有 permission mode 下都先评估，auto 的分类器不替代用户授权。
+- `.claude/hooks/tests/test_pre_tool_use.sh`：新增 2 case（ask-auto-mode-extra-hint / audit-log-records-permission-mode），总 28 case。
+- `docs/improvement-backlog.md §D`：新增 D7 — Auto mode 深度集成（扩 yaml 规则覆盖"软风险"，需观察 daily 使用数据后判断）。
+
+#### Changed
+
+- `.claude/scripts/policy-dispatch.py`：
+  - `audit_log()` 加 `permission_mode` 形参，写入每条 JSONL 记录
+  - `main()` 从 stdin `payload.permission_mode` 读取并透传到所有 audit_log 调用（deny / ask_user / bypass 三路径全覆盖）
+  - auto mode 下命中 `ask_user` 规则时额外输出 "↑ 当前 permission_mode=auto，分类器**不可**替代用户授权" 提醒
+- `.claude/scripts/audit-log-summary.py`：新增 `--by-permission-mode` 聚合视角；老记录（字段引入前）归类为 `(legacy)`，便于识别切换点。
+- `docs/improvement-backlog.md §E`：追加 E40。
+
+#### 验证
+
+- `bash .claude/hooks/tests/test_pre_tool_use.sh` 28 case 全过（含 2 个新 permission_mode case）。
+- `python .claude/scripts/audit-log-summary.py --by-permission-mode` 当前 260 条历史记录全归 `(legacy)`，新写入的 case 显示 `auto`。
+- prettier 改动文件全过。
+
 ### 2026-05-19 — P2 低成本组合（C2 / C5 / C9 / C11）
 
 #### Added

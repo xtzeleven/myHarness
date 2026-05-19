@@ -168,6 +168,8 @@ git status --porcelain
 
 被灰名单拦下时，**必须**让用户明确说"授权"再继续，不可绕过。
 
+**permission mode（auto / plan / acceptEdits / bypassPermissions）下同样适用**：上述拦截在所有 mode 下都先评估生效。auto mode 的分类器**不替代用户授权**；命中灰名单时主对话仍必须 AskUserQuestion，不可因"已 auto"而省略。详见 [.claude/rules/engineering-practices.md §15 Permission Mode policy](.claude/rules/engineering-practices.md#permission-mode-policyauto-mode-集成)。
+
 ## 10. 子目录指引
 
 - 后端 agent 设计：`docs/AGENTS.backend.md`

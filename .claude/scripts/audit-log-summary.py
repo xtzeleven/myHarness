@@ -19,6 +19,7 @@ Usage:
   python .claude/scripts/audit-log-summary.py --by-agent          # 按 sub-agent 聚合
   python .claude/scripts/audit-log-summary.py --by-ext            # 按文件后缀聚合（PostToolUse）
   python .claude/scripts/audit-log-summary.py --by-day            # 按日期聚合
+  python .claude/scripts/audit-log-summary.py --by-permission-mode # 按权限模式聚合（auto/plan/默认...）
   python .claude/scripts/audit-log-summary.py --hook SubagentStop # 过滤 hook 类型
 """
 from __future__ import annotations
@@ -183,6 +184,7 @@ def main():
     ap.add_argument("--by-agent", action="store_true", help="按 sub-agent 聚合（SubagentStop）")
     ap.add_argument("--by-ext", action="store_true", help="按文件后缀聚合（PostToolUse）")
     ap.add_argument("--by-day", action="store_true", help="按日期聚合")
+    ap.add_argument("--by-permission-mode", action="store_true", help="按 permission_mode 聚合（default/acceptEdits/plan/auto/bypassPermissions）")
     args = ap.parse_args()
 
     entries = load_entries()
@@ -195,7 +197,8 @@ def main():
 
     # 聚合视角（可组合，分节输出）
     any_aggregate = any([args.by_hook, args.by_tool, args.by_action,
-                          args.by_agent, args.by_ext, args.by_day])
+                          args.by_agent, args.by_ext, args.by_day,
+                          args.by_permission_mode])
 
     if args.by_hook:
         by_field(entries, lambda e: e.get("hook"), "按 Hook")
@@ -218,6 +221,10 @@ def main():
         print()
     if args.by_day:
         by_field(entries, lambda e: _day_of(e.get("ts", "")), "按日期")
+        print()
+    if args.by_permission_mode:
+        # 老记录无此字段 → 归类为 (legacy)，帮助识别字段引入前后切换点
+        by_field(entries, lambda e: e.get("permission_mode") or "(legacy)", "按 Permission Mode")
         print()
 
     if not any_aggregate:

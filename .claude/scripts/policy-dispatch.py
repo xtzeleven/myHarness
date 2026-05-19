@@ -44,7 +44,7 @@ POLICIES_DIR = Path(__file__).resolve().parent.parent / "rules" / "policies"
 
 # ---------- audit log ----------
 
-def audit_log(action: str, reason: str, *, tool: str, target: str, bypass: bool = False, rule_id: str = "") -> None:
+def audit_log(action: str, reason: str, *, tool: str, target: str, bypass: bool = False, rule_id: str = "", permission_mode: str = "") -> None:
     try:
         AUDIT_LOG.parent.mkdir(parents=True, exist_ok=True)
         entry = {
@@ -56,6 +56,7 @@ def audit_log(action: str, reason: str, *, tool: str, target: str, bypass: bool 
             "reason": reason,
             "rule_id": rule_id,
             "bypass": bypass,
+            "permission_mode": permission_mode,
         }
         with open(AUDIT_LOG, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
@@ -250,12 +251,15 @@ def main() -> int:
     file_path = str(tool_input.get("file_path") or "")
     file_basename = os.path.basename(file_path) if file_path else ""
     new_content = str(tool_input.get("new_string") or tool_input.get("content") or "")
+    # Claude Code 在 PreToolUse payload 注入当前权限模式：
+    # default / acceptEdits / plan / auto / bypassPermissions（不同版本可能略有差异，原样落审计）
+    permission_mode = str(payload.get("permission_mode") or "")
 
     target_for_log = file_path or cmd or ""
 
     # Bypass：放行所有规则但写审计
     if os.environ.get("HARNESS_BYPASS") == "1":
-        audit_log("bypass", "HARNESS_BYPASS=1 in env", tool=tool_name, target=target_for_log, bypass=True)
+        audit_log("bypass", "HARNESS_BYPASS=1 in env", tool=tool_name, target=target_for_log, bypass=True, permission_mode=permission_mode)
         print("[pre-tool-use] ⚠️⚠️⚠️ BYPASS ACTIVE — 黑+灰名单全部放行，仅记录审计 ⚠️⚠️⚠️", file=sys.stderr)
         print("[pre-tool-use] 这不应是常态。CI 检测到 commit message 含 'BYPASS:' 会拒合。", file=sys.stderr)
         # 用量阈值告警：过去 7 天 bypass 次数（含本次）≥ 阈值 → 红字提醒收敛
@@ -277,7 +281,7 @@ def main() -> int:
         if matches_when(rule.get("when") or {}, **eval_kwargs):
             reason = str(rule.get("reason") or "(no reason)")
             rule_id = str(rule.get("id") or "")
-            audit_log("deny", reason, tool=tool_name, target=target_for_log, rule_id=rule_id)
+            audit_log("deny", reason, tool=tool_name, target=target_for_log, rule_id=rule_id, permission_mode=permission_mode)
             print(f"[pre-tool-use] BLOCKED: {reason}", file=sys.stderr)
             print("[pre-tool-use] 如确需执行，请用户在终端手动跑，或调整规则后重试", file=sys.stderr)
             return 2
@@ -289,9 +293,12 @@ def main() -> int:
         if matches_when(rule.get("when") or {}, **eval_kwargs):
             reason = str(rule.get("reason") or "(no reason)")
             rule_id = str(rule.get("id") or "")
-            audit_log("ask_user", reason, tool=tool_name, target=target_for_log, rule_id=rule_id)
+            audit_log("ask_user", reason, tool=tool_name, target=target_for_log, rule_id=rule_id, permission_mode=permission_mode)
             print(f"[pre-tool-use] ⚠️ 待人工授权: {reason}", file=sys.stderr)
             print("[pre-tool-use] 主 Claude：请向用户描述将执行的动作并等待明确授权后再重试，不可绕过。", file=sys.stderr)
+            # auto 模式下灰名单触发额外提醒（auto 的分类器可能想自动放行）
+            if permission_mode == "auto":
+                print("[pre-tool-use] ↑ 当前 permission_mode=auto，分类器**不可**替代用户授权。", file=sys.stderr)
             return 2
 
     # 3) hints — 全部过一遍（多个 hint 可同时触发），不阻塞
