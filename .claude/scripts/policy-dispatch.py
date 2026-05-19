@@ -87,6 +87,42 @@ def remember_hint(msg: str) -> None:
         pass
 
 
+# ---------- bypass usage threshold ----------
+
+BYPASS_WARN_THRESHOLD = int(os.environ.get("HARNESS_BYPASS_WARN_AT", "3"))
+BYPASS_WINDOW_DAYS = 7
+
+
+def count_bypass_in_window() -> int:
+    """统计过去 N 天 .audit.log 中 bypass=true 的次数（含本次之前）。"""
+    if not AUDIT_LOG.exists():
+        return 0
+    cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=BYPASS_WINDOW_DAYS)
+    n = 0
+    try:
+        with open(AUDIT_LOG, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except Exception:
+                    continue
+                if not rec.get("bypass"):
+                    continue
+                ts = rec.get("ts") or ""
+                try:
+                    when = datetime.datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                except Exception:
+                    continue
+                if when >= cutoff:
+                    n += 1
+    except Exception:
+        return n
+    return n
+
+
 # ---------- predicate evaluators ----------
 
 def _as_list(v: Any) -> list[str]:
@@ -222,6 +258,14 @@ def main() -> int:
         audit_log("bypass", "HARNESS_BYPASS=1 in env", tool=tool_name, target=target_for_log, bypass=True)
         print("[pre-tool-use] ⚠️⚠️⚠️ BYPASS ACTIVE — 黑+灰名单全部放行，仅记录审计 ⚠️⚠️⚠️", file=sys.stderr)
         print("[pre-tool-use] 这不应是常态。CI 检测到 commit message 含 'BYPASS:' 会拒合。", file=sys.stderr)
+        # 用量阈值告警：过去 7 天 bypass 次数（含本次）≥ 阈值 → 红字提醒收敛
+        used = count_bypass_in_window()
+        if used >= BYPASS_WARN_THRESHOLD:
+            print(
+                f"\033[31m[pre-tool-use] ❗ bypass 已在过去 {BYPASS_WINDOW_DAYS} 天用了 {used} 次（阈值 {BYPASS_WARN_THRESHOLD}）。"
+                f"这是机制性放行，不应成为日常 — 请回看规则是否需要放宽，或考虑改 policy。\033[0m",
+                file=sys.stderr,
+            )
         return 0
 
     eval_kwargs = dict(cmd=cmd, file_path=file_path, file_basename=file_basename, new_content=new_content)

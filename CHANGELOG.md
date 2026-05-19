@@ -7,6 +7,26 @@
 
 ## [Unreleased] — M7 后置 / M8 启动前清账
 
+### 2026-05-19 — P2 低成本组合（C2 / C5 / C9 / C11）
+
+#### Added
+
+- `.claude/scripts/statusline.py`：Claude Code 状态栏脚本，输出"项目 │ 分支(dirty 标记) │ 模型 · token 估算"，settings.json 注册。**C5 / E37**
+- `AGENTS.md`："Skill vs Agent vs 主对话"小节，职责对照表 + 判断顺序 + 反例。**C9 / E38**
+
+#### Changed
+
+- `docs/loop-architecture.md §3`：新增"硬上限"小节（串行链 ≤ 4 / 并行 ≤ 5 / retry ≤ 2 / 同 agent 单任务 ≤ 3 / escalation ≤ 3 / degradation ≤ 2 / 单任务挂钟 ≤ 30min），明确触顶后必须停下问用户。**C2 / E36**
+- `.claude/scripts/policy-dispatch.py`：bypass 分支累计过去 7 天 `bypass=true` 次数 ≥ 阈值（默认 3，`HARNESS_BYPASS_WARN_AT` 可调）→ 红字 stderr 提醒收敛。**C11 / E39**
+- `.claude/rules/engineering-practices.md §15 Bypass policy`：同步阈值告警条目。**C11**
+- `docs/improvement-backlog.md`：C2 / C5 / C9 / C11 工作量列改 ✅ E36-E39，§E 追加四条完成记录。
+
+#### 验证
+
+- `bash .claude/hooks/tests/test_pre_tool_use.sh` 26 case 仍全过。
+- statusline.py 手测：注入 mock JSON 输出 `项目 │ 分支 │ 模型 · token`，ANSI 颜色与 dirty 标记生效。
+- bypass 阈值告警手测：预置 2 条历史 + 触发第 3 次 → 红字提醒按预期出现。
+
 ### 2026-05-15 — P0-P3 系统性清账（架构 + CI 残留 + telemetry 闭环）
 
 #### Added
