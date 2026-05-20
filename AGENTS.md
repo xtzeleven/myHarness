@@ -12,6 +12,7 @@
 | 重构动手                                | skill `gitnexus-refactoring`                        |
 | review PR / 评估合并风险                | skill `gitnexus-pr-review` 或 agent `code-reviewer` |
 | 索引 / 重建仓库索引                     | skill `gitnexus-cli`                                |
+| 拆需求 / 列子任务 / 写 Gherkin AC       | agent `requirement-decomposer`                      |
 | 实现新功能 / 修 bug（带测试）           | agent `tdd-cycle-driver`                            |
 | DDD 边界 / 聚合 / 领域事件设计          | agent `ddd-architect`                               |
 | Spring 反模式审查 / @Transactional 问题 | agent `spring-boot-reviewer`                        |
@@ -25,16 +26,17 @@
 
 ## 自定义 Agents
 
-| Agent                  | 文件                                                              | 触发关键词                                                        | 模型     | 工具范围                                       |
-| ---------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------- | -------- | ---------------------------------------------- |
-| `tdd-cycle-driver`     | [tdd-cycle-driver.md](.claude/agents/tdd-cycle-driver.md)         | 新功能 / 修 bug / TDD / 红绿重构                                  | sonnet   | Bash, Edit, Write, Read, Glob, Grep            |
-| `code-reviewer`        | [code-reviewer.md](.claude/agents/code-reviewer.md)               | review PR / 当前分支 / 指定文件 / 安全审查                        | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
-| `ddd-architect`        | [ddd-architect.md](.claude/agents/ddd-architect.md)               | 限界上下文 / 聚合边界 / Entity vs VO / 领域事件 / Repository 设计 | **opus** | Read, Glob, Grep, Bash（**只读**）             |
-| `spring-boot-reviewer` | [spring-boot-reviewer.md](.claude/agents/spring-boot-reviewer.md) | @Transactional / 循环依赖 / N+1 / Bean 作用域 / Lombok 滥用       | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
-| `maven-build-doctor`   | [maven-build-doctor.md](.claude/agents/maven-build-doctor.md)     | mvn 编译失败 / 依赖冲突 / NoSuchMethodError / scope / profile     | sonnet   | Read, Glob, Grep, Bash                         |
-| `schema-analyst`       | [schema-analyst.md](.claude/agents/schema-analyst.md)             | 表结构 / 索引 / 慢 SQL / EXPLAIN / N+1 / ER 图                    | sonnet   | Read, Glob, Grep, Bash + MySQL MCP（**只读**） |
-| `migration-author`     | [migration-author.md](.claude/agents/migration-author.md)         | Flyway / Liquibase / 加列 / 改字段 / 迁移脚本 / 回滚              | sonnet   | Read, Glob, Grep, Bash, Edit, Write            |
-| `docs-keeper`          | [docs-keeper.md](.claude/agents/docs-keeper.md)                   | 文档漂移 / sync docs / README 过期 / 新人看不懂                   | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
+| Agent                    | 文件                                                                  | 触发关键词                                                        | 模型     | 工具范围                                       |
+| ------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------- | -------- | ---------------------------------------------- |
+| `requirement-decomposer` | [requirement-decomposer.md](.claude/agents/requirement-decomposer.md) | 拆需求 / INVEST / 写验收标准 / 列子任务 / 拆里程碑                | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
+| `tdd-cycle-driver`       | [tdd-cycle-driver.md](.claude/agents/tdd-cycle-driver.md)             | 新功能 / 修 bug / TDD / 红绿重构                                  | sonnet   | Bash, Edit, Write, Read, Glob, Grep            |
+| `code-reviewer`          | [code-reviewer.md](.claude/agents/code-reviewer.md)                   | review PR / 当前分支 / 指定文件 / 安全审查                        | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
+| `ddd-architect`          | [ddd-architect.md](.claude/agents/ddd-architect.md)                   | 限界上下文 / 聚合边界 / Entity vs VO / 领域事件 / Repository 设计 | **opus** | Read, Glob, Grep, Bash（**只读**）             |
+| `spring-boot-reviewer`   | [spring-boot-reviewer.md](.claude/agents/spring-boot-reviewer.md)     | @Transactional / 循环依赖 / N+1 / Bean 作用域 / Lombok 滥用       | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
+| `maven-build-doctor`     | [maven-build-doctor.md](.claude/agents/maven-build-doctor.md)         | mvn 编译失败 / 依赖冲突 / NoSuchMethodError / scope / profile     | sonnet   | Read, Glob, Grep, Bash                         |
+| `schema-analyst`         | [schema-analyst.md](.claude/agents/schema-analyst.md)                 | 表结构 / 索引 / 慢 SQL / EXPLAIN / N+1 / ER 图                    | sonnet   | Read, Glob, Grep, Bash + MySQL MCP（**只读**） |
+| `migration-author`       | [migration-author.md](.claude/agents/migration-author.md)             | Flyway / Liquibase / 加列 / 改字段 / 迁移脚本 / 回滚              | sonnet   | Read, Glob, Grep, Bash, Edit, Write            |
+| `docs-keeper`            | [docs-keeper.md](.claude/agents/docs-keeper.md)                       | 文档漂移 / sync docs / README 过期 / 新人看不懂                   | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
 
 ## 可用 Skills（外部，已在环境中）
 
@@ -118,16 +120,17 @@ gitnexus 系列 skill 由本机 Claude Code 环境直接提供，**不在 `.clau
 
 按 [loop-architecture §3 escalation](docs/loop-architecture.md) 的策略，每个 Worker 失败 / 卡住时的升级目标：
 
-| Worker                 | 卡住时升级到              | 仍卡升级到                             |
-| ---------------------- | ------------------------- | -------------------------------------- |
-| `tdd-cycle-driver`     | sonnet → opus（同 agent） | Driver → 用户                          |
-| `code-reviewer`        | sonnet → opus             | `spring-boot-reviewer`（专项）+ Driver |
-| `ddd-architect`        | 已 opus，无可升           | Driver → 用户（设计决策需用户拍板）    |
-| `spring-boot-reviewer` | sonnet → opus             | `ddd-architect`（边界问题） + Driver   |
-| `maven-build-doctor`   | sonnet → opus             | `spring-boot-reviewer`（运行时问题）   |
-| `schema-analyst`       | sonnet → opus             | `ddd-architect`（建模问题）            |
-| `migration-author`     | sonnet → opus             | `schema-analyst`（兼容性疑问）         |
-| `docs-keeper`          | sonnet → opus             | Driver → 用户                          |
+| Worker                   | 卡住时升级到              | 仍卡升级到                             |
+| ------------------------ | ------------------------- | -------------------------------------- |
+| `requirement-decomposer` | sonnet → opus             | Driver → 用户（需求模糊需人拍板）      |
+| `tdd-cycle-driver`       | sonnet → opus（同 agent） | Driver → 用户                          |
+| `code-reviewer`          | sonnet → opus             | `spring-boot-reviewer`（专项）+ Driver |
+| `ddd-architect`          | 已 opus，无可升           | Driver → 用户（设计决策需用户拍板）    |
+| `spring-boot-reviewer`   | sonnet → opus             | `ddd-architect`（边界问题） + Driver   |
+| `maven-build-doctor`     | sonnet → opus             | `spring-boot-reviewer`（运行时问题）   |
+| `schema-analyst`         | sonnet → opus             | `ddd-architect`（建模问题）            |
+| `migration-author`       | sonnet → opus             | `schema-analyst`（兼容性疑问）         |
+| `docs-keeper`            | sonnet → opus             | Driver → 用户                          |
 
 **规则**：
 
