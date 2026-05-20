@@ -13,6 +13,7 @@
 | review PR / 评估合并风险                | skill `gitnexus-pr-review` 或 agent `code-reviewer` |
 | 索引 / 重建仓库索引                     | skill `gitnexus-cli`                                |
 | 拆需求 / 列子任务 / 写 Gherkin AC       | agent `requirement-decomposer`                      |
+| 事件风暴 / 业务事件流 / 服务边界候选    | agent `event-storm`                                 |
 | 实现新功能 / 修 bug（带测试）           | agent `tdd-cycle-driver`                            |
 | DDD 边界 / 聚合 / 领域事件设计          | agent `ddd-architect`                               |
 | Spring 反模式审查 / @Transactional 问题 | agent `spring-boot-reviewer`                        |
@@ -29,6 +30,7 @@
 | Agent                    | 文件                                                                  | 触发关键词                                                        | 模型     | 工具范围                                       |
 | ------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------- | -------- | ---------------------------------------------- |
 | `requirement-decomposer` | [requirement-decomposer.md](.claude/agents/requirement-decomposer.md) | 拆需求 / INVEST / 写验收标准 / 列子任务 / 拆里程碑                | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
+| `event-storm`            | [event-storm.md](.claude/agents/event-storm.md)                       | 事件风暴 / 业务事件流 / 服务边界候选 / Actor 梳理                 | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
 | `tdd-cycle-driver`       | [tdd-cycle-driver.md](.claude/agents/tdd-cycle-driver.md)             | 新功能 / 修 bug / TDD / 红绿重构                                  | sonnet   | Bash, Edit, Write, Read, Glob, Grep            |
 | `code-reviewer`          | [code-reviewer.md](.claude/agents/code-reviewer.md)                   | review PR / 当前分支 / 指定文件 / 安全审查                        | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
 | `ddd-architect`          | [ddd-architect.md](.claude/agents/ddd-architect.md)                   | 限界上下文 / 聚合边界 / Entity vs VO / 领域事件 / Repository 设计 | **opus** | Read, Glob, Grep, Bash（**只读**）             |
@@ -123,6 +125,7 @@ gitnexus 系列 skill 由本机 Claude Code 环境直接提供，**不在 `.clau
 | Worker                   | 卡住时升级到              | 仍卡升级到                             |
 | ------------------------ | ------------------------- | -------------------------------------- |
 | `requirement-decomposer` | sonnet → opus             | Driver → 用户（需求模糊需人拍板）      |
+| `event-storm`            | sonnet → opus             | Driver → 用户（服务边界决策需人拍板）  |
 | `tdd-cycle-driver`       | sonnet → opus（同 agent） | Driver → 用户                          |
 | `code-reviewer`          | sonnet → opus             | `spring-boot-reviewer`（专项）+ Driver |
 | `ddd-architect`          | 已 opus，无可升           | Driver → 用户（设计决策需用户拍板）    |
