@@ -66,11 +66,20 @@ fi
 # 3. Memory 索引摘要
 memory_index=""
 home_dir="${HOME:-}"
-user_name="${USER:-${USERNAME:-rw135}}"
+user_name="${USER:-${USERNAME:-unknown}}"
+
+# 动态派生项目 ID（Claude Code 用 cwd 路径替换 / 为 -，去掉盘符冒号）
+project_id=""
+if [ -n "$PWD" ]; then
+  # /d/myGithub/myHarness → D--myGithub-myHarness
+  project_id="$(echo "$PWD" | sed -E 's|^/([a-zA-Z])/|\U\1--|; s|/|-|g')"
+fi
+
 for candidate in \
-  "${home_dir}/.claude/projects/D--myGithub-myHarness/memory/MEMORY.md" \
-  "/c/Users/${user_name}/.claude/projects/D--myGithub-myHarness/memory/MEMORY.md" \
-  "/c/Users/rw135/.claude/projects/D--myGithub-myHarness/memory/MEMORY.md"; do
+  "${home_dir}/.claude/projects/${project_id}/memory/MEMORY.md" \
+  "/c/Users/${user_name}/.claude/projects/${project_id}/memory/MEMORY.md" \
+  "${home_dir}/.claude/projects/D--myGithub-myHarness/memory/MEMORY.md"; do
+  [ -z "$candidate" ] && continue
   if [ -f "$candidate" ]; then
     memory_index="$candidate"
     break

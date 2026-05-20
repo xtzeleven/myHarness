@@ -131,6 +131,7 @@ npx prettier --write  "**/*.{md,json,yml,yaml}"
 
 # 工程实践 / 项目自检（当前可用）
 /audit-practices               # 15 维度工程化自检（对照 engineering-practices.md 15 节）
+/doctor                        # 项目健康一键看板（context / audit / memory / git 五路探针）
 /onboard                       # 新人 5 分钟全局上手
 /sync-docs                     # 手动触发文档同步检查
 
