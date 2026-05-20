@@ -186,6 +186,30 @@ M6 (context) ◄───── M7 (tools+policy) ─► M8 (Java DDD 实例化)
 
 > **载体决策**：参见 [ADR-0002](adr/0002-java-ddd-backend.md)。Java/Spring/Maven/DDD 栈最容易踩坑（Lombok / `@Transactional` / N+1 / 循环依赖），在最容易出错的栈上验证 Harness 有效性最具说服力。
 
+> **产研全链路扩张**：参见 [ADR-0008](adr/0008-process-capability-expansion.md)。M8-T1~T8 主线之前 / 之中嵌入 4 个 Tier 的产研流程性能力（Tier 1 先做：需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查），首发实战对象 = M8 本身 + myHarness 自身。
+
+### M8-T0 — 前置阶段（产研流程性能力）
+
+按 [ADR-0008](adr/0008-process-capability-expansion.md) Tier 1，M8 主线启动前先落地 3 个语言/技术栈无关的流程性资产，并以 M8 计划本身作为首发实战对象：
+
+| 编号   | 子任务                                                                               | 产物                                       |
+| ------ | ------------------------------------------------------------------------------------ | ------------------------------------------ |
+| M8-T0a | 建 `requirement-decomposer` agent（覆盖需求拆解 + 验收标准 AC 生成）                 | `.claude/agents/requirement-decomposer.md` |
+| M8-T0b | 用 T0a 拆 M8-T1~T8 章节为 INVEST 子任务 + Gherkin AC                                 | `docs/m8-decomposition.md`                 |
+| M8-T0c | 建 `event-storm` agent（去 DDD 化的轻量事件风暴 + 服务边界候选）                     | `.claude/agents/event-storm.md`            |
+| M8-T0d | 用 T0c 对 M8-T0b 拆解结果做事件风暴                                                  | `docs/m8-event-storm.md`                   |
+| M8-T0e | 建 `/cross-stage-check` command（产研全链路漂移检查）                                | `.claude/commands/cross-stage-check.md`    |
+| M8-T0f | 用 T0e 扫 myHarness 自身：roadmap ↔ ADR ↔ CHANGELOG ↔ MEMORY.md ↔ AGENTS.md 漂移 | 漂移清单（命令运行时输出，不固化文档）     |
+
+**M8-T0 成功标准**：
+
+- [ ] 3 个 Tier 1 资产 frontmatter 含 `model:` 与触发场景
+- [ ] T0b / T0d 两份产物质量 ≥ 本文 §7 现有 M8 章节
+- [ ] T0f 漂移清单为空或漂移已修；漂移检测能识别本节自身落地后的状态
+- [ ] `/audit-practices` 跑分不退化
+
+**Tier 2/3/4 嵌入说明**：Tier 2（测试用例生成 + 改动分析增强 + code review 增强）随 M8-T3 完成后启动；Tier 3（release notes + ADR 草稿 + 文档同步增强）随 M8-T8 完成后启动；Tier 4 按触发条件随时启动。详见 [ADR-0008](adr/0008-process-capability-expansion.md) §决定·2。
+
 ### 目标
 
 真起 `pom.xml` + `src/`，让 M4-M7 建立的六维度框架在真实 Java 代码上跑一遍，把"框架就位"升级为"框架在真实工程中证明可用"。
