@@ -67,7 +67,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 5. 项目上下文
 
-**项目性质：** myHarness 是 Harness 工程化方法论项目，验证三层 Harness（约束 / 反馈 / 门禁）在真实工程场景下的有效性。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。**能力维度**：M8 主线（Java DDD 代码侧）+ M8-T0 前置阶段（产研全链路流程性能力，含需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查，语言/技术栈无关，详见 [ADR-0008](docs/adr/0008-process-capability-expansion.md)）。当前进度：M7 完成 / M8 待启动（实例化 Java DDD 骨架，详见 [ADR-0002](docs/adr/0002-java-ddd-backend.md)）。
+**项目性质：** myHarness 是 Harness 工程化方法论项目，验证三层 Harness（约束 / 反馈 / 门禁）在真实工程场景下的有效性。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。**能力维度**：M8 主线（Java DDD 代码侧）+ M8-T0 前置阶段（产研全链路流程性能力，含需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查，语言/技术栈无关，详见 [ADR-0008](docs/adr/0008-process-capability-expansion.md)）。当前进度：M7 完成 / **M8-T0 前置阶段进行中**（Tier 1 共 3 资产已落地：`requirement-decomposer` agent + `event-storm` agent + `/cross-stage-check` command）/ **M8 主线**（实例化 Java DDD 骨架，详见 [ADR-0002](docs/adr/0002-java-ddd-backend.md)）待启动。
 
 **技术栈：**
 

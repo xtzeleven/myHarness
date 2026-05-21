@@ -5,7 +5,53 @@
 
 由于本项目是工程化方法论项目而非软件包，"版本"对应 **里程碑（M0–MN）**。
 
-## [Unreleased] — M7 后置 / M8 启动前清账
+## [Unreleased] — M7 后置 / M8-T0 前置阶段 / M8 主线启动前
+
+### 2026-05-21 — M8-T0e/f：跨阶段一致性检查 command + 首发实战
+
+#### Added
+
+- `.claude/commands/cross-stage-check.md`：产研全链路**文档间**漂移检查 command（5 维度：产物存在性 / 状态一致性 / 范围漂移 / 引用链断裂 / 时间线漂移），覆盖 [ADR-0008](docs/adr/0008-process-capability-expansion.md) Tier 1 能力 H。与 `/sync-docs` 互补：sync-docs 查"代码 ↔ 文档"，cross-stage-check 查"文档 ↔ 文档"；不调 agent / 不动文件 / 不扫代码。**M8-T0e**
+
+#### Changed
+
+- `AGENTS.md` 路由速查表：加 "检查产研全链路文档间漂移 → 命令 `/cross-stage-check`" 一行
+- `README.md` L6 status badge / L14 当前状态 / L59 路线表：M8-T0 进行中 + M8 主线待启动 精确化（修 cross-stage-check 首发实战发现的 [P2.3-P2.5] 措辞漂移）
+- `CLAUDE.md` §5 项目性质段："当前进度" 加入 M8-T0 落地状态（修 [P2.2]）
+- `docs/improvement-backlog.md` L4 Status："M7 后置 / M8-T0 前置阶段 / M8 主线启动前需消化"（修 [P2.6]）
+- `docs/roadmap.md` §10 修订记录：加 v0.4 (2026-05-20) "M8-T0 前置阶段引入 + Tier 1 资产落地"（修 [P5.1]）
+- `CHANGELOG.md` `[Unreleased]` 标题："M7 后置 / M8-T0 前置阶段 / M8 主线启动前"（修 [P2.1]）；同时补 2026-05-20 / 2026-05-21 入账段（修 [P3.1]）
+
+#### 验证
+
+- `/cross-stage-check` 首发实战 (**M8-T0f**)：扫 myHarness 自身命中 7 项漂移（5 必修 + 2 需用户拍板）。本批次：5 必修全修 + 2 用户拍板均确认改
+- `.claude/.audit.log` 留痕：`hook=CrossStageCheck action=scanned target=all-stages-20260521`
+- 5 个 Tier 1 资产 frontmatter 检查：2 agents 含 `model: sonnet` + 触发场景关键词；1 command 含 description + argument-hint
+
+### 2026-05-20 — M8-T0a~d：产研全链路扩张 + Tier 1 前两组资产落地
+
+#### Added
+
+- `docs/adr/0008-process-capability-expansion.md`：产研全链路 Harness 能力扩张决策。盘点 16 项能力（60% 零件已就位），按 4 Tier 分批落地；Tier 1 = 需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查；明示 4 条边界约束（语言/技术栈无关 + 实战载体不空跑 + 首发对象绑实物 + 失败回退）+ Tier 4 触发条件机制化。与 [ADR-0002](docs/adr/0002-java-ddd-backend.md) / [ADR-0007](docs/adr/0007-revoke-plugin-pivot.md) 正交。**M8-T0 启动决策**
+- `.claude/agents/requirement-decomposer.md`：需求拆解 + AC 生成 agent（INVEST 必检 / Gherkin AC / 语言技术栈无关 / 不擅自做技术选型 / 不可测需求拒绝输出）。**M8-T0a**
+- `docs/m8-decomposition.md`：用 requirement-decomposer 拆 M8 章节为 3 phase / 16 subtask（P1.1-P3.5）+ 每条 Gherkin AC + 拓扑图 + Self-application 验证 + U1-U8 待澄清清单。**M8-T0b 首发实战**
+- `.claude/agents/event-storm.md`：通用事件风暴 + 服务边界候选 agent（事件命名过去式 / 不依赖 DDD 术语 / 服务边界 ≥ 2 方案 / 不擅自做技术选型 / 拒绝对开发任务流做事件风暴）。**M8-T0c**
+- `docs/m8-event-storm.md`：用 event-storm 对 M8 Phase 2 PlaceOrder 业务流做事件风暴 → 12 事件（7 happy + 5 异常）+ 5 actor + 3 服务边界方案（推荐方案 A 适配 M8）+ 反模式自查 + 与 ddd-architect 衔接建议。**M8-T0d 首发实战**
+
+#### Changed
+
+- `AGENTS.md` 路由速查表 + 自定义 Agents 表：加 `requirement-decomposer` / `event-storm` 两行
+- `CLAUDE.md` §5 项目性质段：加 "能力维度：M8 主线（Java DDD 代码侧）+ M8-T0 前置阶段（产研全链路流程性能力...）"
+- `docs/roadmap.md` §7：加 M8-T0 前置阶段表（6 子任务）+ Tier 2/3/4 嵌入说明（按 ADR-0008 §决定·6）
+- `.claude/hooks/session-start.sh`：hook 可移植性修复（commit `db0a45e`）
+- `docs/adr/README.md` + 多处 markdown 表：prettier 表格对齐（commit `d58382a`）
+
+#### 验证
+
+- 两个新 agent frontmatter 含 `model: sonnet` + 触发场景关键词，满足 [ADR-0008 §边界约束] 与 [roadmap §7 M8-T0 成功标准]
+- m8-decomposition / m8-event-storm 文末含 `<!-- harness:agent-output -->` schema 块，与 [agent-output-schema.md] 一致
+- m8-decomposition.md Self-application 验证全过（INVEST 不达标项有 ⚠️ + 说明 / AC 无模糊词 / 16 子任务拆 3 phase × ≤7）
+- m8-event-storm.md 反模式自查全过（事件命名过去式 / actor 不含"系统" / 服务边界 3 方案 / 12 事件 / happy + 异常都有）
 
 ### 2026-05-19 — P2 剩余低成本组合（C1 / C6 / C8 / C10 / C12 / C16 → E43-E48）
 

@@ -3,7 +3,7 @@
 > 自用 Harness 工程级实践
 > _Real-world coding benchmark for AI assistants_
 
-![Status](https://img.shields.io/badge/status-M7%20done%20%7C%20M8%20pending-green)
+![Status](https://img.shields.io/badge/status-M7%20done%20%7C%20M8--T0%20active%20%7C%20M8%20main%20pending-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Models](https://img.shields.io/badge/models-8%2B-green)
 
@@ -11,7 +11,7 @@
 
 从 Harness 原理开始，把三层 Harness（约束 / 反馈 / 门禁）落地到一个真实的工程场景，验证其在 LLM 辅助开发中的有效性。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。
 
-> **当前状态**：M7 完成（六维度 Harness 框架就绪），M8 待启动（实例化 Java DDD 骨架，详见 [ADR-0002](docs/adr/0002-java-ddd-backend.md)）。
+> **当前状态**：M7 完成（六维度 Harness 框架就绪）；**M8-T0 前置阶段**进行中（产研全链路 3 资产已落地，详见 [ADR-0008](docs/adr/0008-process-capability-expansion.md)）；**M8 主线**（实例化 Java DDD 骨架，详见 [ADR-0002](docs/adr/0002-java-ddd-backend.md)）待启动。
 
 ## 🛠️ 技术路线
 
@@ -46,17 +46,18 @@
 
 ## 📊 阶段性路线
 
-| 阶段   | 目标                                                                | 状态      |
-| ------ | ------------------------------------------------------------------- | --------- |
-| **M0** | 项目立项，写下三层架构假设                                          | ✅ 完成   |
-| **M1** | Layer 1 落地（CLAUDE.md + rules + PreToolUse）                      | ✅ 完成   |
-| **M2** | Layer 2 落地（hooks + agents + commands）                           | ✅ 完成   |
-| **M3** | Layer 3 落地（CI + 提交规范 + 必需文件门禁）                        | ✅ 完成   |
-| **M4** | Memory 启用（决策原因 + 项目踩坑两类，索引 `MEMORY.md`）            | ✅ 完成   |
-| **M5** | Loop 架构（Driver/Worker 调度 + 三策略 + `.session.state` 恢复）    | ✅ 完成   |
-| **M6** | Context 治理（token 预算 ≤ 8K + 按需 hint + 子目录 CLAUDE.md 规划） | ✅ 完成   |
-| **M7** | Tools 治理 + Policy 机制化（版本锁 + 降级链 + bypass + audit log）  | ✅ 完成   |
-| **M8** | 实例化 Java DDD 骨架（六维度回归测试场）                            | ⏭️ 待启动 |
+| 阶段      | 目标                                                                     | 状态          |
+| --------- | ------------------------------------------------------------------------ | ------------- |
+| **M0**    | 项目立项，写下三层架构假设                                               | ✅ 完成       |
+| **M1**    | Layer 1 落地（CLAUDE.md + rules + PreToolUse）                           | ✅ 完成       |
+| **M2**    | Layer 2 落地（hooks + agents + commands）                                | ✅ 完成       |
+| **M3**    | Layer 3 落地（CI + 提交规范 + 必需文件门禁）                             | ✅ 完成       |
+| **M4**    | Memory 启用（决策原因 + 项目踩坑两类，索引 `MEMORY.md`）                 | ✅ 完成       |
+| **M5**    | Loop 架构（Driver/Worker 调度 + 三策略 + `.session.state` 恢复）         | ✅ 完成       |
+| **M6**    | Context 治理（token 预算 ≤ 8K + 按需 hint + 子目录 CLAUDE.md 规划）      | ✅ 完成       |
+| **M7**    | Tools 治理 + Policy 机制化（版本锁 + 降级链 + bypass + audit log）       | ✅ 完成       |
+| **M8-T0** | 产研全链路前置阶段（需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查） | ⏳ 进行中     |
+| **M8**    | 实例化 Java DDD 骨架（六维度回归测试场）                                 | ⏭️ 主线待启动 |
 
 ## 🚀 快速上手
 
