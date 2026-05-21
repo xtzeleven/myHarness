@@ -1,0 +1,2 @@
+# Application 层：用例编排 / 事务边界（@Transactional 仅在此层）
+# 详见根 CLAUDE.md §5 + engineering-practices §12

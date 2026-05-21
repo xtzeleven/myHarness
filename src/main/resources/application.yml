@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: harness
+  # Phase 1 阶段尚无真实数据库使用；排除 DataSource / Flyway 相关 autoconfig，让 Spring Boot 能空启动。
+  # M8-T3（P2.1+ 第一个 BC 落地）后移除本段，按真实数据源配置。
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+      - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+
+server:
+  port: 8080
+
+# MyBatis-Plus 全局配置（M8-T3 启用 BC 时生效）
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+# 日志（按 §13：SLF4J 参数化输出，不写敏感字段）
+logging:
+  level:
+    root: INFO
+    com.example.harness: DEBUG

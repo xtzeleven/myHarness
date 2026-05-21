@@ -67,7 +67,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 5. 项目上下文
 
-**项目性质：** myHarness 是 Harness 工程化方法论项目，验证三层 Harness（约束 / 反馈 / 门禁）在真实工程场景下的有效性。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。**能力维度**：M8 主线（Java DDD 代码侧）+ M8-T0 前置阶段（产研全链路流程性能力，含需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查，语言/技术栈无关，详见 [ADR-0008](docs/adr/0008-process-capability-expansion.md)）。当前进度：M7 完成 / **M8-T0 前置阶段进行中**（Tier 1 共 3 资产已落地：`requirement-decomposer` agent + `event-storm` agent + `/cross-stage-check` command）/ **M8 主线**（实例化 Java DDD 骨架，详见 [ADR-0002](docs/adr/0002-java-ddd-backend.md)）待启动。
+**项目性质：** myHarness 是 Harness 工程化方法论项目，验证三层 Harness（约束 / 反馈 / 门禁）在真实工程场景下的有效性。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。**能力维度**：M8 主线（Java DDD 代码侧）+ M8-T0 前置阶段（产研全链路流程性能力，含需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查，语言/技术栈无关，详见 [ADR-0008](docs/adr/0008-process-capability-expansion.md)）。当前进度：M7 完成 / **M8-T0 Tier 1 已完成**（3 资产：`requirement-decomposer` agent + `event-storm` agent + `/cross-stage-check` command）/ **M8 主线 Phase 1 骨架已落地**（pom.xml + Maven Wrapper + DDD 四层目录 + 主类 + smoke test，详见 [ADR-0002](docs/adr/0002-java-ddd-backend.md)）/ **Phase 2**（第一个 BC `order`）待启动。
 
 **技术栈：**
 
@@ -116,7 +116,7 @@ DDD 依赖方向 **严格单向**：interfaces → application → domain ← in
 
 ## 7. 测试 / 校验命令
 
-> 注：M8（实例化 Java DDD 骨架）尚未启动，`pom.xml` 与 `src/` 暂未实例化。下面 `mvn` 命令在 M8 启动后才可用；当前仅文档 / 配置 / 工程实践三类命令可用。
+> 注：M8 主线 Phase 1 骨架已落地（`pom.xml` + Maven Wrapper + `src/` 四层目录 + 主类 + smoke test）；Phase 2（第一个 BC `order`）待启动。`mvn` 命令可用，**前置**：本机需 JDK 17（`.tool-versions` 锁 `java temurin-17.0.13+11`）。当前会话首次落地时 Java 1.8，`./mvnw clean compile` 验证留待用户装好 JDK 17 后手动跑。
 
 ```bash
 # Java / Maven（M4 后启用）

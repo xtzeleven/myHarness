@@ -25,6 +25,17 @@
 
 U1-U5 必须在 Phase 1 启动前定。U6-U8 可在过程中按需澄清。
 
+**2026-05-21 拍板**（M8 主线 Phase 1 启动前会话）：
+
+- **U1** = MyBatis-Plus（spring-boot-reviewer 主覆盖 JPA 反模式，MyBatis 规则后续补强）
+- **U2** = testcontainers + MySQL（与生产同构，避免 H2 方言差异掩盖 migration 问题）
+- **U3** = `order`（单数，符合 DDD 习惯，按 roadmap §7 建议）
+- **U4** = `com.example.harness`（包基址，所有 src/ 文件锚定）
+- **U5** = Flyway（轻量 SQL-first，与 spring-boot-starter-jdbc 集成顺畅）
+- U6/U7/U8 按 engineering-practices §13 默认（Lombok 限 VO @Value / JUnit5+AssertJ+Mockito / gitnexus 索引随 P3.3）
+
+Phase 1 骨架（P1.1-P1.4）已实施；P1.5 验证（`./mvnw clean compile`）待本机装 JDK 17 后手动跑。
+
 ---
 
 ## Phase 1 — 项目骨架（覆盖 M8-T1 + T2）
