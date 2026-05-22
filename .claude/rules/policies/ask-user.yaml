@@ -53,3 +53,19 @@
     file_basename_in: ['pom.xml']
     new_content_present: false
   reason: 'pom.xml 整文件改写（请确认未变更主要依赖版本）'
+
+# --- D8 follow-up（M8-T1 实测盲点修复）：Bash 写敏感文件 ---
+# pom-major-deps / ddd-aggregate-boundary 仅 match Edit/Write/MultiEdit；
+# Bash heredoc / `>` 重定向 / tee / sed -i 可绕过 → 在 Bash tool 上补同义规则。
+
+- id: bash-pom-write
+  tool: Bash
+  when:
+    cmd_matches: '(>\s*\S*pom\.xml\b|\btee\s+\S*pom\.xml\b|\bsed\s+-i\s+\S+\s+\S*pom\.xml\b)'
+  reason: 'Bash 写 pom.xml（重定向 / tee / sed -i 绕开 Edit/Write 拦截）— 等同 pom-major-deps 主依赖审查'
+
+- id: bash-domain-boundary-write
+  tool: Bash
+  when:
+    cmd_matches: '(>\s*\S*src/main/java/\S*/domain/\S+\.java\b|\btee\s+\S*src/main/java/\S*/domain/\S+\.java\b|\bsed\s+-i\s+\S+\s+\S*src/main/java/\S*/domain/\S+\.java\b)'
+  reason: 'Bash 写 src/main/java/.../domain/ 下 .java 文件（重定向 / tee / sed -i 绕开 Edit/Write 拦截）— 触发 DDD 边界审查'

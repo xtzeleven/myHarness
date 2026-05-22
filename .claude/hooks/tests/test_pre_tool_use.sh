@@ -137,6 +137,20 @@ run_case "ask-pom-spring-boot" 2 "依赖升级" \
 run_case "ask-pom-bare-rewrite" 2 "整文件改写" \
   '{"tool_name":"Write","tool_input":{"file_path":"pom.xml","content":""}}'
 
+# --- Bash 写敏感文件（D8 follow-up：Edit/Write 拦截被 heredoc / 重定向 / tee / sed -i 绕过）---
+echo ""
+echo "## Bash 写敏感文件"
+run_case "ask-bash-pom-redirect" 2 "Bash 写 pom.xml" \
+  '{"tool_name":"Bash","tool_input":{"command":"cat > pom.xml"}}'
+run_case "ask-bash-pom-tee" 2 "Bash 写 pom.xml" \
+  '{"tool_name":"Bash","tool_input":{"command":"tee pom.xml < input.xml"}}'
+run_case "ask-bash-pom-sed-i" 2 "Bash 写 pom.xml" \
+  '{"tool_name":"Bash","tool_input":{"command":"sed -i s/1.0/2.0/ pom.xml"}}'
+run_case "ask-bash-domain-redirect" 2 "DDD 边界" \
+  '{"tool_name":"Bash","tool_input":{"command":"echo package > src/main/java/com/x/domain/order/Foo.java"}}'
+run_case "allow-bash-cat-pom" 0 "" \
+  '{"tool_name":"Bash","tool_input":{"command":"cat pom.xml"}}'
+
 # --- Bypass（HARNESS_BYPASS=1）---
 echo ""
 echo "## Bypass 放行"

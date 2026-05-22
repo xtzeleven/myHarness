@@ -7,6 +7,27 @@
 
 ## [Unreleased] — M8-T0 Tier 1 完成 / M8 主线 Phase 1 骨架 / Phase 2 待启动
 
+### 2026-05-22 — D8 hook 规则补强：Bash 写 pom.xml / domain/ 也拦下
+
+#### Added
+
+- `.claude/rules/policies/ask-user.yaml`：补 2 灰名单规则覆盖"Bash 绕过 Edit/Write 拦截"盲点：
+  - `bash-pom-write`：Bash 通过 `>` 重定向 / `tee` / `sed -i` 写 `pom.xml` → 触发同 `pom-major-deps` 主依赖审查
+  - `bash-domain-boundary-write`：Bash 通过 `>` 重定向 / `tee` / `sed -i` 写 `src/main/java/.../domain/*.java` → 触发同 `ddd-aggregate-boundary` DDD 边界审查
+- `.claude/hooks/tests/test_pre_tool_use.sh`：新增"Bash 写敏感文件"区段 5 case（28 → 33 total）：
+  - 4 命中（pom redirect / pom tee / pom sed -i / domain redirect）
+  - 1 false-positive 防御（`cat pom.xml` 应放行）
+
+#### Changed
+
+- `docs/improvement-backlog.md`：D8 → §E（E49 完成项，标 ✅）
+
+#### 验证
+
+- `bash .claude/hooks/tests/test_pre_tool_use.sh`：33/33 全过
+- `python .claude/scripts/policy-dispatch.py --validate`：all rules pass schema check
+- 关闭 2026-05-21 段"未完 follow-up" 的 D8 条目
+
 ### 2026-05-21 — M8-T1 + M8-T2：Phase 1 项目骨架 + U1-U5 拍板
 
 #### Added
@@ -42,7 +63,6 @@
 
 #### 未完 follow-up
 
-- **D8 hook 规则补强**：`pom-major-deps` / `ddd-aggregate-boundary` 等规则仅 match Edit/Write/MultiEdit，需扩到 Bash 写文件场景（详见 `docs/improvement-backlog.md §D D8`）
 - 本机 Java 17 装好后跑 `./mvnw clean compile` 验证 Phase 1 骨架（P1.5）
 - M8-T3 / P2.1 启动时，移除 `application.yml` 中的 `spring.autoconfigure.exclude`（DataSource/Flyway autoconfig）
 
