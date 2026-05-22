@@ -5,7 +5,28 @@
 
 由于本项目是工程化方法论项目而非软件包，"版本"对应 **里程碑（M0–MN）**。
 
-## [Unreleased] — M8-T0 Tier 1 完成 / M8 主线 Phase 1 骨架 + Phase 2 P2.1 / P2.2-P2.6 待启动
+## [Unreleased] — M8-T0 Tier 1 完成 / M8 主线 Phase 1 骨架 + Phase 2 P2.1+P2.2 / P2.3-P2.6 待启动
+
+### 2026-05-22 — M8-T3 / P2.2：`OrderRepository` 接口（domain 层）
+
+#### Added
+
+- `src/main/java/com/example/harness/domain/order/repository/OrderRepository.java`：
+  - `Order save(Order order)`
+  - `Optional<Order> findById(OrderId id)`
+  - `List<Order> findActiveByCustomer(String customerId)`（active 当前定义 = `status == PENDING`，javadoc 写明）
+- 子包 `domain/order/repository/`（首次落地；后续聚合的 Repository 同样走 `domain/<bc>/repository/` 子包）
+
+#### 验证
+
+- ✅ AC#1：`grep "^import " OrderRepository.java` 仅 `java.util.{List,Optional}` + `com.example.harness.domain.order.{Order,OrderId}`，无 infrastructure / spring import
+- ✅ AC#2：方法名"表达业务意图"（`findActiveByCustomer` 而非 `findByStatusAndCustomerId`），返回类型聚合根 `Order` / `List<Order>` / `Optional<Order>`
+- ⚠️ **灰名单未触发（Windows 路径分隔符 bug）**：`ddd-aggregate-boundary` 规则 `file_path_matches: 'src/main/java/.*/domain/'` 用正斜杠，Windows 上 Claude Code 传入的 `file_path` 是反斜杠 `D:\...\src\main\java\...\domain\...`，正则不匹配 → 规则在 Windows 上全失效。用户在主对话已显式授权写本文件（M8-T1 同款"声明授权"流程），但 hook 端没拦下 → audit log 仅有 PostToolUse `executed` 记录，无 `ask_user` 记录。新 backlog 项**候选 D9** 跟踪修法（dispatcher 评估 `file_path_matches` 时 normalize path / 或 yaml 用 `[/\\]` 兼容写法）
+
+#### 未完 follow-up
+
+- **候选 D9**：所有 `file_path_matches` 规则在 Windows 上失效（dispatcher path normalize 或 yaml 规则兼容写法）。影响：`ddd-aggregate-boundary` / `write-credentials-dir` / `hint-domain-layer` / `hint-infrastructure-layer` / `hint-application-layer` / `hint-migration-files` / `hint-spring-config` / `hint-agent-md` 8 条规则。建议下次 commit 前修
+- P2.3 `OrderRepository` 实现（infrastructure 层 + MyBatis-Plus）— **依赖**：本机 JDK 17（跑 mvn test 验证 testcontainers MySQL）
 
 ### 2026-05-22 — M8-T3 / P2.1：`Order` 聚合根 + `OrderItem` / `OrderId` VO + `EmptyOrderException`
 
