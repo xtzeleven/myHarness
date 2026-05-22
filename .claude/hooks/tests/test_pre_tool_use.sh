@@ -137,6 +137,15 @@ run_case "ask-pom-spring-boot" 2 "依赖升级" \
 run_case "ask-pom-bare-rewrite" 2 "整文件改写" \
   '{"tool_name":"Write","tool_input":{"file_path":"pom.xml","content":""}}'
 
+# --- Windows path normalize（D9 回归）：Claude Code 在 Windows 下传反斜杠路径，
+#     dispatcher 必须 normalize 才能让 file_path_matches 正斜杠正则生效 ---
+echo ""
+echo "## Windows path (D9)"
+run_case "ask-domain-aggregate-winpath" 2 "DDD 边界" \
+  '{"tool_name":"Write","tool_input":{"file_path":"D:\\dev\\src\\main\\java\\com\\x\\domain\\order\\OrderAggregateRoot.java","content":"package x;"}}'
+run_case "allow-application-winpath" 0 "" \
+  '{"tool_name":"Write","tool_input":{"file_path":"D:\\dev\\src\\main\\java\\com\\x\\application\\PlaceOrderHandler.java","content":"package x;"}}'
+
 # --- Bash 写敏感文件（D8 follow-up：Edit/Write 拦截被 heredoc / 重定向 / tee / sed -i 绕过）---
 echo ""
 echo "## Bash 写敏感文件"

@@ -7,6 +7,31 @@
 
 ## [Unreleased] — M8-T0 Tier 1 完成 / M8 主线 Phase 1 骨架 + Phase 2 P2.1-P2.3 / P2.4-P2.6 待启动
 
+### 2026-05-22 — D9 hook 规则补强：dispatcher file_path 反斜杠 normalize（Windows 兼容）
+
+#### Fixed
+
+- `.claude/scripts/policy-dispatch.py` `main()` 把 `file_path` 中的 `\` 替换为 `/`：Windows 上 Claude Code 传入的 `file_path` 是反斜杠（`D:\...\src\main\java\...\domain\...`），而所有 yaml 规则的 `file_path_matches` 用正斜杠正则 → 此前 **8 条 file_path_matches 规则在 Windows 上全失效**（M8-T3 P2.2 / P2.3 实测加深证据）：
+  - `ask-user.yaml > ddd-aggregate-boundary`
+  - `deny.yaml > write-credentials-dir`
+  - `hints.yaml > hint-domain-layer / hint-infrastructure-layer / hint-application-layer / hint-migration-files / hint-spring-config / hint-agent-md`
+
+#### Added
+
+- `.claude/hooks/tests/test_pre_tool_use.sh`：新区段 `## Windows path (D9)` 2 case（33 → 35 total）：
+  - `ask-domain-aggregate-winpath`：反斜杠 `D:\dev\src\main\java\com\x\domain\order\OrderAggregateRoot.java` Write 应触发 `ddd-aggregate-boundary` 灰名单
+  - `allow-application-winpath`：反斜杠 application 层文件不该误触发（防 normalize 引入新误判）
+
+#### Changed
+
+- `docs/improvement-backlog.md`：新增 §E `E50` 完成项（D9 首次正式入账 §E，无 §D strikethrough — D9 仅在 P2.2 commit message / CHANGELOG follow-up 中作"候选"提及，未进过 §D 表格）
+
+#### 验证
+
+- `bash test_pre_tool_use.sh` → 35/35 全过
+- `python policy-dispatch.py --validate` → all rules pass schema check
+- normalize 不破坏现有 33 case（含此前用正斜杠 file_path 的 `ask-domain-aggregate` 等）
+
 ### 2026-05-22 — M8-T3 / P2.3：`OrderRepository` 实现（infrastructure 层 / MyBatis-Plus + items JSON）
 
 #### Added

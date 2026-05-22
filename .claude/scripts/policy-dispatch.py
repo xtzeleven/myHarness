@@ -340,7 +340,12 @@ def main() -> int:
     tool_name = payload.get("tool_name") or ""
     tool_input = payload.get("tool_input") or {}
     cmd = str(tool_input.get("command") or "")
-    file_path = str(tool_input.get("file_path") or "")
+    # D9 修复：Windows 上 Claude Code 传入的 file_path 是反斜杠 D:\a\b\c.java，
+    # 而所有 yaml 规则的 file_path_matches / file_path_glob 用正斜杠正则。
+    # normalize 一律转正斜杠，让 8 条 file_path_matches 规则跨平台生效。
+    # basename 在 normalized path 上仍正确（os.path.basename("D:/a/b/c.java") == "c.java"）。
+    # target_for_log 同步用 normalized：跨平台 audit log 一致。
+    file_path = str(tool_input.get("file_path") or "").replace("\\", "/")
     file_basename = os.path.basename(file_path) if file_path else ""
     new_content = str(tool_input.get("new_string") or tool_input.get("content") or "")
     # Claude Code 在 PreToolUse payload 注入当前权限模式：
