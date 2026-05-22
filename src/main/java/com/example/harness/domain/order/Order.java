@@ -47,6 +47,20 @@ public class Order {
                 OrderStatus.PENDING);
     }
 
+    /**
+     * 从已持久化的状态重建聚合根。
+     *
+     * <p>**仅供 Repository 实现使用**：业务流程必须走 {@link #place(String, List)}（含 items 校验、ID 生成）。
+     * 本方法不重复 place 的校验 —— 历史数据若有"边缘合法"状态（如 items 为空但 status=REJECTED），
+     * 仍应能复原，否则 Repository 读不回历史聚合。
+     */
+    public static Order reconstitute(OrderId id, String customerId, List<OrderItem> items, OrderStatus status) {
+        Objects.requireNonNull(id, "id must not be null");
+        Objects.requireNonNull(customerId, "customerId must not be null");
+        Objects.requireNonNull(status, "status must not be null");
+        return new Order(id, customerId, items == null ? List.of() : List.copyOf(items), status);
+    }
+
     public OrderId id() {
         return id;
     }

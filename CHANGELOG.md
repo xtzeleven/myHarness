@@ -5,7 +5,35 @@
 
 由于本项目是工程化方法论项目而非软件包，"版本"对应 **里程碑（M0–MN）**。
 
-## [Unreleased] — M8-T0 Tier 1 完成 / M8 主线 Phase 1 骨架 + Phase 2 P2.1+P2.2 / P2.3-P2.6 待启动
+## [Unreleased] — M8-T0 Tier 1 完成 / M8 主线 Phase 1 骨架 + Phase 2 P2.1-P2.3 / P2.4-P2.6 待启动
+
+### 2026-05-22 — M8-T3 / P2.3：`OrderRepository` 实现（infrastructure 层 / MyBatis-Plus + items JSON）
+
+#### Added
+
+- `src/main/java/com/example/harness/infrastructure/order/persistence/`（**首次落地** infrastructure 层）：
+  - `OrderPO.java`：`@TableName(value="orders", autoResultMap=true)`，`@TableId(ASSIGN_UUID)` UUID 主键；`items` 用 `@TableField(value="items_json", typeHandler=JacksonTypeHandler.class)` 走方案 B（JSON 列）
+  - `OrderMapper.java`：`extends BaseMapper<OrderPO>` 空接口；CRUD 全走 MyBatis-Plus 内置 `insert` / `selectById` / `selectList(LambdaQueryWrapper)`
+  - `OrderPersistenceAdapter.java`：`@Repository implements OrderRepository`；构造器注入 OrderMapper；3 方法体走 selectById 判定 insert vs updateById、LambdaQueryWrapper 查 active；含 private static `toPO`/`toDomain` 转换
+- `src/test/resources/application.yml`（**首次落地** test 资源）：测试环境排除 `DataSource / DataSourceTransactionManager / Flyway / MybatisPlusAutoConfiguration` autoconfig — 让 `HarnessApplicationTests.contextLoads` 不被新加的 `@Repository` Adapter 拖死（main 配置已排除前 3 项，本文件 + MybatisPlusAutoConfiguration）
+
+#### Changed
+
+- `domain/order/Order.java`：加 `public static Order reconstitute(OrderId, String customerId, List<OrderItem>, OrderStatus)` 给 Repository 实现重建已存在聚合用。javadoc 明示"仅供 Repository 实现使用，业务流程必须走 place()"，不重复 place 的 items 校验（历史"边缘合法"数据须能复原）
+
+#### 验证
+
+- ✅ AC#1.a：`grep -rE "^import com\.baomidou\.mybatisplus" src/main/java/com/example/harness/infrastructure/` → 7 个 import（BaseMapper / LambdaQueryWrapper / @TableId / @TableField / @TableName / @IdType / JacksonTypeHandler），**仅**在 OrderMapper / OrderPersistenceAdapter / OrderPO 3 个文件内
+- ✅ AC#1.b：`grep -rnE "^import (com\.baomidou|org\.springframework|jakarta\.persistence|com\.fasterxml\.jackson)" src/main/java/com/example/harness/domain/` → 空输出（domain/ 仍纯净）
+- ⚠️ **AC#2 待端到端验证**（save → findById → equals）：依赖 P2.6 Migration + testcontainers MySQL；本机 Java 1.8 跑不了，留 P1.5+P2.6 一起跑
+- ⚠️ **预期 hint 仍未触发**（D9 Windows path bug 持续）：本批次新建 infrastructure/ 应触发 `hint-infrastructure-layer`，新加 reconstitute() 应触发 `hint-domain-layer`，实测两个都没触发 — D9 影响面进一步确认
+
+#### 未完 follow-up
+
+- **AC#2 端到端跑通**（本机 JDK 17 + Docker + P2.6 Migration）
+- **D9 Windows path bug** — P2.3 后建议立即修，否则 P2.4 改 application 层 hint 仍不触发
+- **P2.4 PlaceOrderHandler**：依赖 P2.3 ✅ + P2.2 ✅，可直接启动
+- **MyBatis-Plus + Lombok `@Value` Jackson 反序列化**：OrderItem 用 Lombok `@Value`（无默认构造），P2.6 跑测试时如 Jackson 反序列化失败，需给 OrderItem 加 `@JsonCreator` + `@JsonProperty`（此改动会触发 hint-domain-layer，但 D9 未修前实际不会拦）
 
 ### 2026-05-22 — M8-T3 / P2.2：`OrderRepository` 接口（domain 层）
 
