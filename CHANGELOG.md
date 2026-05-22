@@ -5,7 +5,36 @@
 
 由于本项目是工程化方法论项目而非软件包，"版本"对应 **里程碑（M0–MN）**。
 
-## [Unreleased] — M8-T0 Tier 1 完成 / M8 主线 Phase 1 骨架 / Phase 2 待启动
+## [Unreleased] — M8-T0 Tier 1 完成 / M8 主线 Phase 1 骨架 + Phase 2 P2.1 / P2.2-P2.6 待启动
+
+### 2026-05-22 — M8-T3 / P2.1：`Order` 聚合根 + `OrderItem` / `OrderId` VO + `EmptyOrderException`
+
+#### Added
+
+- `src/main/java/com/example/harness/domain/order/`（第一个 BC `order` 的 domain 建模）：
+  - `OrderId.java`：typed identifier VO（Lombok `@Value` 包 UUID + `generate()` 工厂）
+  - `OrderItem.java`：VO（Lombok `@Value`：`sku` / `quantity` / `unitPrice: BigDecimal`）
+  - `OrderStatus.java`：enum `PENDING / CONFIRMED / REJECTED / EXPIRED`（与 [m8-event-storm](docs/m8-event-storm.md) 时间线一致）
+  - `Order.java`：聚合根（**不用 Lombok 注解**避免 `@Data` 暴露 setter）。手写 private ctor + `public static Order place(customerId, items)` factory；`items` 经 `List.copyOf` 不可变；`equals/hashCode` 仅基于 `id`（DDD 标准）
+  - `EmptyOrderException.java`：domain exception，`place()` 当 items 为 null / empty 时抛
+- `src/test/java/com/example/harness/domain/order/` 3 个测试类：
+  - `OrderIdTest`：typed equality / `generate()` 唯一性
+  - `OrderItemTest`：全字段 `equals/hashCode` + 反射断言"字段全 final 无 setter"（守护 AC#3 不被未来 PR 退化）
+  - `OrderTest`：`place_returnsPendingOrder` / 空 items 抛 / null items 抛 / `items()` 不可变 / `equals` 仅基于 id（覆盖 AC#2 + 聚合根标识语义）
+
+#### 验证
+
+- ✅ AC#1（`grep -rE "^import (org\.springframework|jakarta\.persistence|com\.fasterxml\.jackson)" src/main/java/com/example/harness/domain/` 空输出）— 仅 import `java.*` + `lombok.Value`
+- ✅ AC#2 / AC#3 代码层满足；测试断言守护
+- ✅ PreToolUse hook 全程无 `BLOCKED` / `⚠️ 待人工授权`（5 个文件名均不命中 `ddd-aggregate-boundary` 的 `(Aggregate|Repository|Event)\.java$` 正则）；仅触发 `💡 提示: 改 domain 层前建议调 ddd-architect agent`（hint 性，本会话已去重）
+- ⚠️ `./mvnw test -Dtest='Order*'` 验证待手动：本机 Java 1.8 不满足 Java 17 toolchain，待 P1.5 装好 JDK 17 后随 P1.5 一并跑
+
+#### 未完 follow-up
+
+- 本机装 JDK 17 后 `./mvnw test -Dtest='Order*'` 跑 5+2+2 = 9 个测试方法（含 P1.5 验证）
+- P2.2 `OrderRepository` 接口（domain 层）— **会触发 `ddd-aggregate-boundary` 灰名单**，下次开工时请准备显式授权
+- P2.4 PlaceOrderHandler 时给 `Order` 加 `confirm()` / `reject()` / `expire()` 状态转移方法 + 同步 `OrderPlaced` / `OrderConfirmed` 等 DomainEvent
+- 引入 Customer BC 后把 `Order.customerId: String` 升级为 typed `CustomerId` VO
 
 ### 2026-05-22 — D8 hook 规则补强：Bash 写 pom.xml / domain/ 也拦下
 
