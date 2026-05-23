@@ -1,13 +1,19 @@
 spring:
   application:
     name: harness
-  # Phase 1 阶段尚无真实数据库使用；排除 DataSource / Flyway 相关 autoconfig，让 Spring Boot 能空启动。
-  # M8-T3（P2.1+ 第一个 BC 落地）后移除本段，按真实数据源配置。
+  # M8-T3 P2.1-P2.5 仍未提供真实数据源（dev 走 testcontainers 集成测，main 无 dev 库连接信息）。
+  # 排除 DataSource / Flyway autoconfig，让本地 `./mvnw spring-boot:run` 能空启动；
+  # 真集成测由 OrderPersistenceAdapterIT 自带 testcontainers DataSource + Flyway 配置。
+  # 后续若引入 dev MySQL 实例，删本节并迁到 dev/prod profile（参 docs/mcp-onboarding.md）。
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
       - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+  # Flyway 默认 locations 即 classpath:db/migration；显式写出意图：V1__create_orders.sql 之后的迁移在此累加。
+  flyway:
+    locations: classpath:db/migration
+    baseline-on-migrate: true
 
 server:
   port: 8080
