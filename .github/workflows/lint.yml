@@ -218,6 +218,10 @@ jobs:
   commit-lint:
     name: Conventional Commits format
     runs-on: ubuntu-latest
+    # 只在 PR 合入前把关：conventional-commit 是"入库门禁"，不是"入库后追责"。
+    # push 事件回溯 HEAD~5 只会永久卡在历史里的坏 commit 上，改不掉也补救不了。
+    # 正常流程所有 commit 都经 PR，覆盖不丢失。
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -225,11 +229,7 @@ jobs:
       - name: Check commit messages match Conventional Commits
         run: |
           set -e
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
-          else
-            range="HEAD~5..HEAD"
-          fi
+          range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
           # Regex: type(scope)?!?: subject  (allow Chinese subject)
           # Types: feat fix docs style refactor perf test build ci chore revert
           pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^)]+\))?!?:[[:space:]]+.+'
