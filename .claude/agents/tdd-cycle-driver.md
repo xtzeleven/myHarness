@@ -67,3 +67,22 @@ model: sonnet
 - 跳过红，直接写实现再补测试 → 不是 TDD
 - 在红的状态下重构 → 失去安全网
 - 为了让测试过而修改测试断言 → 作弊
+
+## 输出契约
+
+所有循环结束时在末尾附 schema 块（格式见 [docs/agent-output-schema.md](../../docs/agent-output-schema.md)）：
+
+```markdown
+## 循环 N: <功能点>
+
+<红绿重构 ...>
+
+<!-- harness:agent-output -->
+
+status: ok | degraded | escalate
+degraded_from: <失败工具名> # 仅 degraded 时（如测试运行器不可用）
+escalate_to: <user | agent-name> # 仅 escalate 时（如验收标准不明需用户拍板）
+risks: <残留风险一行，可选>
+
+<!-- /harness:agent-output -->
+```

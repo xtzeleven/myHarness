@@ -118,3 +118,22 @@ EXPLAIN SELECT ... FROM x WHERE ...;
 - **大表必须给在线 DDL 工具建议**（pt-online-schema-change / gh-ost / MySQL Online DDL）。
 - **不直接连库执行**。MCP 是只读用于查现状；migration 落地走 CI/CD 或人工。
 ```
+
+## 输出契约
+
+产出 migration 后在末尾附 schema 块（格式见 [docs/agent-output-schema.md](../../docs/agent-output-schema.md)）。
+危险变更（🔴）必须 `status: escalate` 转用户确认：
+
+```markdown
+## Migration 方案
+
+<migration + rollback ...>
+
+<!-- harness:agent-output -->
+
+status: ok | escalate
+escalate_to: <user | agent-name> # 仅 escalate 时（危险 DDL 必须转 user）
+risks: <数据安全 / 回滚风险一行，可选>
+
+<!-- /harness:agent-output -->
+```

@@ -108,3 +108,21 @@ model: sonnet
 - ❌ "建议加注释" — 加什么注释？没说 = 废话
 - ❌ "考虑性能" — 哪里？多大量级？说具体
 - ❌ 把整个文件粘回报告 — 引用行号即可
+
+## 输出契约
+
+评审结束时在输出末尾附 schema 块（格式见 [docs/agent-output-schema.md](../../docs/agent-output-schema.md)）：
+
+```markdown
+## 评审结论
+
+<结论一句话>
+
+<!-- harness:agent-output -->
+
+status: ok | escalate
+escalate_to: <user | agent-name> # 仅 escalate 时（如发现 DDD 边界问题转 ddd-architect）
+risks: <主要风险一行，可选>
+
+<!-- /harness:agent-output -->
+```

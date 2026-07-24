@@ -120,3 +120,21 @@ mvn dependency:tree | head -30  # 依赖现状
 - 不要 paraphrase 整个 README，只指出漂移点。
 - 区分 "**新人看不懂**"（必改）vs "**老员工无所谓**"（可推迟）。
 - 不要因为风格小差异（标题大小写、空行数）报漂移。
+
+## 输出契约
+
+产出漂移清单后在末尾附 schema 块（格式见 [docs/agent-output-schema.md](../../docs/agent-output-schema.md)）：
+
+```markdown
+## 文档漂移清单
+
+<清单 ...>
+
+<!-- harness:agent-output -->
+
+status: ok | escalate
+escalate_to: <user | agent-name> # 仅 escalate 时
+risks: <主要漂移风险一行，可选>
+
+<!-- /harness:agent-output -->
+```

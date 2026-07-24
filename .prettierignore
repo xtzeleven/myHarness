@@ -1,0 +1,6 @@
+# gitnexus 代码索引缓存 —— 机器生成，不纳入格式检查
+.gitnexus/
+
+# 依赖 / 构建产物（与 .gitignore 对齐，防 prettier 扫入）
+node_modules/
+target/

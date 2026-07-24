@@ -120,3 +120,23 @@ mvn dependency:tree -Dincludes=...
 | profile 没生效 | 没用 `-P`，或 activation 条件不满足 |
 | `@SpringBootTest` 启动失败 | dependency 缺失 / Bean 缺失 / profile 错 |
 ```
+
+## 输出契约
+
+诊断结束时在末尾附 schema 块（格式见 [docs/agent-output-schema.md](../../docs/agent-output-schema.md)）。
+`mvn dependency:tree` 等工具不可用时用 `status: degraded` 标注降级：
+
+```markdown
+## 构建诊断
+
+<根因 + 修复 ...>
+
+<!-- harness:agent-output -->
+
+status: ok | degraded | escalate
+degraded_from: <失败工具名> # 仅 degraded 时
+escalate_to: <user | agent-name> # 仅 escalate 时
+risks: <残留风险一行，可选>
+
+<!-- /harness:agent-output -->
+```

@@ -10,7 +10,7 @@
     "prettier": "3.3.3"
   },
   "scripts": {
-    "format": "prettier --write \"**/*.{md,json,yml,yaml}\" --ignore-path .gitignore",
-    "format:check": "prettier --check \"**/*.{md,json,yml,yaml}\" --ignore-path .gitignore"
+    "format": "prettier --write \"**/*.{md,json,yml,yaml}\" --ignore-path .gitignore --ignore-path .prettierignore",
+    "format:check": "prettier --check \"**/*.{md,json,yml,yaml}\" --ignore-path .gitignore --ignore-path .prettierignore"
   }
 }
