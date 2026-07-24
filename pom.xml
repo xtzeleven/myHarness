@@ -101,6 +101,22 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!-- Failsafe：跑 *IT 集成测（Testcontainers）。绑定到 verify 阶段。
+                 版本由 spring-boot-starter-parent 管理，此处不锁版本。
+                 surefire 跑 *Test（单测），failsafe 跑 *IT（集成测），职责分离。 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

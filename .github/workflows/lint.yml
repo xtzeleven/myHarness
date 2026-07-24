@@ -251,3 +251,43 @@ jobs:
             exit 1
           fi
           echo "All commit messages match Conventional Commits."
+
+  java-build:
+    name: Java build + test (mvnw verify)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17 (temurin, matches .tool-versions)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+      - name: Ensure mvnw is executable
+        run: chmod +x ./mvnw
+      - name: mvnw verify
+        # verify = compile + unit tests (+ Testcontainers ITs via failsafe).
+        # ubuntu-latest ships Docker, so Testcontainers-backed ITs run here too.
+        run: ./mvnw -B --no-transfer-progress verify
+
+  ddd-layer-purity:
+    name: DDD layer purity (domain 层无框架污染)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: domain/ 不得 import 框架类，也不得标 @Transactional
+        # engineering-practices §12 达标条件的机制化门禁。
+        # git grep 无命中时 exit 1；这里"命中即违规"，故命中要主动置 violations。
+        run: |
+          set -e
+          violations=0
+          if git grep -lE 'import (org\.springframework|jakarta\.persistence|javax\.persistence|com\.baomidou|com\.fasterxml\.jackson)' -- ':(glob)src/main/java/**/domain/**/*.java'; then
+            echo "::error::domain 层 import 了框架类（Spring/JPA/MyBatis/Jackson），见上方文件列表"
+            violations=1
+          fi
+          if git grep -l '@Transactional' -- ':(glob)src/main/java/**/domain/**/*.java'; then
+            echo "::error::domain 层出现 @Transactional，事务边界只允许在 application 层"
+            violations=1
+          fi
+          [ "$violations" -eq 0 ] || exit 1
+          echo "domain/ 层纯净：无框架 import，无 @Transactional ✅"

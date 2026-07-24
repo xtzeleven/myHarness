@@ -67,7 +67,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 5. 项目上下文
 
-**项目性质：** myHarness 是 Harness 工程化方法论项目，验证三层 Harness（约束 / 反馈 / 门禁）在真实工程场景下的有效性。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。**能力维度**：M8 主线（Java DDD 代码侧）+ M8-T0 前置阶段（产研全链路流程性能力，含需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查，语言/技术栈无关，详见 [ADR-0008](docs/adr/0008-process-capability-expansion.md)）。当前进度：M7 完成 / **M8-T0 Tier 1 已完成**（3 资产：`requirement-decomposer` agent + `event-storm` agent + `/cross-stage-check` command）/ **M8 主线 Phase 1 骨架已落地**（pom.xml + Maven Wrapper + DDD 四层目录 + 主类 + smoke test，详见 [ADR-0002](docs/adr/0002-java-ddd-backend.md)）/ **Phase 2 P2.1-P2.3 域建模 + Repository 接口 + Repository 实现已落地**（`Order` 聚合根 + `OrderItem` / `OrderId` VO + `EmptyOrderException` + `OrderRepository` 接口 + `OrderPersistenceAdapter`（MyBatis-Plus + items JSON 列））/ **P2.4-P2.6 待启动**（Handler / Controller / Migration）。
+**项目性质：** myHarness 是 Harness 工程化方法论项目，验证三层 Harness（约束 / 反馈 / 门禁）在真实工程场景下的有效性。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。**能力维度**：M8 主线（Java DDD 代码侧）+ M8-T0 前置阶段（产研全链路流程性能力，含需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查，语言/技术栈无关，详见 [ADR-0008](docs/adr/0008-process-capability-expansion.md)）。当前进度：M7 完成 / **M8-T0 Tier 1 已完成**（3 资产：`requirement-decomposer` agent + `event-storm` agent + `/cross-stage-check` command）/ **M8 主线 Phase 1 骨架已落地**（pom.xml + Maven Wrapper + DDD 四层目录 + 主类 + smoke test，详见 [ADR-0002](docs/adr/0002-java-ddd-backend.md)）/ **Phase 2 P2.1-P2.6 全链路已落地**（`Order` 聚合根 + `OrderItem` / `OrderId` VO + `EmptyOrderException` + `OrderRepository` 接口 + `OrderPersistenceAdapter`（MyBatis-Plus + items JSON 列）+ `PlaceOrderHandler` 用例编排 + `OrderController` / DTO / Assembler + `GlobalExceptionHandler` + Flyway 迁移 `V1__create_orders.sql`）。
 
 **技术栈：**
 
@@ -116,7 +116,7 @@ DDD 依赖方向 **严格单向**：interfaces → application → domain ← in
 
 ## 7. 测试 / 校验命令
 
-> 注：M8 主线 Phase 1 骨架已落地（`pom.xml` + Maven Wrapper + `src/` 四层目录 + 主类 + smoke test）；Phase 2（第一个 BC `order`）待启动。`mvn` 命令可用，**前置**：本机需 JDK 17（`.tool-versions` 锁 `java temurin-17.0.13+11`）。当前会话首次落地时 Java 1.8，`./mvnw clean compile` 验证留待用户装好 JDK 17 后手动跑。
+> 注：M8 主线 Phase 2（第一个 BC `order`）全链路已落地（域建模 → Repository → Handler → Controller → Migration + 单测/集成测）。`mvn verify` 由 CI（`lint.yml` 的 `java-build` job）不可绕过地执行；`domain/` 层纯净度（无框架 import / 无 `@Transactional`）由 `ddd-layer-purity` job 硬门禁。**本机前置**：JDK 17（`.tool-versions` 锁 `java temurin-17.0.13+11`）；Testcontainers 集成测需本机 Docker。
 
 ```bash
 # Java / Maven（M4 后启用）
@@ -216,3 +216,48 @@ git status --porcelain
 - `/commit` 命令完成时建议 `done-step` 当前 commit 描述
 - 失败永远静默吞掉，不阻断会话
 - `.session.state` 已 .gitignore，不入仓库
+
+<!-- gitnexus:start -->
+
+# GitNexus — Code Intelligence
+
+This project is indexed by GitNexus as **myHarness** (671 symbols, 1023 relationships, 15 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+
+> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
+
+## Always Do
+
+- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
+- **MUST run `gitnexus_detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows.
+- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
+- When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
+- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`.
+
+## Never Do
+
+- NEVER edit a function, class, or method without first running `gitnexus_impact` on it.
+- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
+- NEVER rename symbols with find-and-replace — use `gitnexus_rename` which understands the call graph.
+- NEVER commit changes without running `gitnexus_detect_changes()` to check affected scope.
+
+## Resources
+
+| Resource                                   | Use for                                  |
+| ------------------------------------------ | ---------------------------------------- |
+| `gitnexus://repo/myHarness/context`        | Codebase overview, check index freshness |
+| `gitnexus://repo/myHarness/clusters`       | All functional areas                     |
+| `gitnexus://repo/myHarness/processes`      | All execution flows                      |
+| `gitnexus://repo/myHarness/process/{name}` | Step-by-step execution trace             |
+
+## CLI
+
+| Task                                         | Read this skill file                                        |
+| -------------------------------------------- | ----------------------------------------------------------- |
+| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md`       |
+| Blast radius / "What breaks if I change X?"  | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
+| Trace bugs / "Why is X failing?"             | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md`       |
+| Rename / extract / split / refactor          | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md`     |
+| Tools, resources, schema reference           | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md`           |
+| Index, status, clean, wiki CLI commands      | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md`             |
+
+<!-- gitnexus:end -->

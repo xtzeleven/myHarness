@@ -1,6 +1,7 @@
 package com.example.harness.domain.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -10,6 +11,50 @@ import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
 class OrderItemTest {
+
+    @Test
+    void construct_withValidArgs_succeeds() {
+        OrderItem item = new OrderItem("SKU-1", 1, new BigDecimal("0.00"));
+        assertThat(item.getSku()).isEqualTo("SKU-1");
+        assertThat(item.getQuantity()).isEqualTo(1);
+        assertThat(item.getUnitPrice()).isEqualByComparingTo("0.00");
+    }
+
+    @Test
+    void construct_withBlankSku_throws() {
+        assertThatThrownBy(() -> new OrderItem("  ", 1, new BigDecimal("1.00")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("sku");
+    }
+
+    @Test
+    void construct_withNullSku_throws() {
+        assertThatThrownBy(() -> new OrderItem(null, 1, new BigDecimal("1.00")))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void construct_withZeroOrNegativeQuantity_throws() {
+        assertThatThrownBy(() -> new OrderItem("SKU-1", 0, new BigDecimal("1.00")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("quantity");
+        assertThatThrownBy(() -> new OrderItem("SKU-1", -1, new BigDecimal("1.00")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("quantity");
+    }
+
+    @Test
+    void construct_withNegativeUnitPrice_throws() {
+        assertThatThrownBy(() -> new OrderItem("SKU-1", 1, new BigDecimal("-0.01")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("unitPrice");
+    }
+
+    @Test
+    void construct_withNullUnitPrice_throws() {
+        assertThatThrownBy(() -> new OrderItem("SKU-1", 1, null))
+                .isInstanceOf(NullPointerException.class);
+    }
 
     @Test
     void equalsHashCode_basedOnAllFields() {

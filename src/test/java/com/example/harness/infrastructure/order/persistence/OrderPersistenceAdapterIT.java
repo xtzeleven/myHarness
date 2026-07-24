@@ -30,11 +30,10 @@ import com.example.harness.domain.order.repository.OrderRepository;
  * - P2.6 AC#1：Flyway V1__create_orders.sql 跑通，表存在
  * - P2.6 AC#2：重复 migrate 报告 "no migration necessary"（Flyway 自身在 schema_history 已有 V1 后跳过）
  *
- * 文件后缀 `*IT.java` 走 Failsafe 约定 —— 当前 pom.xml **未**注册 failsafe-plugin，
- * 因此 `mvn test` / `mvn verify` 都不会自动触发本测；手动跑命令：
- *   mvn test -Dtest=OrderPersistenceAdapterIT -DfailIfNoTests=false
- * 需本机 Docker daemon 运行。无 Docker 时手动跑会因 Testcontainers init 失败，
- * 不影响主流程 mvn test 绿色 —— 文件后缀本身就是 skip 机制。
+ * 文件后缀 `*IT.java` 走 Failsafe 约定：pom.xml 已注册 maven-failsafe-plugin，
+ * `mvn verify` 在 integration-test 阶段自动触发本测（surefire 跑 *Test，failsafe 跑 *IT）。
+ * `@Testcontainers(disabledWithoutDocker = true)`：有 Docker 就跑（CI ubuntu 自带），
+ * 无 Docker 就整类 skip（本地无 Docker 时 `mvn verify` 仍绿），不因缺 Docker 让构建失败。
  *
  * `properties = { "spring.autoconfigure.exclude=" }` 覆盖主 application.yml 的排除清单，
  * 让 DataSource / Flyway / MybatisPlus autoconfig 在本测中恢复，连接 testcontainers MySQL。
@@ -44,7 +43,7 @@ import com.example.harness.domain.order.repository.OrderRepository;
         classes = HarnessApplication.class,
         properties = { "spring.autoconfigure.exclude=" }
 )
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class OrderPersistenceAdapterIT {
 
     @Container
