@@ -41,7 +41,7 @@ public class OrderPersistenceAdapter implements OrderRepository {
 
     @Override
     public Optional<Order> findById(OrderId id) {
-        OrderPO po = mapper.selectById(id.getValue());
+        OrderPO po = mapper.selectById(id.getValue().toString());
         return Optional.ofNullable(po).map(OrderPersistenceAdapter::toDomain);
     }
 
@@ -57,7 +57,7 @@ public class OrderPersistenceAdapter implements OrderRepository {
 
     private static OrderPO toPO(Order o) {
         return new OrderPO(
-                o.id().getValue(),
+                o.id().getValue().toString(),
                 o.customerId(),
                 o.status().name(),
                 o.items());
@@ -65,7 +65,7 @@ public class OrderPersistenceAdapter implements OrderRepository {
 
     private static Order toDomain(OrderPO po) {
         return Order.reconstitute(
-                new OrderId(po.getId()),
+                new OrderId(java.util.UUID.fromString(po.getId())),
                 po.getCustomerId(),
                 po.getItems(),
                 OrderStatus.valueOf(po.getStatus()));

@@ -1,7 +1,6 @@
 package com.example.harness.infrastructure.order.persistence;
 
 import java.util.List;
-import java.util.UUID;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -28,8 +27,9 @@ import lombok.NoArgsConstructor;
 @TableName(value = "orders", autoResultMap = true)
 public class OrderPO {
 
-    @TableId(type = IdType.ASSIGN_UUID)
-    private UUID id;
+    /** UUID 以 CHAR(36) 字符串存储；domain OrderId(UUID) ↔ String 转换在 OrderPersistenceAdapter 完成。 */
+    @TableId(type = IdType.INPUT)
+    private String id;
 
     private String customerId;
 
