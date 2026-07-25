@@ -36,6 +36,10 @@ public class PlaceOrderHandler {
     public OrderId handle(PlaceOrderCommand cmd) {
         Order order = Order.place(cmd.customerId(), cmd.items());
         Order saved = repository.save(order);
+        // ⚠️ 事件在事务提交前同步发布：当前 OrderPlaced 无消费者，无活跃 bug。
+        // 引入首个监听器前，改用 @TransactionalEventListener(phase = AFTER_COMMIT)，
+        // 否则事务回滚会连带已发生副作用（发邮件/调外部系统），异步读取方还可能读到未提交订单。
+        // 依据：M8-T6 ddd-architect + spring-boot-reviewer 双 agent 独立命中（2026-07-25）。
         publisher.publishEvent(OrderPlaced.of(saved.id(), saved.customerId()));
         return saved.id();
     }

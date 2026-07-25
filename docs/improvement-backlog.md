@@ -68,6 +68,18 @@ _B7–B10 全部完成。详见 §E（B7→E12 / B8→E8 / B9→E9 / B10→E10�
 
 _C17 / C18 / C21 已完成。详见 §E（C17→E18 / C18→E19 / C21→E20）。C4 / C19 本批完成（E28 / E22）。_
 
+### M8-T6 agent 实跑发现（2026-07-25，ddd-architect + spring-boot-reviewer 双跑 order BC）
+
+> 两个后端 agent 独立审 order BC，7/8 审查点直接通过、无阻塞项。以下 3 条为真实发现，严重度均不高，作为债务留痕。**两 agent 独立命中同一处（C22）**是最强信号。
+
+| #   | 维度        | 项                                                                                                                                                                     | 状态                                                                                                                        |
+| --- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| C22 | 事件 / 事务 | `PlaceOrderHandler` 在 `@Transactional` 内同步 `publishEvent`：当前 OrderPlaced 无消费者故无活跃 bug；引入首个监听器前须改 `@TransactionalEventListener(AFTER_COMMIT)` | ✅ 已埋警示注释（`PlaceOrderHandler.java:39` publishEvent 上方，含修法 + 双 agent 依据）；引入 listener 时落地 AFTER_COMMIT |
+| C23 | DDD 建模    | `Order` 用裸 `String customerId` 引用 Customer 聚合，与 `OrderId` 自身的 typed-id 主张自相矛盾                                                                         | ⏳ Customer BC 落地时引入 `CustomerId` VO；现无 Customer BC，用 String 合理                                                 |
+| C24 | 性能（低）  | `OrderPersistenceAdapter.save` 新建路径必然 `selectById==null`，热路径多一次无用 SELECT                                                                                | ⏳ 效率项非 bug；可用 MyBatis-Plus `insertOrUpdate` 或上层显式表达 new/update 意图                                          |
+
+> 另有 d-architect 提出的"事件产生逻辑下沉到聚合根"完整方案：会改 `Order` 聚合根（触发 DDD 灰名单），当前单入口收益不明确，判为过早抽象，暂不做；待第二个创建 Order 的入口（批量导入 / 后台补单）出现时重估。
+
 ### 本批新引入的 follow-up（已落地）
 
 _F1 / F2 同批落地，详见 §E（F1→E33 / F2→E34）。_
@@ -76,16 +88,16 @@ _F1 / F2 同批落地，详见 §E（F1→E33 / F2→E34）。_
 
 ## D. 设计判断点（P3，可商榷）
 
-| #   | 项                                                                                                                                   | 讨论方向                                                                                       |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| D1  | `.claude/policies/` 目录化 vs 散在 .md                                                                                               | 现状散在但可读；若要可程序解析则集中化                                                         |
-| D2  | 三层 Harness vs 六维度视角并存                                                                                                       | README 加"视角注解段"；或在 ADR 写明两套视角的关系                                             |
-| D3  | ADR-0001 "L1 工程化规则（14 节）" 历史快照是否更新                                                                                   | ADR 通常不改；建议保留作为快照证据                                                             |
-| D4  | Hook 跨平台支持（PowerShell / fish 用户）                                                                                            | 当前要 bash；可在 README 声明前置要求                                                          |
-| D5  | `output style` 配置（engineering-practices §11 提到可选）                                                                            | 是否要项目专属 output style？未必必要                                                          |
-| D6  | ~~worktree 引入 + audit log 跨 worktree 聚合~~                                                                                       | ✅ E41                                                                                         |
-| D7  | Auto mode 深度集成：扩 deny.yaml / ask-user.yaml 覆盖"软风险"（大量删文件 / 改 CI workflow / 改 .gitignore），让分类器之外多一层规则 | 触发条件：实际开始 daily 用 auto mode 后通过 `--by-permission-mode` 看到 auto 下放行的可疑动作 |
-| D8  | ~~Hook 规则补强：Bash heredoc / `>` 重定向 / tee / sed -i 写 pom.xml 或 domain/.java 绕过 Edit/Write 拦截~~                          | ✅ E49                                                                                         |
+| #   | 项                                                                                                                                   | 讨论方向                                                                                                    |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| D1  | `.claude/policies/` 目录化 vs 散在 .md                                                                                               | 现状散在但可读；若要可程序解析则集中化                                                                      |
+| D2  | 三层 Harness vs 六维度视角并存                                                                                                       | README 加"视角注解段"；或在 ADR 写明两套视角的关系                                                          |
+| D3  | ADR-0001 "L1 工程化规则（14 节）" 历史快照是否更新                                                                                   | ADR 通常不改；建议保留作为快照证据                                                                          |
+| D4  | Hook 跨平台支持（PowerShell / fish 用户）                                                                                            | 当前要 bash；可在 README 声明前置要求                                                                       |
+| D5  | ~~`output style` 配置（engineering-practices §11 提到可选）~~                                                                        | ✅ 已建 `.claude/output-styles/harness-traceable.md`（2026-07-25，不设默认，会话级 `/output-style` 手动切） |
+| D6  | ~~worktree 引入 + audit log 跨 worktree 聚合~~                                                                                       | ✅ E41                                                                                                      |
+| D7  | Auto mode 深度集成：扩 deny.yaml / ask-user.yaml 覆盖"软风险"（大量删文件 / 改 CI workflow / 改 .gitignore），让分类器之外多一层规则 | 触发条件：实际开始 daily 用 auto mode 后通过 `--by-permission-mode` 看到 auto 下放行的可疑动作              |
+| D8  | ~~Hook 规则补强：Bash heredoc / `>` 重定向 / tee / sed -i 写 pom.xml 或 domain/.java 绕过 Edit/Write 拦截~~                          | ✅ E49                                                                                                      |
 
 ---
 
