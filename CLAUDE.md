@@ -67,7 +67,9 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 5. 项目上下文
 
-**项目性质：** myHarness 是 Harness 工程化方法论项目，验证三层 Harness（约束 / 反馈 / 门禁）在真实工程场景下的有效性。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。**能力维度**：M8 主线（Java DDD 代码侧）+ M8-T0 前置阶段（产研全链路流程性能力，含需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查，语言/技术栈无关，详见 [ADR-0008](docs/adr/0008-process-capability-expansion.md)）。当前进度：M7 完成 / **M8-T0 Tier 1 已完成**（3 资产：`requirement-decomposer` agent + `event-storm` agent + `/cross-stage-check` command）/ **M8 主线 Phase 1 骨架已落地**（pom.xml + Maven Wrapper + DDD 四层目录 + 主类 + smoke test，详见 [ADR-0002](docs/adr/0002-java-ddd-backend.md)）/ **Phase 2 P2.1-P2.6 全链路已落地**（`Order` 聚合根 + `OrderItem` / `OrderId` VO + `EmptyOrderException` + `OrderRepository` 接口 + `OrderPersistenceAdapter`（MyBatis-Plus + items JSON 列）+ `PlaceOrderHandler` 用例编排 + `OrderController` / DTO / Assembler + `GlobalExceptionHandler` + Flyway 迁移 `V1__create_orders.sql`）。
+**项目性质：** myHarness 是 Harness 工程化方法论项目，验证三层 Harness（约束 / 反馈 / 门禁）在真实工程场景下的有效性。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。**能力维度**：M8 主线（Java DDD 代码侧）+ M8-T0 前置阶段（产研全链路流程性能力，含需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查，语言/技术栈无关，详见 [ADR-0008](docs/adr/0008-process-capability-expansion.md)）。
+
+> **当前进度快照不在本文**：阶段/里程碑/已落地清单变化频繁，统一维护在 [README.md](README.md)（阶段路线表）与 [docs/roadmap.md](docs/roadmap.md)。本文只保留稳定的项目性质与硬规则，避免每会话注入过期的进度描述。
 
 **技术栈：**
 
@@ -124,6 +126,9 @@ mvn clean compile              # 编译
 mvn test                       # 单测
 mvn verify                     # 单测 + 集成测 + 静态检查
 mvn dependency:tree            # 看依赖树（排冲突）
+
+# Harness Python 脚本单测（policy-dispatch / session-state 纯逻辑）
+python -m pytest .claude/scripts/tests/ -q   # 由 CI（lint.yml 的 python-unit-test job）不可绕过地执行
 
 # 文档 / 配置（当前可用）
 npx prettier --check "**/*.{md,json,yml,yaml}"

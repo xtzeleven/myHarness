@@ -197,6 +197,21 @@ jobs:
       - name: Run subagent-stop smoke test
         run: bash .claude/hooks/tests/test_subagent_stop.sh
 
+  python-unit-test:
+    name: Python script unit tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install test deps (pytest + pyyaml)
+        run: pip install pytest pyyaml
+      - name: Run pytest on .claude/scripts
+        # 纯逻辑单测：policy-dispatch matches_when/tool_matches/validate_rule
+        # + session-state 状态机。I/O 与拦截行为仍由 hook smoke test 覆盖。
+        run: python -m pytest .claude/scripts/tests -q
+
   agent-schema-check:
     name: Agents document output schema
     runs-on: ubuntu-latest

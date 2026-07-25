@@ -4,27 +4,27 @@
 
 ## 路由速查（"我该用哪个"）
 
-| 你想做的事                              | 优先用                                              |
-| --------------------------------------- | --------------------------------------------------- |
-| 探索陌生代码 / 画依赖图 / 查调用链      | skill `gitnexus-exploring`                          |
-| 调试报错 / 追溯异常                     | skill `gitnexus-debugging`                          |
-| 重命名 / 拆分前的影响面分析             | skill `gitnexus-impact-analysis`                    |
-| 重构动手                                | skill `gitnexus-refactoring`                        |
-| review PR / 评估合并风险                | skill `gitnexus-pr-review` 或 agent `code-reviewer` |
-| 索引 / 重建仓库索引                     | skill `gitnexus-cli`                                |
-| 拆需求 / 列子任务 / 写 Gherkin AC       | agent `requirement-decomposer`                      |
-| 事件风暴 / 业务事件流 / 服务边界候选    | agent `event-storm`                                 |
-| 实现新功能 / 修 bug（带测试）           | agent `tdd-cycle-driver`                            |
-| DDD 边界 / 聚合 / 领域事件设计          | agent `ddd-architect`                               |
-| Spring 反模式审查 / @Transactional 问题 | agent `spring-boot-reviewer`                        |
-| Maven 编译 / 依赖冲突 / 打包失败        | agent `maven-build-doctor`                          |
-| 表结构 / 索引 / SQL 性能                | agent `schema-analyst`                              |
-| 写数据库 migration                      | agent `migration-author`                            |
-| 检查代码与文档是否漂移                  | agent `docs-keeper`（或命令 `/sync-docs`）          |
-| 检查产研全链路文档间漂移                | 命令 `/cross-stage-check`                           |
-| 新人 5 分钟上手                         | 命令 `/onboard`                                     |
-| 工程化自检                              | 命令 `/audit-practices`                             |
-| 标准化提交                              | 命令 `/commit`                                      |
+| 你想做的事                              | 优先用                                                         |
+| --------------------------------------- | -------------------------------------------------------------- |
+| 探索陌生代码 / 画依赖图 / 查调用链      | skill `gitnexus-exploring`                                     |
+| 调试报错 / 追溯异常                     | skill `gitnexus-debugging`                                     |
+| 重命名 / 拆分前的影响面分析             | skill `gitnexus-impact-analysis`                               |
+| 重构动手                                | skill `gitnexus-refactoring`                                   |
+| review PR / 评估合并风险                | 命令 `/review`（编排三 reviewer）或 skill `gitnexus-pr-review` |
+| 索引 / 重建仓库索引                     | skill `gitnexus-cli`                                           |
+| 拆需求 / 列子任务 / 写 Gherkin AC       | agent `requirement-decomposer`                                 |
+| 事件风暴 / 业务事件流 / 服务边界候选    | agent `event-storm`                                            |
+| 实现新功能 / 修 bug（带测试）           | agent `tdd-cycle-driver`                                       |
+| DDD 边界 / 聚合 / 领域事件设计          | agent `ddd-architect`                                          |
+| Spring 反模式审查 / @Transactional 问题 | agent `spring-boot-reviewer`                                   |
+| Maven 编译 / 依赖冲突 / 打包失败        | agent `maven-build-doctor`                                     |
+| 表结构 / 索引 / SQL 性能                | agent `schema-analyst`                                         |
+| 写数据库 migration                      | agent `migration-author`                                       |
+| 检查代码与文档是否漂移                  | agent `docs-keeper`（或命令 `/sync-docs`）                     |
+| 检查产研全链路文档间漂移                | 命令 `/cross-stage-check`                                      |
+| 新人 5 分钟上手                         | 命令 `/onboard`                                                |
+| 工程化自检                              | 命令 `/audit-practices`                                        |
+| 标准化提交                              | 命令 `/commit`                                                 |
 
 ## 自定义 Agents
 
@@ -40,6 +40,15 @@
 | `schema-analyst`         | [schema-analyst.md](.claude/agents/schema-analyst.md)                 | 表结构 / 索引 / 慢 SQL / EXPLAIN / N+1 / ER 图                    | sonnet   | Read, Glob, Grep, Bash + MySQL MCP（**只读**） |
 | `migration-author`       | [migration-author.md](.claude/agents/migration-author.md)             | Flyway / Liquibase / 加列 / 改字段 / 迁移脚本 / 回滚              | sonnet   | Read, Glob, Grep, Bash, Edit, Write            |
 | `docs-keeper`            | [docs-keeper.md](.claude/agents/docs-keeper.md)                       | 文档漂移 / sync docs / README 过期 / 新人看不懂                   | sonnet   | Read, Glob, Grep, Bash（**只读**）             |
+
+## 项目内 Skills（`.claude/skills/`）
+
+判据型元能力的**单点真源**。skill 让主 Claude 在自然语言下**自主路由**（无需用户敲命令名）；对应的 `/xxx` 命令保留为显式入口，与 skill 共用同一份判据、不重复维护。
+
+| Skill               | 文件                                                  | 触发场景                                                 | 对应命令             |
+| ------------------- | ----------------------------------------------------- | -------------------------------------------------------- | -------------------- |
+| `audit-practices`   | [SKILL.md](.claude/skills/audit-practices/SKILL.md)   | 「做次工程实践自检」「15 维度打分」「工程化到位没」      | `/audit-practices`   |
+| `cross-stage-check` | [SKILL.md](.claude/skills/cross-stage-check/SKILL.md) | 「查下文档间漂移」「roadmap/ADR/CHANGELOG 状态对得上吗」 | `/cross-stage-check` |
 
 ## 可用 Skills（外部，已在环境中）
 

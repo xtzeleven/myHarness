@@ -7,6 +7,31 @@
 
 ## [Unreleased] — M8-T0 Tier 1 完成 / M8 主线 Phase 1 骨架 + Phase 2 P2.1-P2.3 / P2.4-P2.6 待启动
 
+### 2026-07-25 — Harness 治理批次：注入瘦身 + 脚本单测 + command→skill 化 + review 编排 + output style
+
+> 架构视角一轮治理优化，四块：A 治理清理 / D 脚本补测试 / B command 迁 skill / C review 编排 + output style。全程 prettier + pytest(28) + hook smoke(35) + policy --validate 全绿。
+
+#### Added
+
+- **D 脚本单测**：`.claude/scripts/tests/`（pytest，纯 stdlib）— `test_policy_dispatch.py`（20 case：`matches_when` 谓词 AND 语义 / `tool_matches` / `validate_rule`）+ `test_session_state.py`（8 case：状态机命令）+ `conftest.py`（importlib 加载连字符文件名脚本）。经 mutation 验证（篡改 OR→AND 立即 fail）
+- `.github/workflows/lint.yml`：新增 `python-unit-test` job（pytest on `.claude/scripts/tests`），Python 脚本逻辑首次进不可绕 CI 门禁
+- **B command→skill 化**：`.claude/skills/audit-practices/SKILL.md` + `.claude/skills/cross-stage-check/SKILL.md` — 判据真源迁入 skill（带 `description` 触发场景，主 Claude 可在自然语言下自主加载）；对应 command 薄化为显式入口指针，共用同一份判据
+- **C review 编排**：`.claude/commands/review.md` — 显式声明三 reviewer（code-reviewer / spring-boot-reviewer / ddd-architect）的串并行调度 + 决策树，与 AGENTS.md 自反馈环 / 升级链同一套约定
+- **C output style**：`.claude/output-styles/harness-traceable.md` — 项目专属可追溯输出风格（假设显式化 / 决策可追溯 / 层级标注）；**不设默认**，会话级 `/output-style` 手动启用
+- `docs/improvement-backlog-archive.md` — §E 已完成 49 条（E1-E50）拆出归档，主 backlog 只留活跃项
+- `AGENTS.md`：新增"项目内 Skills"小节 + 路由表加 `/review` 行
+
+#### Changed
+
+- `CLAUDE.md` §5：删除每会话注入却变化最频繁的 Phase 2 全链路进度快照长句，改为指向 README / roadmap 的指针（降注入内容密度）
+- `CLAUDE.md` §7：测试命令段加入 pytest 命令
+- `docs/improvement-backlog.md` §E / §F：整表移至归档文件，§E 改指针，§F 维护说明同步
+- `.github/required-files.txt`：Scripts 段加 3 个 pytest 测试文件
+
+#### 未采纳（记录理由）
+
+- **A gitnexus 块去重作废**：CLAUDE.md 与 AGENTS.md 的 `<!-- gitnexus:start/end -->` 块**不是可去重的重复** — gitnexus CLI 有意为 Claude Code（读 CLAUDE.md）与 Cursor/Codex 等（读 AGENTS.md）各写一份，手动删会被 `npx gitnexus analyze` 重新注入。已记 memory `pitfall_gitnexus_block_not_duplicate`
+
 ### 2026-05-22 — D9 hook 规则补强：dispatcher file_path 反斜杠 normalize（Windows 兼容）
 
 #### Fixed

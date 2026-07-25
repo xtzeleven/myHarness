@@ -56,6 +56,9 @@ package.json
 .claude/scripts/audit-log-summary.py
 .claude/scripts/policy-dispatch.py
 .claude/scripts/session-state.py
+.claude/scripts/tests/conftest.py
+.claude/scripts/tests/test_policy_dispatch.py
+.claude/scripts/tests/test_session_state.py
 
 # --- Docs ---
 docs/AGENTS.backend.md
