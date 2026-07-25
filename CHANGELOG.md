@@ -5,7 +5,9 @@
 
 由于本项目是工程化方法论项目而非软件包，"版本"对应 **里程碑（M0–MN）**。
 
-## [Unreleased] — M8-T0 Tier 1 完成 / M8 主线 Phase 1 骨架 + Phase 2 P2.1-P2.3 / P2.4-P2.6 待启动
+## [Unreleased]
+
+> 阶段进度以 [README「M8 实况」](README.md#-项目简介) 为唯一真源，本文只记逐条变更、不重述阶段状态（避免多处漂移）。
 
 ### 2026-07-25 — Harness 治理批次：注入瘦身 + 脚本单测 + command→skill 化 + review 编排 + output style
 

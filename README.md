@@ -3,7 +3,7 @@
 > 自用 Harness 工程级实践
 > _Real-world coding benchmark for AI assistants_
 
-![Status](https://img.shields.io/badge/status-M7%20done%20%7C%20M8--T0%20done%20%7C%20M8%20phase1%20skeleton-green)
+![Status](https://img.shields.io/badge/status-M7%20done%20%7C%20M8--T0%20done%20%7C%20M8%20in--progress-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Agents](https://img.shields.io/badge/agents-10-green)
 
@@ -11,7 +11,7 @@
 
 从 Harness 原理开始，把三层 Harness（约束 / 反馈 / 门禁）落地到一个真实的工程场景，验证其在 LLM 辅助开发中的有效性。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。
 
-> **当前状态**：M7 完成（六维度 Harness 框架就绪）；**M8-T0** 已完成（产研全链路 Tier 1 共 3 资产落地，详见 [ADR-0008](docs/adr/0008-process-capability-expansion.md)）；**M8 主线 Phase 1 骨架**已落地（pom.xml + Maven Wrapper + DDD 四层目录 + 主类 + smoke test，详见 [ADR-0002](docs/adr/0002-java-ddd-backend.md)）；**Phase 2**（第一个 BC `order`）待启动。
+> **当前状态**：Harness 六维度框架就绪（M0-M7 完成），产研全链路 Tier 1 落地（M8-T0），M8 主线进行中。**细粒度进度以下方「📊 阶段性路线」表 + 「M8 实况」小节为唯一真源**——badge / 本段不重述 Phase 级状态，避免多处漂移（本项目自身的防漂移实践）。
 
 ## 🛠️ 技术路线
 
@@ -47,18 +47,37 @@
 
 ## 📊 阶段性路线
 
-| 阶段      | 目标                                                                     | 状态                                 |
-| --------- | ------------------------------------------------------------------------ | ------------------------------------ |
-| **M0**    | 项目立项，写下三层架构假设                                               | ✅ 完成                              |
-| **M1**    | Layer 1 落地（CLAUDE.md + rules + PreToolUse）                           | ✅ 完成                              |
-| **M2**    | Layer 2 落地（hooks + agents + commands）                                | ✅ 完成                              |
-| **M3**    | Layer 3 落地（CI + 提交规范 + 必需文件门禁）                             | ✅ 完成                              |
-| **M4**    | Memory 启用（决策原因 + 项目踩坑两类，索引 `MEMORY.md`）                 | ✅ 完成                              |
-| **M5**    | Loop 架构（Driver/Worker 调度 + 三策略 + `.session.state` 恢复）         | ✅ 完成                              |
-| **M6**    | Context 治理（token 预算 ≤ 8K + 按需 hint + 子目录 CLAUDE.md 规划）      | ✅ 完成                              |
-| **M7**    | Tools 治理 + Policy 机制化（版本锁 + 降级链 + bypass + audit log）       | ✅ 完成                              |
-| **M8-T0** | 产研全链路前置阶段（需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查） | ✅ 完成                              |
-| **M8**    | 实例化 Java DDD 骨架（六维度回归测试场）                                 | ⏳ Phase 1 骨架完成 / Phase 2 待启动 |
+| 阶段      | 目标                                                                     | 状态                           |
+| --------- | ------------------------------------------------------------------------ | ------------------------------ |
+| **M0**    | 项目立项，写下三层架构假设                                               | ✅ 完成                        |
+| **M1**    | Layer 1 落地（CLAUDE.md + rules + PreToolUse）                           | ✅ 完成                        |
+| **M2**    | Layer 2 落地（hooks + agents + commands）                                | ✅ 完成                        |
+| **M3**    | Layer 3 落地（CI + 提交规范 + 必需文件门禁）                             | ✅ 完成                        |
+| **M4**    | Memory 启用（决策原因 + 项目踩坑两类，索引 `MEMORY.md`）                 | ✅ 完成                        |
+| **M5**    | Loop 架构（Driver/Worker 调度 + 三策略 + `.session.state` 恢复）         | ✅ 完成                        |
+| **M6**    | Context 治理（token 预算 ≤ 8K + 按需 hint + 子目录 CLAUDE.md 规划）      | ✅ 完成                        |
+| **M7**    | Tools 治理 + Policy 机制化（版本锁 + 降级链 + bypass + audit log）       | ✅ 完成                        |
+| **M8-T0** | 产研全链路前置阶段（需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查） | ✅ 完成                        |
+| **M8**    | 实例化 Java DDD 骨架（六维度回归测试场）                                 | ⏳ 进行中（见下方「M8 实况」） |
+
+> **进度真源**：M8 的细粒度进度只在下方「M8 实况」维护一处。README 其他位置、badge、CHANGELOG **不重述 Phase 级状态**，避免多处漂移（此前 badge/正文/CHANGELOG 三处各说各话已是教训）。
+
+### 📍 M8 实况（细粒度进度唯一真源）
+
+第一个限界上下文 `order` 已全链路落地（DDD 四层 + Migration + 测试）：
+
+| Phase      | 内容                                                                                    | 状态              |
+| ---------- | --------------------------------------------------------------------------------------- | ----------------- |
+| Phase 1    | 项目骨架（pom.xml + Maven Wrapper + DDD 四层目录 + 主类 + smoke test）                  | ✅                |
+| P2.1       | `Order` 聚合根 + `OrderItem` / `OrderId` VO + `OrderStatus` + `EmptyOrderException`     | ✅                |
+| P2.2       | `OrderRepository` 接口（domain 层）+ `OrderPlaced` 领域事件                             | ✅                |
+| P2.3       | `OrderPersistenceAdapter`（infrastructure，MyBatis-Plus + items JSON 列 + TypeHandler） | ✅                |
+| P2.4       | `PlaceOrderHandler` 用例编排（application，事务边界 + 发事件）                          | ✅                |
+| P2.5       | `OrderController` + DTO + Assembler + `GlobalExceptionHandler`（interfaces）            | ✅                |
+| P2.6       | Flyway 迁移 `V1__create_orders.sql`                                                     | ✅                |
+| 端到端验证 | Testcontainers 集成测（`OrderPersistenceAdapterIT`）本机需 JDK 17 + Docker 跑通         | ⏳ 待本机环境验证 |
+
+**下一步**：本机 JDK 17 + Docker 跑通 `mvn verify`（含 Testcontainers IT）；之后按 [ADR-0008](docs/adr/0008-process-capability-expansion.md) 启动 Tier 2（测试生成 / 改动分析 / code review 增强）。
 
 ## 🚀 快速上手
 
