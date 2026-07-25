@@ -48,8 +48,15 @@ package.json
 .claude/commands/audit-practices.md
 .claude/commands/audit-context.md
 .claude/commands/commit.md
+.claude/commands/cross-stage-check.md
+.claude/commands/doctor.md
 .claude/commands/onboard.md
+.claude/commands/review.md
 .claude/commands/sync-docs.md
+
+# --- Skills (项目内自建) ---
+.claude/skills/audit-practices/SKILL.md
+.claude/skills/cross-stage-check/SKILL.md
 
 # --- Scripts ---
 .claude/scripts/audit-context-cost.py

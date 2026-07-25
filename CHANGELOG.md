@@ -32,6 +32,20 @@
 
 - **A gitnexus 块去重作废**：CLAUDE.md 与 AGENTS.md 的 `<!-- gitnexus:start/end -->` 块**不是可去重的重复** — gitnexus CLI 有意为 Claude Code（读 CLAUDE.md）与 Cursor/Codex 等（读 AGENTS.md）各写一份，手动删会被 `npx gitnexus analyze` 重新注入。已记 memory `pitfall_gitnexus_block_not_duplicate`
 
+### 2026-07-25 — 门禁自愈：agent/command 清册与 CI 门禁对齐 + memory 路径去硬编码
+
+> 承接治理批次，从架构视角复查暴露的三处"单点真源失守"——被治理的清册增长了，门禁却没跟上。全程 prettier 全量 / pytest(28) / hook smoke(35) 全绿。
+
+#### Fixed
+
+- `.github/workflows/lint.yml` `expected_agents`：只硬编码 8 个 agent，漏 `requirement-decomposer` / `event-storm` — 这两个最新 agent 删了 CI 也不报错。补齐到 10 个
+- `.github/required-files.txt` Commands 段：只列 5 个命令，漏 `cross-stage-check` / `doctor` / `review` — 删了不 fail CI。补齐到 8 个；同时把上批引入的 2 个 skill（`.claude/skills/*/SKILL.md`）纳入必需文件门禁
+- `.claude/hooks/session-start.sh`：memory 索引路径的第三个 candidate 硬编码了本机 `D--myGithub-myHarness`，换机器/盘符/用户名时会静默落到无意义兜底。删除硬编码，仅保留 `$PWD` 派生；派生失配时改为**显式提示**（打印派生的 project_id + 排查指引），不再静默失败
+
+#### Changed
+
+- `README.md`：`8 个 Sub-agents` → `10 个`（补列 requirement-decomposer / event-storm）；`5 个 Slash commands` → `8 个`；badge `models-8+`、目录速览计数同步刷新
+
 ### 2026-05-22 — D9 hook 规则补强：dispatcher file_path 反斜杠 normalize（Windows 兼容）
 
 #### Fixed

@@ -5,7 +5,7 @@
 
 ![Status](https://img.shields.io/badge/status-M7%20done%20%7C%20M8--T0%20done%20%7C%20M8%20phase1%20skeleton-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Models](https://img.shields.io/badge/models-8%2B-green)
+![Agents](https://img.shields.io/badge/agents-10-green)
 
 ## 🎯 项目简介
 
@@ -28,8 +28,9 @@
   在 LLM 行动**期间与之后**给出即时信号，让"错的能立刻被纠"。
 
   - **Hooks**：SessionStart（注入 git 态 / memory 索引 / 工具就绪）+ PreToolUse（黑灰双层 + 审计日志 + 按需 hint）+ PostToolUse（按后缀分发 prettier/ruff）+ Stop（变更摘要 + 写 `.session.state`）
-  - **8 个 Sub-agents**：`tdd-cycle-driver`（TDD 红绿重构）、`code-reviewer`（通用评审）、`ddd-architect`（DDD 战略战术，opus）、`spring-boot-reviewer`（Spring 反模式）、`maven-build-doctor`（构建诊断）、`schema-analyst`（schema/SQL 分析，走 MySQL MCP）、`migration-author`（Flyway/Liquibase）、`docs-keeper`（文档漂移检测）
-  - **5 个 Slash commands**：`/audit-practices`（15 维度自检）、`/audit-context`（token 注入审计）、`/commit`（标准化提交）、`/onboard`（新人 5 分钟上手）、`/sync-docs`（文档同步检查）
+  - **10 个 Sub-agents**：`requirement-decomposer`（需求拆解+AC）、`event-storm`（事件风暴+服务边界）、`tdd-cycle-driver`（TDD 红绿重构）、`code-reviewer`（通用评审）、`ddd-architect`（DDD 战略战术，opus）、`spring-boot-reviewer`（Spring 反模式）、`maven-build-doctor`（构建诊断）、`schema-analyst`（schema/SQL 分析，走 MySQL MCP）、`migration-author`（Flyway/Liquibase）、`docs-keeper`（文档漂移检测）
+  - **8 个 Slash commands**：`/audit-practices`（15 维度自检）、`/audit-context`（token 注入审计）、`/commit`（标准化提交）、`/onboard`（新人 5 分钟上手）、`/sync-docs`（文档同步检查）、`/cross-stage-check`（跨阶段一致性）、`/review`（评审编排）、`/doctor`（健康看板）
+  - **2 个自建 Skills**：`audit-practices` / `cross-stage-check`（判据真源，主 Claude 可按自然语言自主加载；对应 command 为显式入口）
   - **gitnexus skills**：探索 / 调试 / 影响面 / 重构 / PR 评审 / 索引 七件套（外部环境提供）
 
 - **Layer 3：质量门禁层（Quality Gates）**
@@ -113,12 +114,17 @@ CHANGELOG.md                         发布变更记录
     format.sh                        PostToolUse 格式化
     session-start.sh                 注入 git 态 / memory / 工具就绪
     stop-check.sh                    会话结束摘要 + 写 .session.state
-  agents/                            8 个：tdd-cycle-driver / code-reviewer
+  agents/                            10 个：tdd-cycle-driver / code-reviewer
                                     / ddd-architect / spring-boot-reviewer
                                     / maven-build-doctor / schema-analyst
                                     / migration-author / docs-keeper
-  commands/                          5 个：audit-practices / audit-context
+                                    / requirement-decomposer / event-storm
+  commands/                          8 个：audit-practices / audit-context
                                     / commit / onboard / sync-docs
+                                    / cross-stage-check / review / doctor
+  skills/                            自建 2：audit-practices / cross-stage-check
+                                    （+ gitnexus 外部七件套）
+  output-styles/                     harness-traceable（可选，非默认）
   scripts/
     audit-context-cost.py            token 注入审计
     audit-log-summary.py             .audit.log 摘要

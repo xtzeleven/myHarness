@@ -53,6 +53,8 @@ jobs:
         run: |
           set -e
           expected_agents=(
+            "requirement-decomposer"
+            "event-storm"
             "tdd-cycle-driver"
             "code-reviewer"
             "ddd-architect"
