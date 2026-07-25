@@ -130,6 +130,12 @@ run_case "ask-domain-repository" 2 "DDD 边界" \
   '{"tool_name":"Edit","tool_input":{"file_path":"src/main/java/com/x/domain/order/OrderRepository.java","new_string":"// repo"}}'
 run_case "ask-domain-event" 2 "DDD 边界" \
   '{"tool_name":"Write","tool_input":{"file_path":"src/main/java/com/x/domain/order/OrderPlacedEvent.java","content":"..."}}'
+# 业务名聚合根（无 Aggregate 后缀）+ domain 下 VO —— 规则窄修后 domain 下任意 .java 都应触发。
+# 防回归：此前规则只认 (Aggregate|Repository|Event) 后缀，真实聚合根 Order.java 漏网（见 CHANGELOG）。
+run_case "ask-domain-aggregate-plainname" 2 "DDD 边界" \
+  '{"tool_name":"Write","tool_input":{"file_path":"src/main/java/com/x/domain/order/Order.java","content":"package x;"}}'
+run_case "ask-domain-vo-plainname" 2 "DDD 边界" \
+  '{"tool_name":"Edit","tool_input":{"file_path":"src/main/java/com/x/domain/order/OrderId.java","new_string":"// vo"}}'
 run_case "allow-application-handler" 0 "" \
   '{"tool_name":"Write","tool_input":{"file_path":"src/main/java/com/x/application/PlaceOrderHandler.java","content":"..."}}'
 run_case "ask-pom-spring-boot" 2 "依赖升级" \

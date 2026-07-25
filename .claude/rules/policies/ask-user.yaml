@@ -36,9 +36,13 @@
 - id: ddd-aggregate-boundary
   tool: [Edit, Write, MultiEdit]
   when:
-    file_path_matches: 'src/main/java/.*/domain/'
-    file_basename_matches: '(Aggregate|AggregateRoot|Repository|Event|DomainEvent)\.java$'
-  reason: 'DDD 边界改动：聚合根 / Repository 接口 / 领域事件'
+    # domain 层下所有 .java 改动都要人工授权。
+    # 早期用 basename 后缀（Aggregate|Repository|Event）匹配，但本项目聚合根按
+    # DDD 地道风格用业务名直接命名（Order.java 而非 OrderAggregateRoot.java），
+    # 后缀正则漏掉了最核心的聚合根本身 → 改为 domain/ 下全 .java 拦。
+    # domain 层本就不该频繁改，多问一次授权符合"边界慎改"初衷。
+    file_path_matches: 'src/main/java/.*/domain/.*\.java$'
+  reason: 'DDD 边界改动：domain 层 .java（聚合根 / VO / Repository 接口 / 领域事件）'
 
 - id: pom-major-deps
   tool: [Edit, Write, MultiEdit]
