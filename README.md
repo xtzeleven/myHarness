@@ -29,7 +29,7 @@
 
   - **Hooks**：SessionStart（注入 git 态 / memory 索引 / 工具就绪）+ PreToolUse（黑灰双层 + 审计日志 + 按需 hint）+ PostToolUse（按后缀分发 prettier/ruff）+ Stop（变更摘要 + 写 `.session.state`）
   - **10 个 Sub-agents**：`requirement-decomposer`（需求拆解+AC）、`event-storm`（事件风暴+服务边界）、`tdd-cycle-driver`（TDD 红绿重构）、`code-reviewer`（通用评审）、`ddd-architect`（DDD 战略战术，opus）、`spring-boot-reviewer`（Spring 反模式）、`maven-build-doctor`（构建诊断）、`schema-analyst`（schema/SQL 分析，走 MySQL MCP）、`migration-author`（Flyway/Liquibase）、`docs-keeper`（文档漂移检测）
-  - **8 个 Slash commands**：`/audit-practices`（15 维度自检）、`/audit-context`（token 注入审计）、`/commit`（标准化提交）、`/onboard`（新人 5 分钟上手）、`/sync-docs`（文档同步检查）、`/cross-stage-check`（跨阶段一致性）、`/review`（评审编排）、`/doctor`（健康看板）
+  - **9 个 Slash commands**：`/audit-practices`（15 维度自检）、`/audit-context`（token 注入审计）、`/commit`（标准化提交）、`/onboard`（新人 5 分钟上手）、`/sync-docs`（文档同步检查）、`/cross-stage-check`（跨阶段一致性）、`/review`（评审编排）、`/doctor`（健康看板）、`/verify-setup`（环境预检）
   - **2 个自建 Skills**：`audit-practices` / `cross-stage-check`（判据真源，主 Claude 可按自然语言自主加载；对应 command 为显式入口）
   - **gitnexus skills**：探索 / 调试 / 影响面 / 重构 / PR 评审 / 索引 七件套（外部环境提供）
 
@@ -91,8 +91,9 @@
 > **Windows 注意**：CI 跑在 `ubuntu-latest`，但本地 hook 在 Git Bash 下处理 `D:\` 路径与 Linux 不同。**合并前必须本地跑**：
 >
 > ```bash
-> bash .claude/hooks/tests/test_pre_tool_use.sh   # 28 case
-> bash .claude/hooks/tests/test_subagent_stop.sh  # 6 case
+> bash .claude/scripts/verify-setup.sh             # 环境预检（先跑这个）
+> bash .claude/hooks/tests/test_pre_tool_use.sh   # 37 case
+> bash .claude/hooks/tests/test_subagent_stop.sh  # 7 case
 > python .claude/scripts/policy-dispatch.py --validate
 > ```
 >

@@ -23,6 +23,7 @@
 | 检查代码与文档是否漂移                  | agent `docs-keeper`（或命令 `/sync-docs`）                     |
 | 检查产研全链路文档间漂移                | 命令 `/cross-stage-check`                                      |
 | 新人 5 分钟上手                         | 命令 `/onboard`                                                |
+| 检查本机环境是否配齐（hook/构建前置）   | 命令 `/verify-setup`                                           |
 | 工程化自检                              | 命令 `/audit-practices`                                        |
 | 标准化提交                              | 命令 `/commit`                                                 |
 

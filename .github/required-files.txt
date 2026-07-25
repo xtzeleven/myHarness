@@ -53,6 +53,7 @@ package.json
 .claude/commands/onboard.md
 .claude/commands/review.md
 .claude/commands/sync-docs.md
+.claude/commands/verify-setup.md
 
 # --- Skills (项目内自建) ---
 .claude/skills/audit-practices/SKILL.md
@@ -63,6 +64,7 @@ package.json
 .claude/scripts/audit-log-summary.py
 .claude/scripts/policy-dispatch.py
 .claude/scripts/session-state.py
+.claude/scripts/verify-setup.sh
 .claude/scripts/tests/conftest.py
 .claude/scripts/tests/test_policy_dispatch.py
 .claude/scripts/tests/test_session_state.py
