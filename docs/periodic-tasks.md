@@ -61,16 +61,18 @@
 #### 触发节奏
 
 - **每天 09:00 UTC**：审计实践健康度（结构 + memory 索引一致性）
-- **每周一 03:00 UTC**：依赖 / 工具版本漂移检查
+- **每周一 03:00 UTC**：4 个 weekly job — stale 检查 / 工具版本漂移 / audit-log 提醒 / context-cost baseline
 - **手动**：`workflow_dispatch`
 
 #### 跑什么
 
-| Job                   | 内容                                             | 失败动作               |
-| --------------------- | ------------------------------------------------ | ---------------------- |
-| daily-structure-audit | 跑 lint.yml 同样的 structure-check job           | 创建 issue（不阻塞）   |
-| weekly-stale-check    | 看仓库是否 7 天无 commit + 是否有 PR > 14 天未合 | 仅警告（issue / 评论） |
-| weekly-tool-versions  | 检查 prettier / actions 版本是否过期             | 仅警告                 |
+| Job                   | 内容                                               | 失败动作               |
+| --------------------- | -------------------------------------------------- | ---------------------- |
+| daily-structure-audit | 跑 lint.yml 同样的 structure-check job             | 创建 issue（不阻塞）   |
+| weekly-stale-check    | 看仓库是否 7 天无 commit + 是否有 PR > 14 天未合   | 仅警告（issue / 评论） |
+| weekly-tool-versions  | 检查 prettier / actions 版本是否过期               | 仅警告                 |
+| weekly-audit-reminder | 提醒本机跑 audit-log-summary（.audit.log 本地）    | 开 issue（提醒）       |
+| weekly-context-audit  | 跑 audit-context-cost，报每会话注入 token baseline | 开 issue（baseline）   |
 
 **重要**：调度型 workflow **不能**直接 fail repo（会噪音）；用 issue / 评论方式给提示，而不是 status check。
 

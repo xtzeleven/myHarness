@@ -80,6 +80,10 @@ run_case "deny-rm-rf-home" 2 "家目录" \
   '{"tool_name":"Bash","tool_input":{"command":"rm -rf ~"}}'
 run_case "deny-rm-rf-git" 2 ".git" \
   '{"tool_name":"Bash","tool_input":{"command":"rm -rf .git"}}'
+run_case "deny-find-root-delete" 2 "递归删根" \
+  '{"tool_name":"Bash","tool_input":{"command":"find / -delete"}}'
+run_case "allow-find-subdir-delete" 0 "" \
+  '{"tool_name":"Bash","tool_input":{"command":"find ./build -name \"*.tmp\" -delete"}}'
 run_case "deny-force-push-main" 2 "保护分支" \
   '{"tool_name":"Bash","tool_input":{"command":"git push --force origin main"}}'
 run_case "deny-chmod-777-recursive" 2 "chmod 777" \

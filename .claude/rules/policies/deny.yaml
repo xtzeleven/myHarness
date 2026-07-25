@@ -11,6 +11,13 @@
       - 'rm -fr /'
   reason: 'rm -rf 根目录'
 
+- id: bash-find-delete-root
+  tool: Bash
+  when:
+    # find / ... -delete / -exec rm：等效递归删根，rm -rf 黑名单的同义绕过通道
+    cmd_matches: 'find\s+(/|~|\$HOME)(\s|$)[^|;&]*(-delete\b|-exec\s+rm\b)'
+  reason: 'find / -delete / -exec rm（等效递归删根，绕过 rm -rf 黑名单）'
+
 - id: bash-rm-rf-home
   tool: Bash
   when:
