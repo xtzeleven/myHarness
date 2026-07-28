@@ -1,0 +1,38 @@
+# agents.yaml — 自定义 agent 注册表（单一真源）
+#
+# 这是"有哪些 agent + 各自默认模型"的机器可读单点真源。
+# 派生方（由 check-agents-manifest.py 校验一致，不手工同步）：
+#   - .claude/agents/<name>.md          实际 agent 文件必须存在，frontmatter model 与此一致
+#   - AGENTS.md「自定义 Agents」表        行集必须与此完全一致（不多不少）
+#   - .github/workflows/lint.yml         不再硬编码 expected_agents 数组，改跑 check 脚本
+#   - docs/policy-model-selection.md §2   交叉校验（软警告：缺行/模型不符会提示但不阻塞）
+#
+# 新增 agent 流程：
+#   1. 在 .claude/agents/<name>.md 写文件（frontmatter 含 name/description/tools/model + schema 标记）
+#   2. 在本文件 agents: 下加一条 {name, model}
+#   3. 在 AGENTS.md「自定义 Agents」表加一行
+#   4. 跑 python .claude/scripts/check-agents-manifest.py 确认三向一致
+#
+# model 取值：sonnet / opus / haiku（改默认模型的"为什么"写在 .md frontmatter 注释 + policy-model-selection §2）
+
+agents:
+  - name: requirement-decomposer
+    model: sonnet
+  - name: event-storm
+    model: sonnet
+  - name: tdd-cycle-driver
+    model: sonnet
+  - name: code-reviewer
+    model: sonnet
+  - name: ddd-architect
+    model: opus
+  - name: spring-boot-reviewer
+    model: sonnet
+  - name: maven-build-doctor
+    model: sonnet
+  - name: schema-analyst
+    model: sonnet
+  - name: migration-author
+    model: sonnet
+  - name: docs-keeper
+    model: sonnet

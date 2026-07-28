@@ -105,8 +105,11 @@ gitnexus 系列 skill 由本机 Claude Code 环境直接提供，**不在 `.clau
    - `description`：职责 + **触发场景示例**（关键词要具体到主 Claude 能路由）
    - `tools`：最小权限集
    - `model`：通常 `sonnet`，复杂战略问题用 `opus`
-2. 在本文 **"自定义 Agents" 表**与 **"路由速查"表**各登记一行
-3. 自检：用 `/audit-practices agents` 看路由是否清晰
+   - `<!-- harness:agent-output -->`：输出 schema 示例（见 [docs/agent-output-schema.md](docs/agent-output-schema.md)）
+2. 在 [`.claude/agents.yaml`](.claude/agents.yaml)（**单一真源**）加一条 `{name, model}`
+3. 在本文 **"自定义 Agents" 表**与 **"路由速查"表**各登记一行
+4. 跑 `python .claude/scripts/check-agents-manifest.py` 确认 yaml ↔ .md ↔ AGENTS.md 三向一致（CI 的 `agents-manifest-check` job 会拦不一致）
+5. 自检：用 `/audit-practices agents` 看路由是否清晰
 
 ## 反模式
 

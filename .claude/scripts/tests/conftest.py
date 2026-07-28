@@ -33,3 +33,8 @@ def policy_dispatch():
 @pytest.fixture(scope="session")
 def session_state():
     return _load_module("session-state.py", "session_state_under_test")
+
+
+@pytest.fixture(scope="session")
+def check_agents_manifest():
+    return _load_module("check-agents-manifest.py", "check_agents_manifest_under_test")

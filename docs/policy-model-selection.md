@@ -17,16 +17,18 @@
 
 ## 2. Agent 默认模型表
 
-| Agent                  | 默认模型 | 选这个的原因                         | 升级路径                                         |
-| ---------------------- | -------- | ------------------------------------ | ------------------------------------------------ |
-| `tdd-cycle-driver`     | sonnet   | 红绿循环路径明确，sonnet 够用        | sonnet → opus（连续 2 次 GREEN 失败时）          |
-| `code-reviewer`        | sonnet   | 通用评审，sonnet 性价比高            | sonnet → opus（涉敏感 / 安全审查时）             |
-| `ddd-architect`        | **opus** | 战略设计 / 跨 BC 决策需要长链路推理  | 已最高，下一步是用户决策                         |
-| `spring-boot-reviewer` | sonnet   | Spring 反模式有清单可对照，sonnet 够 | sonnet → opus（涉事务边界 / 复杂 Bean 生命周期） |
-| `maven-build-doctor`   | sonnet   | 构建错误有套路                       | sonnet → opus（依赖冲突涉多版本传递时）          |
-| `schema-analyst`       | sonnet   | EXPLAIN / 索引分析有套路             | sonnet → opus（跨表 join / 分库分表设计）        |
-| `migration-author`     | sonnet   | 模板化产出                           | sonnet → opus（向后兼容性涉应用层双写时）        |
-| `docs-keeper`          | sonnet   | 漂移检测是模式匹配                   | sonnet → opus（罕见，文档结构剧变时）            |
+| Agent                    | 默认模型 | 选这个的原因                            | 升级路径                                         |
+| ------------------------ | -------- | --------------------------------------- | ------------------------------------------------ |
+| `requirement-decomposer` | sonnet   | 拆解 + AC 生成是结构化任务，sonnet 足够 | sonnet → opus（需求模糊 retry 仍不能拆）→ 用户   |
+| `event-storm`            | sonnet   | 事件风暴是结构化梳理，sonnet 足够       | sonnet → opus（复杂跨域流程划不清）→ 用户        |
+| `tdd-cycle-driver`       | sonnet   | 红绿循环路径明确，sonnet 够用           | sonnet → opus（连续 2 次 GREEN 失败时）          |
+| `code-reviewer`          | sonnet   | 通用评审，sonnet 性价比高               | sonnet → opus（涉敏感 / 安全审查时）             |
+| `ddd-architect`          | **opus** | 战略设计 / 跨 BC 决策需要长链路推理     | 已最高，下一步是用户决策                         |
+| `spring-boot-reviewer`   | sonnet   | Spring 反模式有清单可对照，sonnet 够    | sonnet → opus（涉事务边界 / 复杂 Bean 生命周期） |
+| `maven-build-doctor`     | sonnet   | 构建错误有套路                          | sonnet → opus（依赖冲突涉多版本传递时）          |
+| `schema-analyst`         | sonnet   | EXPLAIN / 索引分析有套路                | sonnet → opus（跨表 join / 分库分表设计）        |
+| `migration-author`       | sonnet   | 模板化产出                              | sonnet → opus（向后兼容性涉应用层双写时）        |
+| `docs-keeper`            | sonnet   | 漂移检测是模式匹配                      | sonnet → opus（罕见，文档结构剧变时）            |
 
 ## 3. 通用场景表（agent 未指定时）
 

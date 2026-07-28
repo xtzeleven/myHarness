@@ -49,30 +49,7 @@ jobs:
           fi
           echo "All ${#required[@]} required files present (manifest: .github/required-files.txt)."
 
-      - name: Agents directory has expected files
-        run: |
-          set -e
-          expected_agents=(
-            "requirement-decomposer"
-            "event-storm"
-            "tdd-cycle-driver"
-            "code-reviewer"
-            "ddd-architect"
-            "spring-boot-reviewer"
-            "maven-build-doctor"
-            "schema-analyst"
-            "migration-author"
-            "docs-keeper"
-          )
-          missing=0
-          for a in "${expected_agents[@]}"; do
-            if [ ! -e ".claude/agents/$a.md" ]; then
-              echo "::error file=.claude/agents/$a.md::missing agent file"
-              missing=$((missing+1))
-            fi
-          done
-          [ "$missing" -eq 0 ] || exit 1
-          echo "All expected agents present."
+      # agent 清单校验从硬编码数组移到 agents-manifest-check job（单一真源 .claude/agents.yaml）
 
       - name: Hook scripts have shebang and are executable in git
         run: |
@@ -214,23 +191,23 @@ jobs:
         # + session-state 状态机。I/O 与拦截行为仍由 hook smoke test 覆盖。
         run: python -m pytest .claude/scripts/tests -q
 
-  agent-schema-check:
-    name: Agents document output schema
+  agents-manifest-check:
+    name: Agents manifest consistency (agents.yaml 单一真源)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Every agent .md contains schema example
-        run: |
-          set -e
-          missing=0
-          while IFS= read -r f; do
-            if ! grep -q 'harness:agent-output' "$f"; then
-              echo "::error file=$f::agent missing <!-- harness:agent-output --> schema example (see docs/agent-output-schema.md)"
-              missing=$((missing+1))
-            fi
-          done < <(find .claude/agents -maxdepth 1 -type f -name "*.md")
-          [ "$missing" -eq 0 ] || exit 1
-          echo "All agents document the output schema."
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Check agents.yaml ↔ .md 文件 ↔ AGENTS.md 三向一致
+        # 单一真源 .claude/agents.yaml；脚本校验：
+        #   - 每个声明的 agent .md 存在 + frontmatter name/model 一致 + 含 schema 标记
+        #   - 目录里无未登记的孤儿 .md
+        #   - AGENTS.md「自定义 Agents」表行集与 yaml 完全一致
+        # 取代旧的硬编码 expected_agents 数组 + 独立 schema grep。
+        run: python .claude/scripts/check-agents-manifest.py
 
   commit-lint:
     name: Conventional Commits format
