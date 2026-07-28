@@ -203,6 +203,77 @@ def show_tail(entries, n):
         print(json.dumps(e, ensure_ascii=False))
 
 
+# 活动噪声：PostToolUse 每次 Edit/Write 都记一条，占日志 ~90%。
+# 审计真正关心的是"策略决策"与"异常"，这些从下面的噪声集之外的所有 action 里来。
+NOISE_ACTIONS = {"executed"}
+# 高危信号：出现即需人工确认，--decisions 视图里高亮
+ALERT_ACTIONS = {"bypass", "secret_suspect", "error"}
+
+
+def show_decisions(entries) -> None:
+    """策略决策聚焦视图（C：把决策信号从 executed 活动噪声里捞出来）。
+
+    保留：deny / ask_user / bypass / secret_suspect / error / warn / authorized_write
+          + SubagentStop status in {failed, blocked} 或 degraded_from 非空
+    过滤：executed（PostToolUse 活动噪声，占日志约 90%）
+
+    高危（bypass / secret_suspect / error）单列高亮，避免被普通 deny/ask_user 淹没。
+    """
+    total_raw = len(entries)
+    decisions = []
+    for e in entries:
+        action = (e.get("action") or "").strip()
+        if action in NOISE_ACTIONS or action == "":
+            # SubagentStop 异常无 action 字段，靠 status/degraded_from 兜底纳入
+            if e.get("hook") == "SubagentStop" and (
+                e.get("status") in ("failed", "blocked") or e.get("degraded_from")
+            ):
+                decisions.append(e)
+            continue
+        # baseline / scored / scanned 是审计工具自记的信息条，非决策，剔除
+        if action in ("baseline", "scored", "scanned"):
+            continue
+        decisions.append(e)
+
+    filtered = total_raw - len(decisions)
+    print(f"=== 策略决策摘要 (共 {total_raw} 条 audit，滤除 {filtered} 条活动噪声，{len(decisions)} 条决策/信号) ===")
+    if not decisions:
+        print("  (无策略决策或异常信号)")
+        return
+    print()
+
+    # 高危信号单列
+    alerts = [e for e in decisions if (e.get("action") or "").strip() in ALERT_ACTIONS or e.get("bypass")]
+    print(f"⚠️  高危信号 (bypass / secret / dispatcher error): {len(alerts)}")
+    if alerts:
+        by_action = Counter((e.get("action") or "?").strip() for e in alerts)
+        for k, v in by_action.most_common():
+            print(f"    {v:>3}  {k}")
+        # 最近 5 条高危原文，便于立即定位
+        print("    最近高危记录:")
+        for e in alerts[-5:]:
+            ts = (e.get("ts") or "")[:19]
+            reason = (e.get("reason") or "")[:60]
+            print(f"      {ts}  {(e.get('action') or '?'):<14}  {reason}")
+    print()
+
+    # 常规门禁决策（deny / ask_user）
+    gate = [e for e in decisions if (e.get("action") or "").strip() in ("deny", "ask_user")]
+    print(f"门禁拦截 (deny / ask_user): {len(gate)}")
+    if gate:
+        by_reason = Counter((e.get("reason") or "?")[:70] for e in gate)
+        for k, v in by_reason.most_common(10):
+            print(f"    {v:>3}  {k}")
+    print()
+
+    # sub-agent 失败 / 降级
+    sub = [e for e in decisions if e.get("hook") == "SubagentStop"]
+    print(f"Sub-agent 失败 / 降级: {len(sub)}")
+    if sub:
+        for k, v in Counter(e.get("agent") or "(unknown)" for e in sub).most_common(10):
+            print(f"    {v:>3}  {k}")
+
+
 def show_failures(entries) -> None:
     """C10：基于现有 audit log 字段聚合"失败相关"信号。
 
@@ -246,6 +317,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tail", type=int, help="显示最近 N 条原始记录")
     ap.add_argument("--bypass", action="store_true", help="仅 bypass 记录")
+    ap.add_argument("--decisions", action="store_true", help="策略决策聚焦（滤除 executed 活动噪声，只留 deny/ask_user/bypass/secret/error + sub-agent 异常）")
     ap.add_argument("--failures", action="store_true", help="工具失败信号摘要（dispatcher error / sub-agent failed|blocked / degraded_from）")
     ap.add_argument("--since", type=str, help="仅 N (h|d|m) 内 / ISO 时间戳之后")
     ap.add_argument("--hook", type=str, help="过滤 hook 类型（PreToolUse/PostToolUse/SubagentStop）")
@@ -267,6 +339,10 @@ def main():
 
     if args.tail:
         show_tail(entries, args.tail)
+        return
+
+    if args.decisions:
+        show_decisions(entries)
         return
 
     if args.failures:

@@ -141,13 +141,13 @@ jobs:
               title: `[scheduled] ${today} 本周 audit log 摘要待审`,
               body: `**.audit.log 是本地 .gitignored 文件**，CI 看不到。请在本机跑：\n\n` +
                     `\`\`\`bash\n` +
-                    `python .claude/scripts/audit-log-summary.py --tail 200\n` +
+                    `python .claude/scripts/audit-log-summary.py --decisions   # 滤除 executed 噪声，只看决策/异常\n` +
                     `python .claude/scripts/audit-log-summary.py --bypass\n` +
                     `python .claude/scripts/audit-log-summary.py --by-hook --by-action\n` +
                     `\`\`\`\n\n` +
-                    `**审查重点**：\n` +
-                    `- bypass 次数：上周是否非零？若是，每次是否有正当理由？\n` +
-                    `- deny / ask_user 高频项：是否暗示规则过紧或工作流不顺？\n` +
+                    `**审查重点**（\`--decisions\` 视图已按下列分组，executed 活动噪声约占日志 90% 已滤除）：\n` +
+                    `- 高危信号（bypass / secret_suspect / dispatcher error）：上周是否非零？每次是否有正当理由？\n` +
+                    `- 门禁拦截（deny / ask_user）高频项：是否暗示规则过紧或工作流不顺？\n` +
                     `- SubagentStop 非 ok 状态：哪些 agent 频繁 degraded / escalate？\n\n` +
                     `审完关掉本 issue。如发现需修补规则，开新 issue 并附 audit.log 行号。`,
               labels: ['harness-health', 'auto-generated', 'audit-review']

@@ -205,9 +205,12 @@ CI 与本地用同一版本（CI 通过 `npm ci` 装；本地通过 `npm install
 
 ```bash
 python .claude/scripts/audit-log-summary.py             # 全量
+python .claude/scripts/audit-log-summary.py --decisions # 策略决策聚焦（滤除 executed 活动噪声，约占 90%）
 python .claude/scripts/audit-log-summary.py --tail 20   # 最近 20 条
 python .claude/scripts/audit-log-summary.py --bypass    # 仅 bypass 记录
 ```
+
+> `--decisions` 是日常审计入口：executed 活动记录占日志约 90%，该视图滤除噪声后按「高危信号（bypass / secret / error）→ 门禁拦截（deny / ask_user）→ sub-agent 异常」三档分组，避免决策被淹没。
 
 详见 [docs/tools-fallback.md §7](docs/tools-fallback.md)。
 
