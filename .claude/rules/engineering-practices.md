@@ -376,7 +376,7 @@ Claude Code 内置 5 种 permission mode：`default` / `acceptEdits` / `plan` / 
 
 **达标**：
 
-- 每个 agent frontmatter 中 model 选择有 1 行注释解释为什么
+- 每个 agent frontmatter 中 model 选择有 1 行注释解释为什么（CI `agents-manifest-check` job 跑 `check-agents-manifest.py` 硬校验，缺注释即 fail）
 - `.claude/.audit.log` 格式合法（JSONL，每行可独立 parse）
 - bypass 在 CI 不可用（`grep -q '^BYPASS:' commit message` → fail）
 - 升级链超过 3 步必须问用户，**不可静默继续**
