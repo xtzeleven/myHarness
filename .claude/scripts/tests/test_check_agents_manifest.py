@@ -69,6 +69,25 @@ def test_policy_md_rows_extracts_name_model(check_agents_manifest):
     assert rows == {"alpha": "sonnet", "beta": "opus"}
 
 
+# ---------- has_model_comment ----------
+
+
+def test_has_model_comment_detects_standard_form(check_agents_manifest):
+    md = "---\nname: foo\nmodel: sonnet\n# model 选择：路径明确，sonnet 够用\n---\n\nbody\n"
+    assert check_agents_manifest.has_model_comment(md) is True
+
+
+def test_has_model_comment_missing(check_agents_manifest):
+    md = "---\nname: foo\nmodel: sonnet\ntools: Read\n---\n\nbody\n"
+    assert check_agents_manifest.has_model_comment(md) is False
+
+
+def test_has_model_comment_only_scans_frontmatter(check_agents_manifest):
+    # 正文里提到 model 的注释不算（必须在 frontmatter 块内）
+    md = "---\nname: foo\nmodel: sonnet\n---\n\n<!-- model 选择在正文不算 -->\n"
+    assert check_agents_manifest.has_model_comment(md) is False
+
+
 # ---------- check() ----------
 
 

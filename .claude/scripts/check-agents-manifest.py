@@ -56,13 +56,19 @@ def load_manifest(path: Path = MANIFEST) -> list[dict]:
     return agents
 
 
+def _frontmatter_block(md_text: str) -> str | None:
+    """返回 --- ... --- 之间的原始 frontmatter 文本（含注释行），无则 None。"""
+    m = re.match(r"^---\s*\n(.*?)\n---\s*\n", md_text, re.DOTALL)
+    return m.group(1) if m else None
+
+
 def parse_frontmatter(md_text: str) -> dict:
     """提取 --- ... --- 之间的 YAML frontmatter。仅取 name/model 简单键值。"""
-    m = re.match(r"^---\s*\n(.*?)\n---\s*\n", md_text, re.DOTALL)
-    if not m:
+    block = _frontmatter_block(md_text)
+    if block is None:
         return {}
     out: dict[str, str] = {}
-    for line in m.group(1).splitlines():
+    for line in block.splitlines():
         km = re.match(r"^([a-zA-Z_]+):\s*(.+?)\s*$", line)
         if km:
             key, val = km.group(1), km.group(2)
@@ -70,6 +76,22 @@ def parse_frontmatter(md_text: str) -> dict:
             val = val.strip().strip("*").strip().strip('"').strip("'")
             out[key] = val
     return out
+
+
+def has_model_comment(md_text: str) -> bool:
+    """frontmatter 块内是否有解释 model 选择原因的注释行（§15 达标条件）。
+
+    约定注释形如：# model 选择：<原因>。宽松匹配"# ... model ..."的注释行，
+    避免因冒号全半角 / 措辞差异误判。
+    """
+    block = _frontmatter_block(md_text)
+    if block is None:
+        return False
+    for line in block.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("#") and "model" in stripped.lower():
+            return True
+    return False
 
 
 def agents_md_table_names(md_text: str) -> list[str]:
@@ -160,6 +182,10 @@ def check(manifest: list[dict]) -> tuple[list[str], list[str]]:
             )
         if SCHEMA_MARKER not in text:
             errors.append(f"{name}.md 缺 <!-- {SCHEMA_MARKER} --> schema 示例标记")
+        if not has_model_comment(text):
+            errors.append(
+                f"{name}.md frontmatter 缺 model 选择原因注释（形如 `# model 选择：...`，见 engineering-practices §15 达标条件）"
+            )
 
     # 2. 目录里多出来的 .md（yaml 没登记）
     disk_names = {p.stem for p in AGENTS_DIR.glob("*.md")}
