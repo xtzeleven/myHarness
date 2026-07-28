@@ -8,6 +8,8 @@
 ## [Unreleased]
 
 > 阶段进度以 [README「M8 实况」](README.md#-项目简介) 为唯一真源，本文只记逐条变更、不重述阶段状态（避免多处漂移）。
+>
+> **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
 ### 2026-07-25 — Harness 治理批次：注入瘦身 + 脚本单测 + command→skill 化 + review 编排 + output style
 

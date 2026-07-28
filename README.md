@@ -17,6 +17,8 @@
 
 ### 三层 Harness 架构
 
+> **两个互补视角，别混淆**：本项目用**结构视角**（三层：约束 / 反馈 / 门禁，下面这套，按"错误拦在哪个时间点"分）对外讲清架构；用**机制视角**（六维度：Loop / Context / Tools / Permission / Memory / Policy，按机制类型分）在 [roadmap](docs/roadmap.md) 里规划演进。两套指同一套资产的不同切面，不是两套系统。完整对照见 [roadmap §0](docs/roadmap.md#0-出发点为什么需要本文)。
+
 - **Layer 1：约束层（Constraint Harness）**
   在 LLM 行动**之前**注入规则与禁忌，让"错误的代码写不出来"。
 
