@@ -5,7 +5,9 @@
 
 > **本文用途**：记录已发现、暂未修的改进项。每条带优先级、工作量、修法、关联。完成一项就划掉（保留历史不删）。新发现的也追加到这里，避免遗忘。
 >
-> **范围**：八维度系统化分析（Agent Loop / Context Manager / LLM Call / Tool Router / Permission Gate / Hooks / Subagent / Telemetry）+ 前两轮 audit 剩余项。
+> **范围**：八维度系统化分析（Agent Loop / Context Manager / LLM Call / Tool Router / Permission Gate / Hooks / Subagent / Telemetry）+ 前两轮 audit 剩余项。此处"八维度"是 [roadmap](roadmap.md) 六维度机制视角（Loop / Context / Tools / Permission / Memory / Policy）在 review 时的更细粒度展开，不是独立的第三套心智模型。
+>
+> **三份记录类文档分工**（时间指针不重叠）：本文 = **候选待办池**（已发现未做）；[CHANGELOG](../CHANGELOG.md) = 已发生的逐条变更；[roadmap](roadmap.md) = 未来里程碑规划。完成项移入 [archive](improvement-backlog-archive.md)。
 >
 > **不在此列**：M8 实例化（roadmap）、跨项目复用（M9+）。
 

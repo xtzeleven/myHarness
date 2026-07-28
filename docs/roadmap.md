@@ -16,6 +16,14 @@
 
 两套视角不冲突：三层架构是"按时间分阶段"，六维度是"按机制分类型"。
 
+> **术语对照（避免"到底几个维度"的困惑）**：
+>
+> - **三层**（约束 / 反馈 / 门禁）= 结构视角，[README](../README.md) 与 [engineering-practices](../.claude/rules/engineering-practices.md) 的组织骨架
+> - **六维度**（Loop / Context / Tools / Permission / Memory / Policy）= 机制视角，本文与里程碑规划的骨架
+> - **八维度**（Agent Loop / Context / LLM Call / Tool Router / Permission Gate / Hooks / Subagent / Telemetry，见 [improvement-backlog](improvement-backlog.md)）= 六维度里 Loop/Tools 的**更细粒度展开**，仅用于 backlog 逐项归类，**不是第三套体系**
+>
+> 三者是同一套资产由粗到细的三种切面，不是三套并行的心智模型。
+
 ## 1. 维度现状评分
 
 截至 M3 完成时（2026-05-09）：
