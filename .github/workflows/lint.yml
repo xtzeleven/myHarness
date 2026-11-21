@@ -263,6 +263,24 @@ jobs:
         # verify = compile + unit tests (+ Testcontainers ITs via failsafe).
         # ubuntu-latest ships Docker, so Testcontainers-backed ITs run here too.
         run: ./mvnw -B --no-transfer-progress verify
+      - name: Fail if any IT was skipped (G4)
+        # @Testcontainers(disabledWithoutDocker = true) lets ITs skip silently when
+        # Docker is missing or its API is incompatible, and `verify` stays green.
+        # Locally that is intended; in CI a skipped IT is a failure.
+        run: |
+          S=target/failsafe-reports/failsafe-summary.xml
+          if [ ! -f "$S" ]; then
+            echo "::error::$S not found - failsafe did not run any IT"
+            exit 1
+          fi
+          completed=$(sed -n 's:.*<completed>\([0-9]*\)</completed>.*:\1:p' "$S")
+          skipped=$(sed -n 's:.*<skipped>\([0-9]*\)</skipped>.*:\1:p' "$S")
+          echo "failsafe: completed=${completed:-?} skipped=${skipped:-?}"
+          if [ "${completed:-0}" -eq 0 ] || [ "${skipped:-1}" -ne 0 ]; then
+            echo "::error::ITs were skipped or none ran (completed=${completed:-?}, skipped=${skipped:-?}). Docker missing / incompatible on the runner? Skipped suites:"
+            grep -l '<skipped' target/failsafe-reports/TEST-*.xml || true
+            exit 1
+          fi
 
   ddd-layer-purity:
     name: DDD layer purity (domain 层无框架污染)

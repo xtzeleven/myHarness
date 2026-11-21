@@ -34,6 +34,7 @@ import com.example.harness.domain.order.repository.OrderRepository;
  * `mvn verify` 在 integration-test 阶段自动触发本测（surefire 跑 *Test，failsafe 跑 *IT）。
  * `@Testcontainers(disabledWithoutDocker = true)`：有 Docker 就跑（CI ubuntu 自带），
  * 无 Docker 就整类 skip（本地无 Docker 时 `mvn verify` 仍绿），不因缺 Docker 让构建失败。
+ * CI 里 skip 不算绿：`lint.yml` java-build 在 verify 后读 failsafe-summary.xml，skipped > 0 即 fail（G4）。
  *
  * `properties = { "spring.autoconfigure.exclude=" }` 覆盖主 application.yml 的排除清单，
  * 让 DataSource / Flyway / MybatisPlus autoconfig 在本测中恢复，连接 testcontainers MySQL。
