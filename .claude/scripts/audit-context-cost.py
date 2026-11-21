@@ -41,8 +41,25 @@ def get_token_counter():
         enc = tiktoken.get_encoding("cl100k_base")
         return ("tiktoken-cl100k_base", lambda s: len(enc.encode(s)))
     except Exception:
-        # 字符数 / 4 是英文近似；中文每字符 1-2 token，但 / 4 仍是常用粗估
-        return ("char/4 approx", lambda s: max(1, len(s) // 4))
+        # 无 tiktoken 时的粗估（F10）：英文等按 4 字符 ≈ 1 token；CJK 每字约 1.2 token。
+        # 旧版统一 /4 会把中文为主的文档低估约 4–5 倍。
+        return ("char approx (cjk*1.2 + other/4)", approx_tokens)
+
+
+def _is_cjk(ch: str) -> bool:
+    o = ord(ch)
+    return (
+        0x4E00 <= o <= 0x9FFF      # CJK 统一表意文字
+        or 0x3400 <= o <= 0x4DBF   # 扩展 A
+        or 0x3000 <= o <= 0x303F   # CJK 标点
+        or 0xFF00 <= o <= 0xFFEF   # 全角字符
+    )
+
+
+def approx_tokens(s: str) -> int:
+    cjk = sum(1 for ch in s if _is_cjk(ch))
+    other = len(s) - cjk
+    return max(1, round(cjk * 1.2 + other / 4))
 
 # ===== 文件分类 =====
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent

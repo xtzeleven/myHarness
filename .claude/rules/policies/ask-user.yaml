@@ -1,5 +1,5 @@
-# Ask-user rules — 灰名单（exit 2 + ⚠️ 待人工授权 前缀）
-# 主对话识别后必须停下问用户，不可绕过。
+# Ask-user rules — 灰名单（stdout JSON permissionDecision=ask → Claude Code 原生确认弹窗，ADR-0009）
+# 用户在弹窗同意即放行这一次；拒绝即不执行。不再依赖主对话自觉停下来问。
 
 - id: bash-mysql-ddl-dml
   tool: Bash

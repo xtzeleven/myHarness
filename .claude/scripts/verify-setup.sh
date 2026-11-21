@@ -110,6 +110,16 @@ else
   report fail "python" "未安装" "hook 全靠 python 解析 stdin JSON + 写审计日志；无 python 则整个反馈层失效。"
 fi
 
+# --- PyYAML（policy dispatcher 读 rules/policies/*.yaml 的唯一依赖；F1）---
+if [ -n "$py_bin" ]; then
+  if "$py_bin" -c "import yaml" >/dev/null 2>&1; then
+    report ok "pyyaml" "$("$py_bin" -c 'import yaml;print(yaml.__version__)' 2>/dev/null)"
+  else
+    report fail "pyyaml" "$py_bin 未装 PyYAML" \
+      "$py_bin -m pip install pyyaml（externally-managed 时加 --user --break-system-packages）。缺它时 PreToolUse 黑名单无法加载 → fail-closed 拦截所有 Bash / 写操作（ADR-0009）。"
+  fi
+fi
+
 # --- java（M8 实战载体，跑 mvn 前必须 17）---
 if command -v java >/dev/null 2>&1; then
   # java -version 输出到 stderr

@@ -9,6 +9,17 @@ cd "$(dirname "$0")/../.." 2>/dev/null || exit 0
 
 separator="──────────────────────────────────────────"
 
+# 0. 门禁自检（P0-1）：黑名单规则读不出来时 PreToolUse 会 fail-closed 拦下所有 Bash/写操作，
+#    这里放在首屏最前面，让人一眼看到原因与修法。
+py_bin=""
+for c in python python3; do command -v "$c" >/dev/null 2>&1 && { py_bin="$c"; break; }; done
+if [ -z "$py_bin" ]; then
+  echo "❌❌❌ 门禁失效：找不到 python / python3。PreToolUse 会拦截所有 Bash / 写文件操作。装 Python 3 + pyyaml。"
+elif ! "$py_bin" -c "import yaml" >/dev/null 2>&1; then
+  echo "❌❌❌ 门禁失效：$py_bin 缺 PyYAML，黑名单规则无法加载。"
+  echo "     PreToolUse 已 fail-closed（拦截所有 Bash / 写文件），修复：$py_bin -m pip install pyyaml（externally-managed 时加 --user --break-system-packages）"
+fi
+
 print_section() {
   echo ""
   echo "$separator"
