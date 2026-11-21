@@ -9,9 +9,9 @@
 
 ## 🎯 项目简介
 
-从 Harness 原理开始，把三层 Harness（约束 / 反馈 / 门禁）落地到一个真实的工程场景，验证其在 LLM 辅助开发中的有效性。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。
+**可度量的 Harness：哪些该留、哪些该拆，随模型代际实测**（[ADR-0010](docs/adr/0010-measurable-harness-positioning.md)）。把三层 Harness（约束 / 反馈 / 门禁）落地到一个真实的工程场景，并用固定任务集（[`bench/`](bench/README.md)）在每次主要模型发布时复跑，回答"哪一层拦下了什么、哪些规则已经可以拆"。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。
 
-> **当前状态**：Harness 六维度框架就绪（M0-M7 完成），产研全链路 Tier 1 落地（M8-T0），M8 主线进行中。**细粒度进度以下方「📊 阶段性路线」表 + 「M8 实况」小节为唯一真源**——badge / 本段不重述 Phase 级状态，避免多处漂移（本项目自身的防漂移实践）。
+> **当前状态**：Harness 六维度框架就绪（M0-M7 完成），产研全链路 Tier 1 落地（M8-T0），M8 主线进行中；M9「从框架就位到证明有效」已启动（[改进方案](docs/improvement-plan.md)）。**细粒度进度以下方「📊 阶段性路线」表 + 「M8 实况」小节为唯一真源**——badge / 本段不重述 Phase 级状态，避免多处漂移（本项目自身的防漂移实践）。
 
 ## 🛠️ 技术路线
 
@@ -24,7 +24,8 @@
 
   - `CLAUDE.md`：每次会话自动注入的行为准则（项目重定位 + 技术栈 + DDD 禁忌 + 测试命令 + gitnexus 路由）
   - `.claude/rules/engineering-practices.md`：15 节工程化规则（11 通用 + DDD 分层 / Java&Spring / MCP 治理 + Policy 机制化）
-  - `.claude/hooks/pre-tool-use.sh`：黑名单（直接拦：`rm -rf /`、强推主分支、写敏感文件）+ 灰名单（人工授权：DDD 边界改动、主依赖升级、DDL/DML、`mvn deploy`）
+  - `.claude/hooks/pre-tool-use.sh`：黑名单（直接拦：`rm -rf /`、强推主分支、写敏感文件；规则加载失败时 fail-closed）+ 灰名单（Claude Code 原生确认弹窗：DDD 边界改动、主依赖升级、DDL/DML、`mvn deploy`）
+  - `.claude/settings.json` `permissions.deny`：最硬的几条（写密钥 / 凭据、强推 main/master）用原生规则兜底，不依赖 hook（[ADR-0009](docs/adr/0009-native-ask-and-fail-closed.md)）
 
 - **Layer 2：反馈循环层（Feedback Loop）**
   在 LLM 行动**期间与之后**给出即时信号，让"错的能立刻被纠"。
@@ -38,7 +39,8 @@
 - **Layer 3：质量门禁层（Quality Gates）**
   在 LLM **不可绕过**的位置兜底，让"绕过了也合不进 main"。
   - `.gitignore` 覆盖 IDE / OS / Node / Python / Java / 密钥 六类
-  - GitHub Actions `lint.yml`：prettier --check + 必需文件存在性 + JSON 合法性 + AGENTS 链接有效性
+  - GitHub Actions `lint.yml`：prettier --check + 必需文件存在性 + JSON 合法性 + AGENTS 链接有效性 + hook 冒烟测 + pytest + `mvnw verify`
+  - ArchUnit 架构测试（`DddArchitectureTest`，test scope 依赖 `com.tngtech.archunit:archunit-junit5`）：CLAUDE.md §6 的 DDD 禁忌跑在 `mvn verify` 里（[ADR-0011](docs/adr/0011-archunit-ddd-rules.md)）
   - 提交规范：Conventional Commits（由 `/commit` 命令统一动作）
 
 ### 数据 / MCP 接入
@@ -61,6 +63,7 @@
 | **M7**    | Tools 治理 + Policy 机制化（版本锁 + 降级链 + bypass + audit log）       | ✅ 完成                        |
 | **M8-T0** | 产研全链路前置阶段（需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查） | ✅ 完成                        |
 | **M8**    | 实例化 Java DDD 骨架（六维度回归测试场）                                 | ⏳ 进行中（见下方「M8 实况」） |
+| **M9**    | 从"框架就位"到"证明有效"：门禁止血 → 对照实验 → 按成分收敛 → 分层        | ⏳ P0 进行中（见 roadmap M9）  |
 
 > **进度真源**：M8 的细粒度进度只在下方「M8 实况」维护一处。README 其他位置、badge、CHANGELOG **不重述 Phase 级状态**，避免多处漂移（此前 badge/正文/CHANGELOG 三处各说各话已是教训）。
 
@@ -68,25 +71,25 @@
 
 第一个限界上下文 `order` 已全链路落地（DDD 四层 + Migration + 测试）：
 
-| Phase      | 内容                                                                                    | 状态              |
-| ---------- | --------------------------------------------------------------------------------------- | ----------------- |
-| Phase 1    | 项目骨架（pom.xml + Maven Wrapper + DDD 四层目录 + 主类 + smoke test）                  | ✅                |
-| P2.1       | `Order` 聚合根 + `OrderItem` / `OrderId` VO + `OrderStatus` + `EmptyOrderException`     | ✅                |
-| P2.2       | `OrderRepository` 接口（domain 层）+ `OrderPlaced` 领域事件                             | ✅                |
-| P2.3       | `OrderPersistenceAdapter`（infrastructure，MyBatis-Plus + items JSON 列 + TypeHandler） | ✅                |
-| P2.4       | `PlaceOrderHandler` 用例编排（application，事务边界 + 发事件）                          | ✅                |
-| P2.5       | `OrderController` + DTO + Assembler + `GlobalExceptionHandler`（interfaces）            | ✅                |
-| P2.6       | Flyway 迁移 `V1__create_orders.sql`                                                     | ✅                |
-| 端到端验证 | Testcontainers 集成测（`OrderPersistenceAdapterIT`）本机需 JDK 17 + Docker 跑通         | ⏳ 待本机环境验证 |
+| Phase      | 内容                                                                                        | 状态          |
+| ---------- | ------------------------------------------------------------------------------------------- | ------------- |
+| Phase 1    | 项目骨架（pom.xml + Maven Wrapper + DDD 四层目录 + 主类 + smoke test）                      | ✅            |
+| P2.1       | `Order` 聚合根 + `OrderItem` / `OrderId` VO + `OrderStatus` + `EmptyOrderException`         | ✅            |
+| P2.2       | `OrderRepository` 接口（domain 层）+ `OrderPlaced` 领域事件                                 | ✅            |
+| P2.3       | `OrderPersistenceAdapter`（infrastructure，MyBatis-Plus + items JSON 列 + TypeHandler）     | ✅            |
+| P2.4       | `PlaceOrderHandler` 用例编排（application，事务边界 + 发事件）                              | ✅            |
+| P2.5       | `OrderController` + DTO + Assembler + `GlobalExceptionHandler`（interfaces）                | ✅            |
+| P2.6       | Flyway 迁移 `V1__create_orders.sql`                                                         | ✅            |
+| 端到端验证 | `./mvnw verify` 本机（macOS / JDK 17 / Docker 29）跑通：单测 + ArchUnit + Testcontainers IT | ✅ 2026-11-21 |
 
-**下一步**：本机 JDK 17 + Docker 跑通 `mvn verify`（含 Testcontainers IT）；之后按 [ADR-0008](docs/adr/0008-process-capability-expansion.md) 启动 Tier 2（测试生成 / 改动分析 / code review 增强）。
+**下一步**：M9-P1 首批对照实验（[`bench/`](bench/README.md)，T1–T3 本身就是 order 的真实功能）。[ADR-0008](docs/adr/0008-process-capability-expansion.md) Tier 2–4 冻结到 P1 出数据后再评估（D4）。
 
 ## 🚀 快速上手
 
 ### 前置要求
 
 - **Shell**：`bash`（Windows 用户用 **Git Bash** 或 **WSL**；PowerShell / cmd 下 hook 静默失败）
-- **Python 3**：hook 用 python 解析 JSON 与写审计日志
+- **Python 3 + PyYAML**：hook 用 python 解析 JSON、读规则、写审计日志；缺 PyYAML 时黑名单 fail-closed（拦下所有 Bash / 写操作）
 - **Node 20+**：CI 与本地 prettier 走 `npm ci`
 - 工具版本锁见 `.tool-versions`
 
@@ -94,8 +97,8 @@
 >
 > ```bash
 > bash .claude/scripts/verify-setup.sh             # 环境预检（先跑这个）
-> bash .claude/hooks/tests/test_pre_tool_use.sh   # 37 case
-> bash .claude/hooks/tests/test_subagent_stop.sh  # 7 case
+> bash .claude/hooks/tests/test_pre_tool_use.sh   # 48 case
+> bash .claude/hooks/tests/test_subagent_stop.sh  # 6 case
 > python .claude/scripts/policy-dispatch.py --validate
 > ```
 >
@@ -121,29 +124,33 @@ cp .env.example .env && vi .env
 ## 📁 目录速览
 
 ```
-CLAUDE.md                            行为准则（11 节，每会话自动注入）
+CLAUDE.md                            行为准则（12 节 + Always/Never，每会话自动注入）
 README.md                            本文件
-AGENTS.md                            Agent 索引（路由表 + 8 agent）
+AGENTS.md                            Agent 索引（路由表 + 10 agent）
 CHANGELOG.md                         发布变更记录
 .gitignore .env.example .mcp.json    Git / 环境 / MCP 配置
 
 .claude/
-  settings.json                      共享配置（hooks 注册）
+  settings.json                      共享配置（hooks 注册 + permissions.deny 兜底）
   settings.local.json                本地权限（已 .gitignore，不入仓库）
   rules/engineering-practices.md     15 节工程化规则
   hooks/
     pre-tool-use.sh                  黑+灰双层防御 + 审计日志 + 按需 hint
-    format.sh                        PostToolUse 格式化
-    session-start.sh                 注入 git 态 / memory / 工具就绪
+    format.sh                        PostToolUse 格式化 + 密钥字面量检测
+    session-start.sh                 门禁自检 + 注入 git 态 / memory / 工具就绪
+    user-prompt-submit.sh            用户提交 prompt 时敏感词检测（只警告）
     stop-check.sh                    会话结束摘要 + 写 .session.state
+    subagent-stop.sh                 解析 sub-agent 输出块写审计
+    pre-compact.sh                   压缩前注入"必须保留"提示
   agents/                            10 个：tdd-cycle-driver / code-reviewer
                                     / ddd-architect / spring-boot-reviewer
                                     / maven-build-doctor / schema-analyst
                                     / migration-author / docs-keeper
                                     / requirement-decomposer / event-storm
-  commands/                          8 个：audit-practices / audit-context
+  commands/                          9 个：audit-practices / audit-context
                                     / commit / onboard / sync-docs
                                     / cross-stage-check / review / doctor
+                                    / verify-setup
   skills/                            自建 2：audit-practices / cross-stage-check
                                     （+ gitnexus 外部七件套）
   output-styles/                     harness-traceable（可选，非默认）
@@ -151,8 +158,11 @@ CHANGELOG.md                         发布变更记录
     audit-context-cost.py            token 注入审计
     audit-log-summary.py             .audit.log 摘要
 
+bench/                               对照实验：任务集 / 运行记录 / 报告 / 代际总表（M9-P1）
+
 docs/
-  roadmap.md                         六维度路线（M4-M8）
+  roadmap.md                         六维度路线（M4-M8）+ M9
+  improvement-plan.md                M9 改进方案（P0–P4，D1–D7 已拍板）
   loop-architecture.md               Driver/Worker 调度
   context-management.md              token 预算与按需注入
   tools-fallback.md                  工具降级链
@@ -175,6 +185,8 @@ docs/
 | 后端 Agent 协作 | [docs/AGENTS.backend.md](docs/AGENTS.backend.md)                                 |
 | 工程化规则      | [.claude/rules/engineering-practices.md](.claude/rules/engineering-practices.md) |
 | 六维度路线      | [docs/roadmap.md](docs/roadmap.md)                                               |
+| M9 改进方案     | [docs/improvement-plan.md](docs/improvement-plan.md)                             |
+| 对照实验        | [bench/README.md](bench/README.md)                                               |
 | Loop 架构       | [docs/loop-architecture.md](docs/loop-architecture.md)                           |
 | Context 治理    | [docs/context-management.md](docs/context-management.md)                         |
 | 工具降级链      | [docs/tools-fallback.md](docs/tools-fallback.md)                                 |

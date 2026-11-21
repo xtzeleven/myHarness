@@ -67,7 +67,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 5. 项目上下文
 
-**项目性质：** myHarness 是 Harness 工程化方法论项目，验证三层 Harness（约束 / 反馈 / 门禁）在真实工程场景下的有效性。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。**能力维度**：M8 主线（Java DDD 代码侧）+ M8-T0 前置阶段（产研全链路流程性能力，含需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查，语言/技术栈无关，详见 [ADR-0008](docs/adr/0008-process-capability-expansion.md)）。
+**项目性质：** myHarness 是**可度量的 Harness**：哪些该留、哪些该拆，随模型代际实测（[ADR-0010](docs/adr/0010-measurable-harness-positioning.md)）。三层 Harness（约束 / 反馈 / 门禁）落在真实工程场景里，用 `bench/` 固定任务集在每次主要模型发布时复跑验证。**实战载体**：Java + Spring Boot + Maven + DDD 后端骨架（M8 阶段实例化）。**能力维度**：M8 主线（Java DDD 代码侧）+ M8-T0 前置阶段（产研全链路流程性能力，含需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查，语言/技术栈无关，详见 [ADR-0008](docs/adr/0008-process-capability-expansion.md)）。
 
 > **当前进度快照不在本文**：阶段/里程碑/已落地清单变化频繁，统一维护在 [README.md](README.md)（阶段路线表）与 [docs/roadmap.md](docs/roadmap.md)。本文只保留稳定的项目性质与硬规则，避免每会话注入过期的进度描述。
 
@@ -118,7 +118,7 @@ DDD 依赖方向 **严格单向**：interfaces → application → domain ← in
 
 ## 7. 测试 / 校验命令
 
-> 注：M8 主线 Phase 2（第一个 BC `order`）全链路已落地（域建模 → Repository → Handler → Controller → Migration + 单测/集成测）。`mvn verify` 由 CI（`lint.yml` 的 `java-build` job）不可绕过地执行；`domain/` 层纯净度（无框架 import / 无 `@Transactional`）由 `ddd-layer-purity` job 硬门禁。**本机前置**：JDK 17（`.tool-versions` 锁 `java temurin-17.0.13+11`）；Testcontainers 集成测需本机 Docker。
+> 注：M8 主线 Phase 2（第一个 BC `order`）全链路已落地（域建模 → Repository → Handler → Controller → Migration + 单测/集成测）。`mvn verify` 由 CI（`lint.yml` 的 `java-build` job）不可绕过地执行；`domain/` 层纯净度（无框架 import / 无 `@Transactional`）由 `ddd-layer-purity` job 硬门禁；§5 依赖方向与 §6 前 5 条 DDD 禁忌由 ArchUnit `DddArchitectureTest` 在 `mvn verify` 中机制化（§6-3 只覆盖可判定的代理部分，见 [ADR-0011](docs/adr/0011-archunit-ddd-rules.md)）。**本机前置**：JDK 17（`.tool-versions` 锁 `java temurin-17.0.13+11`）；Testcontainers 集成测需本机 Docker。
 
 ```bash
 # Java / Maven（M4 后启用）
@@ -162,7 +162,7 @@ git status --porcelain
 
 ## 9. 人工决策清单（PreToolUse 会拦下并问你）
 
-以下操作命中黑名单 → 直接拒绝；命中**灰名单** → hook 退出 2 + 提示主对话**询问用户授权**：
+以下操作命中黑名单 → 直接拒绝；命中**灰名单** → hook 返回 `permissionDecision: ask`，由 Claude Code **原生弹窗请用户确认**（[ADR-0009](docs/adr/0009-native-ask-and-fail-closed.md)）：
 
 | 类别         | 黑名单（直接拦）                          | 灰名单（人工授权）                                             |
 | ------------ | ----------------------------------------- | -------------------------------------------------------------- |
@@ -172,16 +172,17 @@ git status --porcelain
 | **DDD 边界** | —                                         | **改 `domain/` 下聚合根 / Repository 接口 / DomainEvent 定义** |
 | **依赖**     | —                                         | **改 `pom.xml` 中 spring-boot / 主 ORM / 数据库驱动版本**      |
 
-被灰名单拦下时，**必须**让用户明确说"授权"再继续，不可绕过。
+灰名单以弹窗里用户的同意 / 拒绝为准，不可绕过。黑名单规则加载失败（如缺 PyYAML）时 hook **fail-closed**：拦下所有 Bash / 写操作，按提示装好 PyYAML 即恢复。
 
-**permission mode（auto / plan / acceptEdits / bypassPermissions）下同样适用**：上述拦截在所有 mode 下都先评估生效。auto mode 的分类器**不替代用户授权**；命中灰名单时主对话仍必须 AskUserQuestion，不可因"已 auto"而省略。详见 [.claude/rules/engineering-practices.md §15 Permission Mode policy](.claude/rules/engineering-practices.md#permission-mode-policyauto-mode-集成)。
+**permission mode（auto / plan / acceptEdits / bypassPermissions）下同样适用**：上述拦截在所有 mode 下都先评估生效。auto mode 的分类器**不替代用户授权**；灰名单一律交给原生确认弹窗，不可因"已 auto"而省略。详见 [.claude/rules/engineering-practices.md §15 Permission Mode policy](.claude/rules/engineering-practices.md#permission-mode-policyauto-mode-集成)。
 
 ## 10. 子目录指引
 
 - 后端 agent 设计：`docs/AGENTS.backend.md`
 - DDD 约定（实例化后）：`docs/ddd-conventions.md`
 - 工程化规则：`.claude/rules/engineering-practices.md`
-- 路线图：`docs/roadmap.md`（M4-M8 六维度计划）
+- 路线图：`docs/roadmap.md`（M4-M8 六维度计划 + M9）
+- 对照实验：`bench/README.md`（任务集 / 运行记录 / 代际总表）
 - 决策记录：`docs/adr/`（公开追溯）
 - Worktree 使用：`docs/worktree-usage.md`（何时开 / 跨 worktree audit 聚合 / 反模式）
 

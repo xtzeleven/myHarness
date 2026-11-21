@@ -9,7 +9,7 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **候选待办池**（已发现未做）；[CHANGELOG](../CHANGELOG.md) = 已发生的逐条变更；[roadmap](roadmap.md) = 未来里程碑规划。完成项移入 [archive](improvement-backlog-archive.md)。
 >
-> **不在此列**：M8 实例化（roadmap）、跨项目复用（M9+）。
+> **不在此列**：M8 实例化（roadmap）、跨项目复用。M9 待办见 §G。
 
 ## 优先级图例
 
@@ -97,6 +97,32 @@ _F1 / F2 同批落地，详见 §E（F1→E33 / F2→E34）。_
 | D3  | ADR-0001 "L1 工程化规则（14 节）" 历史快照是否更新                                                                                   | ADR 通常不改；建议保留作为快照证据                                                             |
 | D4  | Hook 跨平台支持（PowerShell / fish 用户）                                                                                            | 当前要 bash；可在 README 声明前置要求                                                          |
 | D7  | Auto mode 深度集成：扩 deny.yaml / ask-user.yaml 覆盖"软风险"（大量删文件 / 改 CI workflow / 改 .gitignore），让分类器之外多一层规则 | 触发条件：实际开始 daily 用 auto mode 后通过 `--by-permission-mode` 看到 auto 下放行的可疑动作 |
+
+---
+
+## G. M9 待办（2026-11-21 起，来源 [improvement-plan.md](improvement-plan.md)）
+
+> 阶段与状态见 [roadmap M9](roadmap.md)。P0 已落地项记在 CHANGELOG 2026-11-21，这里只列**没做完的**。
+
+| #   | 优先级 | 内容                                                                                                                                      | 来源        |
+| --- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| G1  | 🔴 P0  | 原生 ask 在 5 种 permission mode 下逐个手工验证，结果填 engineering-practices §15 实测表；不弹窗的 mode 退回 exit 2                       | P0-3        |
+| G2  | 🔴 P0  | 手工验证 `permissions.deny`：临时让 hook 失效（无 PyYAML 的 python 或 `HARNESS_BYPASS=1 claude`）后写 `.env` / 强推 main 仍被原生规则拦下 | P0-5        |
+| G3  | 🟡 P1  | 首批对照实验：3 任务 × C0/C2 × 2 次，手工跑（D3），出首份报告 + 代际总表第一行                                                            | P1 / bench/ |
+| G4  | 🟡 P1  | CI 防"IT 静默跳过"：`disabledWithoutDocker = true` 让无 Docker / Docker API 不兼容时 IT 被跳过而构建仍绿；CI 里应改为 IT 跳过即 fail      | P0-8 实测   |
+| G5  | 🟢 P2  | 规则清单（见下表）：每条规则填成分 / 当前强制力 / 处置 / 退役条件；backlog + archive 的 ✅ 重标为"✅ 机制"或"📄 文档"                     | P2          |
+| G6  | 🟢 P2  | bypass 记录让 CI 可见（F7）：当前真实 bypass 只在本地 `.audit.log`（gitignored）                                                          | P2 / F7     |
+| G7  | 🟢 P2  | ① 类规则 P1 显示"裸跑已不犯"→ 按退役条件拆，拆后用同一任务集复跑确认不退化                                                                | P2          |
+| G8  | ⚪ P3  | `policies/` 拆 `core/` + `java-ddd/`，`.claude/harness.yaml` 声明 profiles；engineering-practices §12–14 下沉                             | P3          |
+| G9  | ⚪ P3  | 一页总览 + `harness-methodology.md` 增"五种成分与演化终局"+ docs 预算（≤ 3 万 token）                                                     | P4          |
+
+### G5 规则清单（P2，待 P1 数据后填）
+
+| 规则 | 成分（①–⑤） | 当前强制力（机制 / 信号 / 文档） | 处置 | 退役条件 |
+| ---- | ----------- | -------------------------------- | ---- | -------- |
+|      |             |                                  |      |          |
+
+退役条件写法示例："`bench/generations.md` 连续两代模型在 C0 下该埋点均未触发 → 删除"。
 
 ---
 

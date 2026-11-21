@@ -54,15 +54,17 @@
 - 写入敏感文件：`.env`、`*.key`、`*.pem`、`id_rsa`、`*.p12`
 - `chmod 777`、`curl | sh`
 
-**灰名单（exit 2 + 提示主对话向用户索要授权）：**
+**灰名单（stdout 输出 `permissionDecision: "ask"` + exit 0，由 Claude Code 原生弹窗请用户确认）：**
 
 - 改 `domain/` 下聚合根 / Repository 接口 / DomainEvent 定义（DDD 边界）
 - 改 `pom.xml` 中 `spring-boot` / 主 ORM（MyBatis/JPA）/ MySQL 驱动版本
 - 删 commit / 批量 rebase / `git reset --hard origin/*`
 
-退出码 2 阻止 + stderr 给原因；灰名单消息以 `⚠️ 待人工授权:` 开头，便于主对话识别。
+黑名单退出码 2 阻止 + stderr 给原因；灰名单 reason 以 `⚠️ 待人工授权:` 开头，显示在原生确认弹窗里。
 
-**达标**：手动构造危险命令时被拦下；正常命令不误伤；灰名单触发时主对话能正确暂停问用户。
+**失败要响**（[ADR-0009](../../docs/adr/0009-native-ask-and-fail-closed.md)）：`deny.yaml` 加载失败（缺 PyYAML / 解析失败）→ fail-closed，拦截所有经过 PreToolUse 的调用，只放行 PyYAML 安装命令本身。最硬的几条另在 `settings.json` `permissions.deny` 用原生规则兜底，不依赖 hook。
+
+**达标**：手动构造危险命令时被拦下；正常命令不误伤；灰名单触发时弹出原生确认；PyYAML 缺失时危险命令仍被拦（`test_pre_tool_use.sh` 的 fail-closed 用例）。
 
 ---
 
@@ -315,10 +317,12 @@ interfaces  →  application  →  domain  ←  infrastructure
 
 ### Bypass policy（M7-T5 引入）
 
-`HARNESS_BYPASS=1` 环境变量下 hook 放行黑+灰名单，但：
+`HARNESS_BYPASS=1` 环境变量下 hook 放行黑+灰名单。**只有在启动 Claude Code 会话之前设置才生效**（如 `HARNESS_BYPASS=1 claude`），整个会话放开全部黑+灰名单；命令前缀 `HARNESS_BYPASS=1 <command>` **不生效**——hook 读的是 hook 进程自身环境，前缀到不了 hook（[ADR-0009](../../docs/adr/0009-native-ask-and-fail-closed.md)，部分取代 ADR-0004）。单次授权请走灰名单的原生确认弹窗，不要用 bypass。
+
+bypass 生效时：
 
 1. **强制写审计日志**（`.claude/.audit.log`）含 `bypass: true` 标记
-2. **本地可用**（开发者紧急情况下手动 export）
+2. **本地可用**（开发者紧急情况下在启动会话前设置）
 3. **CI 拒合**：commit message 含 `BYPASS:` 或环境变量传到 CI runner 时 lint.yml 直接 fail
 4. **hook 输出红色警告**到 stderr 提醒主对话不要常用
 5. **用量阈值告警**（C11）：过去 7 天 `bypass=true` 记录 ≥ 3 次（可通过 `HARNESS_BYPASS_WARN_AT` 环境变量调阈值），policy-dispatch.py 额外输出红字提示 — 提醒"机制性放行不应成为日常，需要回看是否放宽规则或改 policy"
@@ -342,14 +346,26 @@ Claude Code 内置 5 种 permission mode：`default` / `acceptEdits` / `plan` / 
 **auto mode 落地规则**：
 
 1. **审计可见**：`policy-dispatch.py` 把 stdin payload 的 `permission_mode` 写入 `.claude/.audit.log` 每条记录；`audit-log-summary.py --by-permission-mode` 可看分布
-2. **灰名单不让步**：auto mode 下命中 `ask_user` 规则时，hook 额外输出 "↑ 当前 permission_mode=auto，分类器**不可**替代用户授权" 提醒主 Claude 不要把分类器决定当用户授权
+2. **灰名单不让步**：命中 `ask_user` 规则时 hook 返回原生 `permissionDecision: "ask"`；auto mode 下 reason 里额外写明"分类器不可替代用户授权"
 3. **黑名单照常**：所有 deny 规则在 auto 下仍然 exit 2 拦下
 4. **`.git/` / `.claude/` 保护**：Claude Code v2.1.78+ 把这两路径设为受保护，auto / bypassPermissions 也不能写入，本项目无须重复设防
 5. **不在 settings.json 里 `defaultMode: auto`**：把模式切换留给会话级（Shift+Tab）/ CLI flag（`--enable-auto-mode`），避免主仓库强制所有人 auto
 
+**原生 ask 各 mode 实测记录**（ADR-0009 待手工验证项；验证方法：改 `src/main/java/.../domain/order/Order.java` 一行，看是否弹窗、同意后是否一次写入成功）：
+
+| Mode                | 是否弹窗 | 同意后一次成功 | 验证日期 / 模型 |
+| ------------------- | -------- | -------------- | --------------- |
+| `default`           | 待验证   | 待验证         |                 |
+| `acceptEdits`       | 待验证   | 待验证         |                 |
+| `plan`              | 待验证   | 待验证         |                 |
+| `auto`              | 待验证   | 待验证         |                 |
+| `bypassPermissions` | 待验证   | 待验证         |                 |
+
+若某 mode 下 ask 被自动放行：该 mode 退回 exit 2 作后备，并在此表记录。
+
 **反模式**：
 
-- ❌ 主 Claude 看到"已在 auto mode"就跳过 AskUserQuestion → auto 不等于用户授权
+- ❌ 主 Claude 看到"已在 auto mode"就认为灰名单已授权 → auto 不等于用户授权，以原生弹窗里的用户选择为准
 - ❌ 把 `HARNESS_BYPASS=1` 当 `auto` 替代品 → 两个机制正交，bypass 是放行 hook，auto 是放宽 mode 默认 prompt
 - ❌ `defaultMode: bypassPermissions` 写进 `.claude/settings.json` → 配置级永久绕过，违反审计 policy
 

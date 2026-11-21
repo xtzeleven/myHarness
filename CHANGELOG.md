@@ -11,6 +11,41 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-21 — M9 启动：D1–D7 拍板 + P0 止血（本机门禁真生效）+ ArchUnit + bench 骨架
+
+> 依据 [improvement-plan.md](docs/improvement-plan.md)（Status → Accepted）。本机 macOS 实测：hook 冒烟 48/48、secret 17/17、pytest 44、`policy-dispatch --validate`、`./mvnw verify`（单测 + ArchUnit + Testcontainers IT）全绿。
+
+#### Fixed
+
+- **F1 规则静默放行**：`deny.yaml` 加载失败（缺 PyYAML / 解析失败 / 文件缺失）时 dispatcher fail-closed，拦截所有 PreToolUse 调用，只放行整行的 PyYAML 安装命令；找不到 python 时薄壳直接 exit 2（D1-A，ADR-0009）
+- **F3 灰名单授权后仍被拦**：ask_user 命中改为 stdout `permissionDecision: "ask"` + exit 0，交给 Claude Code 原生确认弹窗
+- **F4 bypass 前缀无效**：文档与测试改为"只认启动会话前设置的 `HARNESS_BYPASS=1`"；新增 `bypass-prefix-not-effective-*` 用例
+- **F6**：PreToolUse matcher 补 `NotebookEdit`，dispatcher 读 `notebook_path` / `new_source`，deny 写文件类规则覆盖 NotebookEdit
+- **F9**：README 目录速览计数（10 agent / 9 commands / 7 hooks / CLAUDE.md 节数 / 测试用例数）
+- **F10**：`audit-context-cost.py` 无 tiktoken 时 CJK 按约 1.2 token/字估算（CLAUDE.md 由 3,072 → 约 4,700）
+- `format.sh` 用 `mapfile`，macOS 自带 bash 3.2 没有 → 密钥检测在 Mac 上静默失效（9/17 用例红）；改为 `read`
+- Testcontainers 1.20.3 → 1.21.4（test scope）：旧版 docker-java 默认 API 1.32，Docker Engine 29 要求 ≥ 1.40，IT 被 `disabledWithoutDocker` 静默跳过而构建仍绿
+
+#### Added
+
+- `settings.json` `permissions.deny`：写 `.env` / 密钥证书 / SSH 密钥 / 凭据、强推 main/master、`rm -rf /`、`rm -rf ~` 原生兜底（F5）
+- `verify-setup.sh` PyYAML 检查（缺失报 ❌）；`session-start.sh` 首屏门禁自检红字警告（F2 / P0-1）
+- ArchUnit（`archunit-junit5` 1.3.0，test scope）：`DddRules` 6 条规则（依赖方向 + CLAUDE.md §6 五条禁忌，§6-3 为代理）、`DddArchitectureTest`、`DddRulesSelfTest`（对故意写错的夹具必须报违规）（D2，ADR-0011）
+- `bench/`：任务集 v1（T1–T3、8 个埋点带成分标签）、运行步骤、记录模板、代际总表（D3 / D7）
+- ADR-0009（原生 ask + fail-closed + bypass）、ADR-0010（定位调整，含 D4 / D6 / D7）、ADR-0011（ArchUnit）
+- roadmap M9 节；backlog §G M9 待办 + P2 规则清单表头
+
+#### Changed
+
+- 项目定位：可度量的 Harness，随模型代际实测（README 简介、CLAUDE.md §5，D6-A）
+- CLAUDE.md §7 / §9 / §10、engineering-practices §3 / §15 同步新的灰名单与 bypass 行为；§15 增原生 ask 各 mode 实测表（待填）
+- ADR-0004 加更新注记（命令前缀结论被 0009 取代）；ADR-0008 加 Tier 2–4 冻结注记（D4）
+
+#### 未完（见 backlog §G）
+
+- G1 原生 ask 各 permission mode 手工验证；G2 `permissions.deny` 在 hook 失效时的手工验证
+- G3 首批对照实验（手工跑）；G4 CI 防 IT 静默跳过
+
 ### 2026-07-25 — Harness 治理批次：注入瘦身 + 脚本单测 + command→skill 化 + review 编排 + output style
 
 > 架构视角一轮治理优化，四块：A 治理清理 / D 脚本补测试 / B command 迁 skill / C review 编排 + output style。全程 prettier + pytest(28) + hook smoke(35) + policy --validate 全绿。
