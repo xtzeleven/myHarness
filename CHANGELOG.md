@@ -11,6 +11,13 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-21 — G4：CI 防 IT 静默跳过
+
+#### Added
+
+- `lint.yml` java-build 新增 `Fail if any IT was skipped (G4)` 步骤：`mvnw verify` 后读 `target/failsafe-reports/failsafe-summary.xml`，`skipped > 0`、`completed = 0` 或报告缺失即 fail，并列出被跳过的测试类。本地无 Docker 时 `disabledWithoutDocker` 照旧跳过，不受影响
+- 本机实测：IT 类级禁用（与 `disabledWithoutDocker` 同为 JUnit 类级 `ExecutionCondition`）时 `verify` exit 0、summary `skipped=3` → 检查 exit 1；正常跑 `skipped=0` → 通过
+
 ### 2026-11-21 — M9 启动：D1–D7 拍板 + P0 止血（本机门禁真生效）+ ArchUnit + bench 骨架
 
 > 依据 [improvement-plan.md](docs/improvement-plan.md)（Status → Accepted）。本机 macOS 实测：hook 冒烟 48/48、secret 17/17、pytest 44、`policy-dispatch --validate`、`./mvnw verify`（单测 + ArchUnit + Testcontainers IT）全绿。
