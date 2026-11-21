@@ -4,6 +4,8 @@
 **Date**: 2026-05-11
 **Stage**: M7 后置整理（M8 启动前清账）
 
+> **2026-11-21 更新**：本文"`HARNESS_BYPASS=1 <command>` 单行作用域"的结论**不成立**——hook 读的是 hook 进程自身环境，命令前缀到不了 hook。该部分由 [ADR-0009](0009-native-ask-and-fail-closed.md) 取代：bypass 只认启动会话前设置的环境变量；单次授权改走 Claude Code 原生确认弹窗。废弃 `.bypass-once` 的结论仍然有效。
+
 ## 背景
 
 `.claude/.audit.log` 第 3–5 行残留 3 条历史记录：

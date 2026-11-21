@@ -5,6 +5,8 @@
 **Stage**: 能力维度扩张（不动 M8 主线）
 **Relates to**: [ADR-0002](0002-java-ddd-backend.md), [ADR-0007](0007-revoke-plugin-pivot.md)
 
+> **2026-11-21 更新（D4）**：Tier 2–4 **冻结**到 M9-P1 首份对照实验报告出来后再评估，见 [ADR-0010](0010-measurable-harness-positioning.md)。Tier 1 已落地资产不动。
+
 ## 背景
 
 myHarness 在 M7 完成后进入"M8 启动前清账"阶段（CHANGELOG `[Unreleased]`），P0/P1 全清。此时项目主导者提出**通用产研流程性能力**诉求，原始列举 10 项：需求拆解、头脑风暴、事件风暴、能力中心 / 服务划分、全链路 trace、改动项分析、安全分析、性能分析、code review、变更文档自动更新。
