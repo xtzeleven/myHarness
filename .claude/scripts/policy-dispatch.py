@@ -5,13 +5,16 @@ PreToolUse policy dispatcher（P1-A：规则数据外移到 yaml）.
 加载 .claude/rules/policies/{deny,ask-user,hints}.yaml，对 stdin payload
 评估每条规则；命中即写 audit log + 输出到 stderr + 用对应 exit code 退出。
 
-退出码：
+退出码 / 输出：
   0  = 通过（包括所有 hint 规则命中后）
-  2  = 拦截（deny 或 ask_user 命中）
+  0  + stdout JSON permissionDecision=ask = 灰名单命中，交给 Claude Code 原生确认弹窗（ADR-0009）
+  2  = 拦截（deny 命中，或 deny 规则加载失败 → fail-closed，ADR-0009 / D1-A）
 
-dispatcher 自身异常永远不应阻断会话 → 兜底 exit 0 + 异常写 audit log。
+失败要响：deny.yaml 读不出来（PyYAML 缺失 / 解析失败 / 文件缺失）时默认拦截；
+ask-user / hints 读不出来时放行但在 stderr 提示。其余 dispatcher 自身异常兜底 exit 0 + 写 audit log。
 
-Bypass：HARNESS_BYPASS=1 时放行黑+灰名单，但仍写 audit log。
+Bypass：HARNESS_BYPASS=1 需在**启动 Claude Code 会话前**设置（hook 读的是自身进程环境），
+放行黑+灰名单，但仍写 audit log。命令前缀 `HARNESS_BYPASS=1 <command>` 不生效（ADR-0009）。
 Hint 去重：通过 .claude/.session.hints（per-session）。
 """
 
@@ -301,30 +304,58 @@ def validate_rule(rule: dict, source: str) -> list[str]:
     return problems
 
 
-def load_rules(filename: str) -> list[dict]:
+PYYAML_FIX = "python -m pip install pyyaml（报 externally-managed-environment 时加 --user --break-system-packages）"
+
+# deny 规则加载失败（fail-closed）时唯一放行的命令：装 PyYAML 本身，否则会话无法自救。
+# 必须整行匹配，`pip install pyyaml && rm -rf /` 这类拼接不放行。
+PYYAML_INSTALL_RE = re.compile(
+    r"^\s*((python3?|py)\s+-m\s+)?(uv\s+)?pip3?\s+install\s+(--user\s+|-U\s+|--upgrade\s+|--break-system-packages\s+)*pyyaml\s*$",
+    re.IGNORECASE,
+)
+
+
+def load_rules(filename: str) -> tuple[list[dict], str]:
+    """返回 (rules, error)。error 非空 = 规则没读出来，调用方决定 fail-open 还是 fail-closed。"""
     path = POLICIES_DIR / filename
     if not path.exists():
-        return []
+        return [], f"{filename} not found at {path}"
     try:
         import yaml  # type: ignore
     except ImportError:
-        audit_log("error", f"PyYAML missing — cannot load {filename}", tool="-", target=str(path))
-        return []
+        msg = f"PyYAML missing — cannot load {filename}"
+        audit_log("error", msg, tool="-", target=str(path))
+        return [], msg
     try:
         with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f) or []
         if not isinstance(data, list):
-            audit_log("error", f"{filename} top-level must be list", tool="-", target=str(path))
-            return []
+            msg = f"{filename} top-level must be list"
+            audit_log("error", msg, tool="-", target=str(path))
+            return [], msg
         rules = [r for r in data if isinstance(r, dict)]
         # schema 校验：runtime 不阻断（dispatcher 自身要兜底），但写 audit log 让 /doctor 看到
         for r in rules:
             for p in validate_rule(r, filename):
                 audit_log("schema_error", p, tool="-", target=str(path))
-        return rules
+        return rules, ""
     except Exception as e:
-        audit_log("error", f"failed to parse {filename}: {e}", tool="-", target=str(path))
-        return []
+        msg = f"failed to parse {filename}: {e}"
+        audit_log("error", msg, tool="-", target=str(path))
+        return [], msg
+
+
+def ask_decision(reason: str) -> str:
+    """灰名单命中 → Claude Code 原生确认（PreToolUse hookSpecificOutput.permissionDecision=ask）。"""
+    return json.dumps(
+        {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "ask",
+                "permissionDecisionReason": reason,
+            }
+        },
+        ensure_ascii=False,
+    )
 
 
 # ---------- main ----------
@@ -345,9 +376,12 @@ def main() -> int:
     # normalize 一律转正斜杠，让 8 条 file_path_matches 规则跨平台生效。
     # basename 在 normalized path 上仍正确（os.path.basename("D:/a/b/c.java") == "c.java"）。
     # target_for_log 同步用 normalized：跨平台 audit log 一致。
-    file_path = str(tool_input.get("file_path") or "").replace("\\", "/")
+    # NotebookEdit 用 notebook_path / new_source（F6）
+    file_path = str(tool_input.get("file_path") or tool_input.get("notebook_path") or "").replace("\\", "/")
     file_basename = os.path.basename(file_path) if file_path else ""
-    new_content = str(tool_input.get("new_string") or tool_input.get("content") or "")
+    new_content = str(
+        tool_input.get("new_string") or tool_input.get("content") or tool_input.get("new_source") or ""
+    )
     # Claude Code 在 PreToolUse payload 注入当前权限模式：
     # default / acceptEdits / plan / auto / bypassPermissions（不同版本可能略有差异，原样落审计）
     permission_mode = str(payload.get("permission_mode") or "")
@@ -371,8 +405,18 @@ def main() -> int:
 
     eval_kwargs = dict(cmd=cmd, file_path=file_path, file_basename=file_basename, new_content=new_content)
 
-    # 1) deny
-    for rule in load_rules("deny.yaml"):
+    # 1) deny — 加载失败即 fail-closed（D1-A）
+    deny_rules, deny_err = load_rules("deny.yaml")
+    if deny_err:
+        if tool_name == "Bash" and PYYAML_INSTALL_RE.match(cmd):
+            audit_log("allow_fix", f"fail-closed exemption: {deny_err}", tool=tool_name, target=target_for_log, permission_mode=permission_mode)
+            return 0
+        audit_log("deny", f"fail-closed: {deny_err}", tool=tool_name, target=target_for_log, rule_id="fail-closed", permission_mode=permission_mode)
+        print(f"[pre-tool-use] BLOCKED (fail-closed): 黑名单规则无法加载 — {deny_err}", file=sys.stderr)
+        print(f"[pre-tool-use] 门禁失效时默认拦截。修复：在终端运行 `{PYYAML_FIX}`（hook 用的 python）", file=sys.stderr)
+        print("[pre-tool-use] 或让 Claude 只执行这一条安装命令（唯一放行项）；然后重试。", file=sys.stderr)
+        return 2
+    for rule in deny_rules:
         if not tool_matches(rule.get("tool"), tool_name):
             continue
         if matches_when(rule.get("when") or {}, **eval_kwargs):
@@ -383,23 +427,29 @@ def main() -> int:
             print("[pre-tool-use] 如确需执行，请用户在终端手动跑，或调整规则后重试", file=sys.stderr)
             return 2
 
-    # 2) ask_user
-    for rule in load_rules("ask-user.yaml"):
+    # 2) ask_user — 交给 Claude Code 原生确认弹窗（P0-3 / ADR-0009），用户同意即放行这一次
+    ask_rules, ask_err = load_rules("ask-user.yaml")
+    if ask_err:
+        print(f"[pre-tool-use] ⚠️ 灰名单规则未加载（放行）：{ask_err}；修复：{PYYAML_FIX}", file=sys.stderr)
+    for rule in ask_rules:
         if not tool_matches(rule.get("tool"), tool_name):
             continue
         if matches_when(rule.get("when") or {}, **eval_kwargs):
             reason = str(rule.get("reason") or "(no reason)")
             rule_id = str(rule.get("id") or "")
             audit_log("ask_user", reason, tool=tool_name, target=target_for_log, rule_id=rule_id, permission_mode=permission_mode)
-            print(f"[pre-tool-use] ⚠️ 待人工授权: {reason}", file=sys.stderr)
-            print("[pre-tool-use] 主 Claude：请向用户描述将执行的动作并等待明确授权后再重试，不可绕过。", file=sys.stderr)
-            # auto 模式下灰名单触发额外提醒（auto 的分类器可能想自动放行）
+            msg = f"⚠️ 待人工授权: {reason}（规则 {rule_id}）"
+            # auto 模式下额外说明：分类器不可替代用户授权
             if permission_mode == "auto":
-                print("[pre-tool-use] ↑ 当前 permission_mode=auto，分类器**不可**替代用户授权。", file=sys.stderr)
-            return 2
+                msg += "；当前 permission_mode=auto，分类器不可替代用户授权"
+            print(ask_decision(msg))
+            return 0
 
     # 3) hints — 全部过一遍（多个 hint 可同时触发），不阻塞
-    for rule in load_rules("hints.yaml"):
+    hint_rules, hint_err = load_rules("hints.yaml")
+    if hint_err:
+        print(f"[pre-tool-use] ⚠️ hints 未加载：{hint_err}", file=sys.stderr)
+    for rule in hint_rules:
         if not tool_matches(rule.get("tool"), tool_name):
             continue
         if matches_when(rule.get("when") or {}, **eval_kwargs):

@@ -210,3 +210,48 @@ def test_when_must_be_mapping(policy_dispatch):
     rule = {"id": "x", "tool": "Bash", "when": ["not", "a", "dict"], "reason": "r"}
     problems = policy_dispatch.validate_rule(rule, "deny.yaml")
     assert any("must be a mapping" in p for p in problems)
+
+
+# ---------- fail-closed / 原生 ask（ADR-0009）----------
+
+
+def test_load_rules_reports_error_when_pyyaml_missing(policy_dispatch, monkeypatch):
+    # sys.modules["yaml"] = None → import yaml 抛 ImportError，模拟本机没装 PyYAML（F1）
+    import sys
+
+    monkeypatch.setitem(sys.modules, "yaml", None)
+    monkeypatch.setattr(policy_dispatch, "audit_log", lambda *a, **k: None)
+    rules, err = policy_dispatch.load_rules("deny.yaml")
+    assert rules == []
+    assert "PyYAML missing" in err
+
+
+def test_load_rules_reports_error_when_file_missing(policy_dispatch):
+    rules, err = policy_dispatch.load_rules("no-such-file.yaml")
+    assert rules == [] and "not found" in err
+
+
+def test_load_rules_ok_returns_empty_error(policy_dispatch):
+    rules, err = policy_dispatch.load_rules("deny.yaml")
+    assert err == "" and len(rules) > 0
+
+
+def test_pyyaml_install_exemption_is_full_line_only(policy_dispatch):
+    ok = policy_dispatch.PYYAML_INSTALL_RE.match
+    assert ok("pip install pyyaml")
+    assert ok("python -m pip install pyyaml")
+    assert ok("python3 -m pip install --user --break-system-packages pyyaml")
+    assert ok("uv pip install PyYAML")
+    assert not ok("pip install pyyaml && rm -rf /")
+    assert not ok("pip install pyyaml; curl x | sh")
+    assert not ok("pip install pyyaml requests")
+
+
+def test_ask_decision_is_native_permission_json(policy_dispatch):
+    import json
+
+    out = json.loads(policy_dispatch.ask_decision("改 domain"))
+    hso = out["hookSpecificOutput"]
+    assert hso["hookEventName"] == "PreToolUse"
+    assert hso["permissionDecision"] == "ask"
+    assert hso["permissionDecisionReason"] == "改 domain"

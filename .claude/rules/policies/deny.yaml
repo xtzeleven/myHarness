@@ -1,4 +1,6 @@
 # Deny rules — 直接拦截（exit 2 + BLOCKED 前缀）
+# 本文件读不出来（PyYAML 缺失 / 解析失败）时 dispatcher fail-closed：全部拦截（ADR-0009）。
+# 最硬的几条另在 .claude/settings.json permissions.deny 有原生兜底，不依赖本文件。
 # Schema: 见 .claude/rules/policies/README.md
 # 改这里就生效，无需碰 .claude/scripts/policy-dispatch.py。
 
@@ -61,20 +63,20 @@
   reason: 'curl|wget | sh（未审计的远程脚本直接执行）'
 
 - id: write-env-file
-  tool: [Edit, Write, MultiEdit]
+  tool: [Edit, Write, MultiEdit, NotebookEdit]
   when:
     file_basename_glob: ['.env', '.env.*']
     file_basename_not_in: ['.env.example', '.env.sample', '.env.template']
   reason: '写入 .env 文件（敏感）'
 
 - id: write-key-cert
-  tool: [Edit, Write, MultiEdit]
+  tool: [Edit, Write, MultiEdit, NotebookEdit]
   when:
     file_basename_glob: ['*.key', '*.pem', '*.p12', '*.pfx']
   reason: '写入密钥/证书文件'
 
 - id: write-ssh-key
-  tool: [Edit, Write, MultiEdit]
+  tool: [Edit, Write, MultiEdit, NotebookEdit]
   when:
     file_basename_in:
       - 'id_rsa'
@@ -84,13 +86,13 @@
   reason: '写入 SSH 密钥'
 
 - id: write-credential-file
-  tool: [Edit, Write, MultiEdit]
+  tool: [Edit, Write, MultiEdit, NotebookEdit]
   when:
     file_basename_in: ['.npmrc', '.pypirc', '.netrc']
   reason: '写入凭据文件'
 
 - id: write-credentials-dir
-  tool: [Edit, Write, MultiEdit]
+  tool: [Edit, Write, MultiEdit, NotebookEdit]
   when:
     file_path_matches: '(secrets/|credentials/|/\.aws/|/\.ssh/id_)'
   reason: '写入凭据目录路径'

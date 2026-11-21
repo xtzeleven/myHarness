@@ -29,11 +29,11 @@ print(fp)
 PY
 }
 
-# 提取并按行读取
-mapfile -t _fields < <(extract_fields)
-tool_name="${_fields[0]:-}"
+# 提取并按行读取（不用 mapfile：macOS 自带 bash 3.2 没有它，会让整个 hook 静默失效）
+tool_name=""
+file_path=""
+{ IFS= read -r tool_name; IFS= read -r file_path; } < <(extract_fields)
 tool_name="${tool_name%$'\r'}"   # 去 Windows Python print 留下的尾 \r
-file_path="${_fields[1]:-}"
 file_path="${file_path%$'\r'}"
 
 # === audit log ===
