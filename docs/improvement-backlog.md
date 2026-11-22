@@ -44,29 +44,29 @@ _B7–B10 全部完成。详见 §E（B7→E12 / B8→E8 / B9→E9 / B10→E10�
 
 | #   | 维度            | 项                                                                                                                            | 工作量                   |
 | --- | --------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| C1  | Agent Loop      | `.session.state.current_task` / `pending_steps` 维护 trigger：在 `/commit` 完成或 `/audit-practices` 跑完后写 last_checkpoint | ✅ E43                   |
-| C2  | Agent Loop      | loop 步数 / 时间硬上限（防长链路失控）                                                                                        | ✅ E36                   |
+| C1  | Agent Loop      | `.session.state.current_task` / `pending_steps` 维护 trigger：在 `/commit` 完成或 `/audit-practices` 跑完后写 last_checkpoint | 📄 文档 E43              |
+| C2  | Agent Loop      | loop 步数 / 时间硬上限（防长链路失控）                                                                                        | 📄 文档 E36              |
 | C3  | Context Manager | compaction sub-agent：上下文超 50% 时主动 spawn summarizer                                                                    | 2-3 h                    |
-| C4  | Context Manager | PreToolUse hint 去重（per session）—— 同一 file_path 多次 Edit 只提示一次                                                     | ✅ E28                   |
-| C5  | Context Manager | statusLine 配置：显示项目 / 分支 / 模型 / token 使用                                                                          | ✅ E37                   |
-| C6  | LLM Call        | opus → sonnet 自动 fallback（当 opus API 不可用）                                                                             | ✅ E44                   |
+| C4  | Context Manager | PreToolUse hint 去重（per session）—— 同一 file_path 多次 Edit 只提示一次                                                     | ✅ 机制 E28              |
+| C5  | Context Manager | statusLine 配置：显示项目 / 分支 / 模型 / token 使用                                                                          | ✅ 机制 E37              |
+| C6  | LLM Call        | opus → sonnet 自动 fallback（当 opus API 不可用）                                                                             | 📄 文档 E44              |
 | C7  | LLM Call        | LLM cost / token usage 度量脚本（tiktoken 估算）                                                                              | 半天                     |
-| C8  | LLM Call        | prompt caching 文档化：哪些 prompt 适合 cache                                                                                 | ✅ E45                   |
-| C9  | Tool Router     | Skill vs Agent 路由原则（文档化"何时用 skill / agent / 主对话"）                                                              | ✅ E38                   |
-| C10 | Tool Router     | 工具失败频次自动统计（依赖 telemetry）                                                                                        | ✅ E46                   |
-| C11 | Permission Gate | bypass 用量阈值告警（用 N 次后 stderr 警告）                                                                                  | ✅ E39                   |
-| C12 | Hooks           | `PreCompact` hook：上下文压缩前注入"务必保留"                                                                                 | ✅ E47                   |
+| C8  | LLM Call        | prompt caching 文档化：哪些 prompt 适合 cache                                                                                 | 📄 文档 E45              |
+| C9  | Tool Router     | Skill vs Agent 路由原则（文档化"何时用 skill / agent / 主对话"）                                                              | 📄 文档 E38              |
+| C10 | Tool Router     | 工具失败频次自动统计（依赖 telemetry）                                                                                        | ✅ 机制 E46              |
+| C11 | Permission Gate | bypass 用量阈值告警（用 N 次后 stderr 警告）                                                                                  | ✅ 机制 E39              |
+| C12 | Hooks           | `PreCompact` hook：上下文压缩前注入"务必保留"                                                                                 | ✅ 机制 E47              |
 | C13 | Subagent        | 新 agent 引入自动验证（喂假 prompt 看主 Claude 是否路由对）                                                                   | 半天                     |
 | C14 | Subagent        | agent invocation count（依赖 SubagentStop telemetry 累积）                                                                    | 已部分启用，仅缺统计入口 |
 | C15 | Telemetry       | 外部观测平台接入（langfuse / honeycomb / OTLP）                                                                               | 1 天                     |
-| C16 | Telemetry       | memory 增长 telemetry：决策类 vs 踩坑类增长率                                                                                 | ✅ E48                   |
+| C16 | Telemetry       | memory 增长 telemetry：决策类 vs 踩坑类增长率                                                                                 | ✅ 机制 E48              |
 
 ### 前两轮 audit 剩余 P2
 
-| #   | 项                                                                                | 工作量 | 修法                                                         |
-| --- | --------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------ |
-| C19 | Model Selection Policy 在 3 处重复（§15 / AGENTS.md 表 / agent frontmatter 注释） | ✅ E22 | 抽 `docs/policy-model-selection.md` 单点真源，其他"详见"     |
-| C20 | agent 自反馈环触发靠字符串匹配（部分由 SubagentStop schema 解决）                 | —      | 与 B5 协同：schema 推广后 AGENTS.md 自反馈表改用 status 触发 |
+| #   | 项                                                                                | 工作量      | 修法                                                         |
+| --- | --------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------ |
+| C19 | Model Selection Policy 在 3 处重复（§15 / AGENTS.md 表 / agent frontmatter 注释） | 📄 文档 E22 | 抽 `docs/policy-model-selection.md` 单点真源，其他"详见"     |
+| C20 | agent 自反馈环触发靠字符串匹配（部分由 SubagentStop schema 解决）                 | —           | 与 B5 协同：schema 推广后 AGENTS.md 自反馈表改用 status 触发 |
 
 _C17 / C18 / C21 已完成。详见 §E（C17→E18 / C18→E19 / C21→E20）。C4 / C19 本批完成（E28 / E22）。_
 
@@ -104,23 +104,20 @@ _F1 / F2 同批落地，详见 §E（F1→E33 / F2→E34）。_
 
 > 阶段与状态见 [roadmap M9](roadmap.md)。P0 已落地项记在 CHANGELOG 2026-11-21，这里只列**没做完的**。
 
-| #   | 优先级 | 内容                                                                                                                                      | 来源        |
-| --- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| G1  | 🔴 P0  | 原生 ask 在 5 种 permission mode 下逐个手工验证，结果填 engineering-practices §15 实测表；不弹窗的 mode 退回 exit 2                       | P0-3        |
-| G2  | 🔴 P0  | 手工验证 `permissions.deny`：临时让 hook 失效（无 PyYAML 的 python 或 `HARNESS_BYPASS=1 claude`）后写 `.env` / 强推 main 仍被原生规则拦下 | P0-5        |
-| G3  | 🟡 P1  | 首批对照实验：3 任务 × C0/C2 × 2 次，手工跑（D3），出首份报告 + 代际总表第一行                                                            | P1 / bench/ |
-| G5  | 🟢 P2  | 规则清单（见下表）：每条规则填成分 / 当前强制力 / 处置 / 退役条件；backlog + archive 的 ✅ 重标为"✅ 机制"或"📄 文档"                     | P2          |
-| G7  | 🟢 P2  | ① 类规则 P1 显示"裸跑已不犯"→ 按退役条件拆，拆后用同一任务集复跑确认不退化                                                                | P2          |
-| G8  | ⚪ P3  | `policies/` 拆 `core/` + `java-ddd/`，`.claude/harness.yaml` 声明 profiles；engineering-practices §12–14 下沉                             | P3          |
-| G9  | ⚪ P3  | 一页总览 + `harness-methodology.md` 增"五种成分与演化终局"+ docs 预算（≤ 3 万 token）                                                     | P4          |
+| #   | 优先级 | 内容                                                                                                                                      | 来源           |
+| --- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| G1  | 🔴 P0  | 原生 ask 在 5 种 permission mode 下逐个手工验证，结果填 engineering-practices §15 实测表；不弹窗的 mode 退回 exit 2                       | P0-3           |
+| G2  | 🔴 P0  | 手工验证 `permissions.deny`：临时让 hook 失效（无 PyYAML 的 python 或 `HARNESS_BYPASS=1 claude`）后写 `.env` / 强推 main 仍被原生规则拦下 | P0-5           |
+| G3  | 🟡 P1  | 首批对照实验：3 任务 × C0/C2 × 2 次，手工跑（D3），出首份报告 + 代际总表第一行                                                            | P1 / bench/    |
+| G7  | 🟢 P2  | ① 类规则 P1 显示"裸跑已不犯"→ 按退役条件拆，拆后用同一任务集复跑确认不退化                                                                | P2             |
+| G8  | ⚪ P3  | `policies/` 拆 `core/` + `java-ddd/`，`.claude/harness.yaml` 声明 profiles；engineering-practices §12–14 下沉                             | P3             |
+| G9  | ⚪ P3  | 一页总览 + `harness-methodology.md` 增"五种成分与演化终局"+ docs 预算（≤ 3 万 token）                                                     | P4             |
+| G10 | 🟡 P1  | K2：把"Customer BC 落地前用 String"（C23）写进 `domain/CLAUDE.md`，让 T3-c 有载体；**须在 G3 首批 bench 之前做**，否则基线前后不一        | G5 盘点        |
+| G11 | 🟢 P2  | K1：CI 检查 PR 是否修改了 base 上已存在的 `V*__*.sql`，改了即 fail（T3-a 目前只有 hint + agent）                                          | G5 盘点        |
+| G12 | 🟢 P2  | K3：CLAUDE.md §9 改成指向 `policies/*.yaml` 的指针，消除与 `ddd-aggregate-boundary` 实际范围的漂移                                        | G5 盘点        |
+| G13 | 🟢 P2  | K4：PreToolUse 加只记日志不拦的 `mcp__*` matcher，让 gitnexus / mysql MCP 调用可观测                                                      | G5 盘点 / P0-6 |
 
-### G5 规则清单（P2，待 P1 数据后填）
-
-| 规则 | 成分（①–⑤） | 当前强制力（机制 / 信号 / 文档） | 处置 | 退役条件 |
-| ---- | ----------- | -------------------------------- | ---- | -------- |
-|      |             |                                  |      |          |
-
-退役条件写法示例："`bench/generations.md` 连续两代模型在 C0 下该埋点均未触发 → 删除"。
+规则清单（G5）已建：[rule-inventory.md](rule-inventory.md)，盘点发现的缺口登记为 G10–G13。按退役条件拆规则是 G7，等 G3 出数据。
 
 ---
 

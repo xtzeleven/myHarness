@@ -169,6 +169,7 @@ bench/                               对照实验：任务集 / 运行记录 / �
 docs/
   roadmap.md                         六维度路线（M4-M8）+ M9
   improvement-plan.md                M9 改进方案（P0–P4，D1–D7 已拍板）
+  rule-inventory.md                  规则清单：成分 / 强制力 / 处置 / 退役条件（M9-P2）
   loop-architecture.md               Driver/Worker 调度
   context-management.md              token 预算与按需注入
   tools-fallback.md                  工具降级链
