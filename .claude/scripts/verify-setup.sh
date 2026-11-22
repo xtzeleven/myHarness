@@ -210,6 +210,17 @@ if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/n
   fi
 fi
 
+# git hooks（bypass 留痕，backlog G6）：未启用时 bypass 记录不会写进提交尾注，CI 看不到
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  hooks_path="$(git config --get core.hooksPath 2>/dev/null || true)"
+  if [ "$hooks_path" = ".githooks" ]; then
+    report ok "git hooks" "core.hooksPath=.githooks（bypass 尾注生效）"
+  else
+    report warn "git hooks" "core.hooksPath=${hooks_path:-未设置}" \
+      "git config core.hooksPath .githooks —— 否则 bypass 期间的提交不带 Harness-Bypass 尾注，CI bypass-guard 看不到（G6）。"
+  fi
+fi
+
 # ============================================================
 # 汇总
 # ============================================================

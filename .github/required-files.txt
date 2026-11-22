@@ -44,6 +44,8 @@ package.json
 .claude/hooks/tests/test_secret_detection.sh
 .claude/hooks/tests/test_user_prompt_submit.sh
 .claude/hooks/tests/test_subagent_stop.sh
+.githooks/prepare-commit-msg
+.claude/scripts/bypass-trailer.py
 
 # --- Commands ---
 .claude/commands/audit-practices.md

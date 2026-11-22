@@ -143,6 +143,16 @@ jobs:
             exit 1
           fi
           echo "No BYPASS markers found in commit messages."
+      - name: Harness-Bypass trailers need Bypass-Reviewed
+        # 本地 bypass 记录由 .githooks/prepare-commit-msg 写成 Harness-Bypass 尾注（backlog G6）；
+        # 同一提交需有 `Bypass-Reviewed: <理由>` 才放行，放行的也列进 job summary
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            range="HEAD~10..HEAD"
+          fi
+          python3 .claude/scripts/bypass-trailer.py --check "$range"
       - name: HARNESS_BYPASS env var must not be set in CI
         run: |
           for v in HARNESS_BYPASS CLAUDE_PLUGIN_HARNESS_BYPASS; do

@@ -19,6 +19,10 @@ elif ! "$py_bin" -c "import yaml" >/dev/null 2>&1; then
   echo "❌❌❌ 门禁失效：$py_bin 缺 PyYAML，黑名单规则无法加载。"
   echo "     PreToolUse 已 fail-closed（拦截所有 Bash / 写文件），修复：$py_bin -m pip install pyyaml（externally-managed 时加 --user --break-system-packages）"
 fi
+# bypass 留痕（G6）：git hooks 未启用时提醒（只在异常时输出，不占正常会话的上下文）
+if [ "$(git config --get core.hooksPath 2>/dev/null)" != ".githooks" ]; then
+  echo "⚠️ bypass 留痕未启用：git config core.hooksPath .githooks（否则 bypass 期间的提交不带 Harness-Bypass 尾注，CI 看不到）"
+fi
 
 print_section() {
   echo ""

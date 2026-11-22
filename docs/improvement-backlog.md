@@ -110,7 +110,6 @@ _F1 / F2 同批落地，详见 §E（F1→E33 / F2→E34）。_
 | G2  | 🔴 P0  | 手工验证 `permissions.deny`：临时让 hook 失效（无 PyYAML 的 python 或 `HARNESS_BYPASS=1 claude`）后写 `.env` / 强推 main 仍被原生规则拦下 | P0-5        |
 | G3  | 🟡 P1  | 首批对照实验：3 任务 × C0/C2 × 2 次，手工跑（D3），出首份报告 + 代际总表第一行                                                            | P1 / bench/ |
 | G5  | 🟢 P2  | 规则清单（见下表）：每条规则填成分 / 当前强制力 / 处置 / 退役条件；backlog + archive 的 ✅ 重标为"✅ 机制"或"📄 文档"                     | P2          |
-| G6  | 🟢 P2  | bypass 记录让 CI 可见（F7）：当前真实 bypass 只在本地 `.audit.log`（gitignored）                                                          | P2 / F7     |
 | G7  | 🟢 P2  | ① 类规则 P1 显示"裸跑已不犯"→ 按退役条件拆，拆后用同一任务集复跑确认不退化                                                                | P2          |
 | G8  | ⚪ P3  | `policies/` 拆 `core/` + `java-ddd/`，`.claude/harness.yaml` 声明 profiles；engineering-practices §12–14 下沉                             | P3          |
 | G9  | ⚪ P3  | 一页总览 + `harness-methodology.md` 增"五种成分与演化终局"+ docs 预算（≤ 3 万 token）                                                     | P4          |
