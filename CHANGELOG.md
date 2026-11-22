@@ -11,6 +11,18 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-22 — G5：规则清单
+
+#### Added
+
+- `docs/rule-inventory.md`：38 条 policy 规则、原生 deny、CLAUDE.md / engineering-practices 各节、8 个 hook、10 个 agent、9 个 command、14 个 CI job、6 条 ArchUnit 规则、② 类文档，逐条填成分 / 强制力 / 处置 / 退役条件。①② 类都写了退役条件（两代未犯 / 无埋点 / 原生替代），目前没有一条已满足
+- `test_rule_inventory.py`（9 例，跑在 CI `python-unit-test`）：新增规则 / job / hook / agent / command / ArchUnit 规则没登记，或字段缺失、①② 行没写退役条件 → fail
+
+#### Changed
+
+- 归档 E1–E55 加"类型"列：33 条 ✅ 机制、21 条 📄 文档（如 E36 loop 硬上限、E44 fallback 只是文字）；backlog §C 里的 ✅ 引用同步重标
+- backlog：G5 → E56；盘点发现的缺口登记为 G10–G13（G10 须在首批 bench 前做）
+
 ### 2026-11-22 — G6：bypass 留痕，CI 可见
 
 #### Added
