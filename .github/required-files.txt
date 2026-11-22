@@ -46,6 +46,7 @@ package.json
 .claude/hooks/tests/test_subagent_stop.sh
 .githooks/prepare-commit-msg
 .claude/scripts/bypass-trailer.py
+docs/rule-inventory.md
 
 # --- Commands ---
 .claude/commands/audit-practices.md
