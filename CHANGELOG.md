@@ -11,6 +11,14 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-22 — bench 防答案泄漏（G3 前置）
+
+#### Fixed
+
+- 原运行步骤用 `git worktree`，且只在 C0 删 Harness：本文、improvement-plan、rule-inventory、backlog、CHANGELOG 都写着埋点，git 历史里也能 `git show` 到。改为 `git archive` 导出不带历史的副本 + 新建单提交仓库；所有配置先删这些文件；副本放 `~/bench-runs/`，避开上级目录 CLAUDE.md；第 5 步两条自检；记录模板加「数据有效性」（任一项不满足即作废）。修订前没有任何运行数据，任务集仍为 v1
+- 本机演练 C0 / C2：副本均只有 1 个提交，两条自检无输出；C0 无 CLAUDE.md 与 `.claude/`
+- `test_rule_inventory.py` 在清单缺失（bench 副本）时跳过；`docs/rule-inventory.md` 加入 `.github/required-files.txt`，真实仓库仍由 CI 保证存在
+
 ### 2026-11-22 — G10：Customer 用 String 的决策写进 domain/CLAUDE.md
 
 #### Changed
