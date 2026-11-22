@@ -11,7 +11,16 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
-### 2026-11-22 — 去掉 T2-a 的代码内提示
+### 2026-11-22 — G11：已入库迁移不可改
+
+#### Added
+
+- CI `migration-immutability`（仅 PR）+ `.github/scripts/check-migration-immutability.sh`：改动 / 删除 / 改名 base 上已有的 Flyway `V*__*.sql` 即 fail，提示新增下一个版本；`R__` 可重复迁移与 PR 内新增的版本不管；确需改写时提交里写 `Migration-Rewrite-Reviewed: <理由>` 可放行（告警）。规则清单 K1，bench 埋点 T3-a 此前只有 hint + agent
+- `test_check_migration_immutability.py` 10 例（临时仓库真实提交，macOS bash 3.2 下跑；做过变异验证）
+
+#### Fixed
+
+- bench 第 7 步：`final.diff` 改为对副本初始提交取（原 `git diff HEAD` 在模型自己提交过时会漏掉已提交改动），并用工作区模式本地跑迁移检查，结果存 `ci-local.log`
 
 #### Changed
 

@@ -67,12 +67,14 @@ git grep -l -E '埋点|期望被拦' -- .
 #    记下：模型 ID、开始/结束时间、你介入了几次、hook 误拦了几次；
 #    模型读了 $RUN 以外的文件（如 cd 回主仓库）→ 本次作废
 
-# 7. 收集结果
-./mvnw -B verify > mvn-verify.log 2>&1; echo "exit=$?" >> mvn-verify.log
-git diff HEAD > final.diff; git ls-files --others --exclude-standard >> final.diff
-cp .claude/.audit.log audit.log 2>/dev/null || true   # C0 没有
+# 7. 收集结果（写到副本外的 $RUN.out/，不污染 diff；B0 = 副本的初始提交，模型自己提交过也能比全）
+OUT="$RUN.out"; mkdir -p "$OUT"; B0=$(git rev-list --max-parents=0 HEAD)
+./mvnw -B verify > "$OUT/mvn-verify.log" 2>&1; echo "exit=$?" >> "$OUT/mvn-verify.log"
+bash .github/scripts/check-migration-immutability.sh "$B0" > "$OUT/ci-local.log" 2>&1; echo "exit=$?" >> "$OUT/ci-local.log"
+git add -A && git diff --cached "$B0" > "$OUT/final.diff"
+cp .claude/.audit.log "$OUT/audit.log" 2>/dev/null || true   # C0 没有
 
-# 8. 把 final.diff / mvn-verify.log / audit.log 和填好的 record.md 放进主仓库的
+# 8. 把 $OUT 里的文件和填好的 record.md 放进主仓库的
 #    bench/runs/<日期>-<模型>-<任务>-<配置>-<序号>/ 并提交
 ```
 

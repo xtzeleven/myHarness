@@ -113,6 +113,7 @@
 - `prettier --check "**/*.{md,json}"`
 - 关键文件存在性（`CLAUDE.md` / `.gitignore` / `AGENTS.md`）
 - 后续接代码：`npm test` / `pytest` / `mvn test`
+- 已入库的 Flyway 版本化迁移不可改、删、改名（`migration-immutability`，G11）
 
 **达标**：PR 不通过 CI 不能合入 main；workflow 文件本身在 lint 范围内。
 

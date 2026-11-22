@@ -39,7 +39,7 @@
 - **Layer 3：质量门禁层（Quality Gates）**
   在 LLM **不可绕过**的位置兜底，让"绕过了也合不进 main"。
   - `.gitignore` 覆盖 IDE / OS / Node / Python / Java / 密钥 六类
-  - GitHub Actions `lint.yml`：prettier --check + 必需文件存在性 + JSON 合法性 + AGENTS 链接有效性 + hook 冒烟测 + pytest + `mvnw verify`
+  - GitHub Actions `lint.yml`：prettier --check + 必需文件存在性 + JSON 合法性 + AGENTS 链接有效性 + hook 冒烟测 + pytest + `mvnw verify` + 已入库迁移不可改
   - ArchUnit 架构测试（`DddArchitectureTest`，test scope 依赖 `com.tngtech.archunit:archunit-junit5`）：CLAUDE.md §6 的 DDD 禁忌跑在 `mvn verify` 里（[ADR-0011](docs/adr/0011-archunit-ddd-rules.md)）
   - 提交规范：Conventional Commits（由 `/commit` 命令统一动作）
 

@@ -45,7 +45,7 @@
 | ----------------------------------------------------------- | ---- | ------ | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | `hint-domain-layer`                                         | ① ②  | 信号   | 冻结                                                                                         | 两代未犯(T1-a, T2-b)                                                               |
 | `hint-application-layer`                                    | ① ②  | 信号   | 冻结                                                                                         | 两代未犯(T1-b)                                                                     |
-| `hint-migration-files`                                      | ① ②  | 信号   | 冻结；T3-a 目前只有这一层和 migration-author（见 §13 K1）                                    | 两代未犯(T3-a)，且 K1 的迁移 CI 检查已落地                                         |
+| `hint-migration-files`                                      | ① ②  | 信号   | 冻结；T3-a 目前只有这一层和 migration-author（见 §13 K1）                                    | 两代未犯(T3-a)（K1 的迁移 CI 检查已落地，G11）                                     |
 | `hint-infrastructure-layer` `hint-spring-config`            | ① ②  | 信号   | 冻结，与 `spring-boot-reviewer` 同去留                                                       | 无埋点（任务集 v2 补适配器 / 配置类埋点）                                          |
 | `hint-pom-xml` `hint-mvn-cmd`                               | ② ③  | 信号   | 冻结                                                                                         | 原生替代(agent description 自动路由)：G7 抽查 C2 记录，没有提示也能调对 agent → 删 |
 | `hint-mysql-select` `hint-grep-find` `hint-git-commit-push` | ②    | 信号   | 冻结                                                                                         | 原生替代(skill / agent description 自动路由)，抽查同上                             |
@@ -138,6 +138,7 @@
 | `ddd-layer-purity`（`git grep`）                                    | ④    | 机制             | 保留，作为不需要 JDK 的快速前置（ADR-0011）       | —                    |
 | `agents-manifest-check`                                             | ④ ②  | 机制             | 保留；守护的 agent 体系本身是 ②，与 agents 同去留 | agents 全部退役后删  |
 | `commit-lint`                                                       | ④    | 机制             | 保留                                              | —                    |
+| `migration-immutability`（G11）                                     | ④    | 机制             | 保留；bench 第 7 步用工作区模式本地跑             | —                    |
 | `bypass-guard`                                                      | ⑤    | 机制             | 保留（含 G6 尾注检查，ADR-0012）                  | —                    |
 | `daily-structure-audit` `weekly-stale-check` `weekly-tool-versions` | ④ ③  | 信号（开 issue） | 保留                                              | —                    |
 | `weekly-audit-reminder`                                             | ⑤    | 信号             | 保留                                              | —                    |
@@ -167,7 +168,7 @@
 
 | #   | 问题                                                                                                                                                                                        | 建议                                                                      |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| K1  | **T3-a 没有机制**：改已有 `V1__*.sql` 只有 hint + `migration-author`；IT 每次用全新库，改 V1 也不会失败                                                                                     | ④：CI 检查 PR 是否修改了 base 上已存在的 `V*__*.sql`，改了即 fail         |
+| K1  | ✅ 已处理（G11 → E59，CI `migration-immutability`）。原问题：**T3-a 没有机制**：改已有 `V1__*.sql` 只有 hint + `migration-author`；IT 每次用全新库，改 V1 也不会失败                        | ④：CI 检查 PR 是否修改了 base 上已存在的 `V*__*.sql`，改了即 fail         |
 | K2  | ✅ 已处理（G10 → E57，写进 `domain/CLAUDE.md`）。原问题：**T3-c 的项目决策没有载体**："Customer BC 落地前用 String"只写在 backlog C23 和 plan 里，模型默认读不到（`domain/CLAUDE.md` 没写） | ③：写进 `domain/CLAUDE.md`。要在首批 bench 之前定：先写再跑，基线才一致   |
 | K3  | **CLAUDE.md §9 与灰名单范围不一致**：§9 写"聚合根 / Repository 接口 / DomainEvent"，`ddd-aggregate-boundary` 实际拦 domain 全部 `.java`                                                     | §9 改成指向 `policies/*.yaml` 的指针（见 §5）                             |
 | K4  | **MCP 工具调用不进审计**：PreToolUse matcher 不含 `mcp__*`，gitnexus / mysql 用了多少无从统计，§5 的 gitnexus 退役条件没法观测                                                              | 加只记日志、不拦截的 matcher（与 P0-6 遗留的"评估 MCP 写类工具"一并处理） |
