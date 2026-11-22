@@ -162,15 +162,11 @@ git status --porcelain
 
 ## 9. 人工决策清单（PreToolUse 会拦下并问你）
 
-以下操作命中黑名单 → 直接拒绝；命中**灰名单** → hook 返回 `permissionDecision: ask`，由 Claude Code **原生弹窗请用户确认**（[ADR-0009](docs/adr/0009-native-ask-and-fail-closed.md)）：
+**规则以 [`.claude/rules/policies/`](.claude/rules/policies/) 为准，本节不抄清单**：手抄的表容易和实际规则漂移。每条规则的 `reason` 字段写明拦什么。
 
-| 类别         | 黑名单（直接拦）                          | 灰名单（人工授权）                                             |
-| ------------ | ----------------------------------------- | -------------------------------------------------------------- |
-| 文件         | 写 `.env` / `*.key` / `id_rsa` / 凭据目录 | —                                                              |
-| 命令         | `rm -rf /` / `chmod 777 /` / `curl \| sh` | —                                                              |
-| Git          | 强推到 main/master/prod                   | 删 commit / 批量 rebase                                        |
-| **DDD 边界** | —                                         | **改 `domain/` 下聚合根 / Repository 接口 / DomainEvent 定义** |
-| **依赖**     | —                                         | **改 `pom.xml` 中 spring-boot / 主 ORM / 数据库驱动版本**      |
+- **黑名单** `deny.yaml` → 直接拒绝。大类：破坏性删除（根 / 家目录 / `.git`）、强推保护分支、`chmod 777`、`curl | sh`、写密钥与凭据文件
+- **灰名单** `ask-user.yaml` → hook 返回 `permissionDecision: ask`，由 Claude Code **原生弹窗请用户确认**（[ADR-0009](docs/adr/0009-native-ask-and-fail-closed.md)）。大类：数据库写操作、改写 git 历史、发布、改 `domain/` 下任意 `.java`、改 `pom.xml` 主要依赖
+- **原生兜底** `settings.json` 的 `permissions.deny`：hook 失效时仍生效的硬边界
 
 灰名单以弹窗里用户的同意 / 拒绝为准，不可绕过。黑名单规则加载失败（如缺 PyYAML）时 hook **fail-closed**：拦下所有 Bash / 写操作，按提示装好 PyYAML 即恢复。
 

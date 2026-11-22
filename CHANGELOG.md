@@ -11,7 +11,13 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
-### 2026-11-22 — G11：已入库迁移不可改
+### 2026-11-22 — G12：CLAUDE.md §9 改为指向规则文件
+
+#### Changed
+
+- CLAUDE.md §9 删掉手抄的黑 / 灰名单表，只留"黑名单直接拒绝 / 灰名单原生弹窗 / 原生 deny 兜底"的语义和大类，清单以 `.claude/rules/policies/*.yaml` 为准。原表已漂移：灰名单实际拦 `domain/` 下全部 `.java`，表里只写了聚合根 / Repository / DomainEvent；"删 commit"没有对应规则；数据库写、`mvn deploy`、`find -delete`、写 SSH 密钥等真实规则没列（规则清单 K3）
+- `policies/README.md`：灰名单退出码 2 → 0 + `permissionDecision: ask`（ADR-0009 后的实际行为）
+- engineering-practices §3 灰名单最低要求按实际规则改正；其中"删 commit / `git reset --hard origin/*`"一直没有对应规则，标明并登记 backlog G14（是否新增待定）
 
 #### Added
 
