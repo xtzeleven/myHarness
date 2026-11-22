@@ -11,6 +11,12 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-22 — G10：Customer 用 String 的决策写进 domain/CLAUDE.md
+
+#### Changed
+
+- `domain/CLAUDE.md` §3 增"对 Customer 的引用"：`customerId` 用 `String` 是有意为之（C23），Customer BC 落地前不引入 `CustomerId` VO、不持有 Customer 对象，想提前改先问用户；§1 跨聚合引用条加指针。此前这条决策只在 backlog 里，模型默认读不到（规则清单 K2，埋点 T3-c）
+
 ### 2026-11-22 — G5：规则清单
 
 #### Added
