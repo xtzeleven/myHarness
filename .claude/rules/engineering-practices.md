@@ -324,10 +324,11 @@ bypass 生效时：
 1. **强制写审计日志**（`.claude/.audit.log`）含 `bypass: true` 标记
 2. **本地可用**（开发者紧急情况下在启动会话前设置）
 3. **CI 拒合**：commit message 含 `BYPASS:` 或环境变量传到 CI runner 时 lint.yml 直接 fail
-4. **hook 输出红色警告**到 stderr 提醒主对话不要常用
-5. **用量阈值告警**（C11）：过去 7 天 `bypass=true` 记录 ≥ 3 次（可通过 `HARNESS_BYPASS_WARN_AT` 环境变量调阈值），policy-dispatch.py 额外输出红字提示 — 提醒"机制性放行不应成为日常，需要回看是否放宽规则或改 policy"
+4. **提交留痕**（G6，[ADR-0012](../../docs/adr/0012-bypass-trailer-ci-visible.md)）：`.githooks/prepare-commit-msg`（需 `git config core.hooksPath .githooks`）把上一个提交以来的 bypass 记录写成 `Harness-Bypass:` 尾注；CI 要求同一提交带 `Bypass-Reviewed: <理由>` 尾注才放行，放行的列进 job summary
+5. **hook 输出红色警告**到 stderr 提醒主对话不要常用
+6. **用量阈值告警**（C11）：过去 7 天 `bypass=true` 记录 ≥ 3 次（可通过 `HARNESS_BYPASS_WARN_AT` 环境变量调阈值），policy-dispatch.py 额外输出红字提示 — 提醒"机制性放行不应成为日常，需要回看是否放宽规则或改 policy"
 
-**注**：早期（2026-05-09 M8 第一次尝试）实验过 `.bypass-once` 文件式单次授权机制（audit.log 有 3 条残留记录），现已废弃。统一只走 `HARNESS_BYPASS=1` env 变量 + commit message marker + CI 拒合三道。废弃理由见 [ADR-0004](../../docs/adr/0004-deprecate-bypass-once.md)。
+**注**：早期（2026-05-09 M8 第一次尝试）实验过 `.bypass-once` 文件式单次授权机制（audit.log 有 3 条残留记录），现已废弃。统一只走 `HARNESS_BYPASS=1` env 变量 + commit message marker + CI 拒合三道，外加提交尾注留痕（第 4 条）。废弃理由见 [ADR-0004](../../docs/adr/0004-deprecate-bypass-once.md)。
 
 ### Permission Mode policy（auto mode 集成）
 
@@ -395,6 +396,7 @@ Claude Code 内置 5 种 permission mode：`default` / `acceptEdits` / `plan` / 
 - 每个 agent frontmatter 中 model 选择有 1 行注释解释为什么（CI `agents-manifest-check` job 跑 `check-agents-manifest.py` 硬校验，缺注释即 fail）
 - `.claude/.audit.log` 格式合法（JSONL，每行可独立 parse）
 - bypass 在 CI 不可用（`grep -q '^BYPASS:' commit message` → fail）
+- bypass 期间的提交带 `Harness-Bypass` 尾注；缺 `Bypass-Reviewed` 理由 → CI fail（`bypass-trailer.py --check`）
 - 升级链超过 3 步必须问用户，**不可静默继续**
 
 ---

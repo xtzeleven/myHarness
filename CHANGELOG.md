@@ -11,6 +11,15 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-22 — G6：bypass 留痕，CI 可见
+
+#### Added
+
+- `.githooks/prepare-commit-msg` + `.claude/scripts/bypass-trailer.py`：把上一个提交以来 `.audit.log` 里的 bypass 记录（及"在 bypass 会话里提交"）写成 `Harness-Bypass:` 尾注；`--no-verify` 跳不过；编辑器提交时预排"标题 / 空行 / 尾注"模板（ADR-0012）
+- `lint.yml` bypass-guard 新步骤 `bypass-trailer.py --check`：带尾注且缺 `Bypass-Reviewed: <理由>` → fail；有理由的放行并列进 job summary（用户 2026-11-22 拍板"补理由后可合"）
+- `/verify-setup` 与 SessionStart：`core.hooksPath` 不是 `.githooks` 时提醒
+- `test_bypass_trailer.py`：临时仓库端到端 11 例（含 amend 界线、`--no-verify`、编辑器模板、坏 range 报错）
+
 ### 2026-11-21 — G4：CI 防 IT 静默跳过
 
 #### Added

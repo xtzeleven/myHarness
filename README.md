@@ -111,13 +111,16 @@ git clone <repo> && cd myHarness
 cat CLAUDE.md
 cat .claude/rules/engineering-practices.md
 
-# 2. 配 MCP（可选，需 MySQL 只读账号）
+# 2. 启用 git hooks（bypass 留痕，ADR-0012）
+git config core.hooksPath .githooks
+
+# 3. 配 MCP（可选，需 MySQL 只读账号）
 cp .env.example .env && vi .env
 
-# 3. 跑自检
+# 4. 跑自检
 /audit-practices
 
-# 4. 新人路径
+# 5. 新人路径
 /onboard backend
 ```
 
@@ -157,6 +160,9 @@ CHANGELOG.md                         发布变更记录
   scripts/
     audit-context-cost.py            token 注入审计
     audit-log-summary.py             .audit.log 摘要
+    bypass-trailer.py                bypass 记录 → 提交尾注 + CI 检查（ADR-0012）
+
+.githooks/prepare-commit-msg         bypass 留痕（需 git config core.hooksPath .githooks）
 
 bench/                               对照实验：任务集 / 运行记录 / 报告 / 代际总表（M9-P1）
 

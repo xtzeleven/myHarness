@@ -392,7 +392,7 @@ def main() -> int:
     if os.environ.get("HARNESS_BYPASS") == "1":
         audit_log("bypass", "HARNESS_BYPASS=1 in env", tool=tool_name, target=target_for_log, bypass=True, permission_mode=permission_mode)
         print("[pre-tool-use] ⚠️⚠️⚠️ BYPASS ACTIVE — 黑+灰名单全部放行，仅记录审计 ⚠️⚠️⚠️", file=sys.stderr)
-        print("[pre-tool-use] 这不应是常态。CI 检测到 commit message 含 'BYPASS:' 会拒合。", file=sys.stderr)
+        print("[pre-tool-use] 这不应是常态。本会话的提交会自动带 Harness-Bypass 尾注，CI 要求补 Bypass-Reviewed 理由才放行。", file=sys.stderr)
         # 用量阈值告警：过去 7 天 bypass 次数（含本次）≥ 阈值 → 红字提醒收敛
         used = count_bypass_in_window()
         if used >= BYPASS_WARN_THRESHOLD:

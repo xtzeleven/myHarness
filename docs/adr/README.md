@@ -17,6 +17,7 @@
 | [0009](0009-native-ask-and-fail-closed.md)     | 灰名单原生确认 + 黑名单 fail-closed + bypass | Accepted（部分取代 0004）                         |
 | [0010](0010-measurable-harness-positioning.md) | 定位调整：可度量的 Harness，随模型代际实测   | Accepted                                          |
 | [0011](0011-archunit-ddd-rules.md)             | 引入 ArchUnit，DDD 禁忌跑进 mvn verify       | Accepted                                          |
+| [0012](0012-bypass-trailer-ci-visible.md)      | bypass 留痕：提交尾注 + CI 要求补理由        | Accepted                                          |
 
 ## 何时写 ADR
 

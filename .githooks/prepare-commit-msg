@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# bypass 留痕（backlog G6）：把上次提交以来的 HARNESS_BYPASS 放行记录写成 Harness-Bypass 尾注。
+# 启用：git config core.hooksPath .githooks（/verify-setup 会检查）。--no-verify 跳不过本 hook。
+# 出错只告警不阻断提交。
+root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+script="$root/.claude/scripts/bypass-trailer.py"
+[ -f "$script" ] || exit 0
+py=""
+for c in python3 python; do command -v "$c" >/dev/null 2>&1 && { py="$c"; break; }; done
+if [ -z "$py" ]; then
+  echo "[prepare-commit-msg] ❌ 找不到 python，未检查 bypass 记录（提交未阻断）" >&2
+  exit 0
+fi
+"$py" "$script" "$@"
+exit 0
