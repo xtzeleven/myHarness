@@ -256,6 +256,18 @@ jobs:
           fi
           echo "All commit messages match Conventional Commits."
 
+  migration-immutability:
+    name: Flyway migrations are immutable (G11)
+    runs-on: ubuntu-latest
+    # 只在 PR 把关，理由同 commit-lint：入库门禁，push 后补救不了
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: No edit / delete / rename of existing V*__*.sql
+        run: bash .github/scripts/check-migration-immutability.sh "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
+
   java-build:
     name: Java build + test (mvnw verify)
     runs-on: ubuntu-latest
