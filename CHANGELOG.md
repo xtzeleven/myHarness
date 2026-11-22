@@ -11,6 +11,12 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-22 — 去掉 T2-a 的代码内提示
+
+#### Changed
+
+- 删除 `PlaceOrderHandler.handle` 里"引入首个监听器前改用 `AFTER_COMMIT`"的 4 行注释：它把埋点 T2-a 的答案写在业务代码里，C0 / C2 都能看到，T2-a 测不出 Harness 的作用。这笔债仍记在 backlog C22
+
 ### 2026-11-22 — bench 防答案泄漏（G3 前置）
 
 #### Fixed
