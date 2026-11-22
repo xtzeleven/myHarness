@@ -12,7 +12,7 @@
   - private 构造器 + static factory（如 `Order.place(...)`） —— 所有创建路径强制走业务校验
   - 业务方法表达意图（`confirm()` / `reject()`），**禁** setter
   - `equals/hashCode` 仅基于 ID
-  - 跨聚合用 **ID 引用**，不持有对方对象（`OrderId` 而非 `Order`）
+  - 跨聚合用 **ID 引用**，不持有对方对象（`OrderId` 而非 `Order`）；Customer 暂用 `String`，见 §3
 - **VO**（如 `OrderItem` / `OrderId`）：
   - 全字段 `final`，无 setter
   - `equals/hashCode` 基于**全部字段**
@@ -45,6 +45,7 @@
 - **事件**：`OrderPlaced`（位于 `event/`）
 - **Repository 接口**：`OrderRepository`（位于 `repository/`），实现在 `infrastructure/`
 - **Domain Exception**：`EmptyOrderException`
+- **对 Customer 的引用**：`customerId` 用裸 `String`，**有意为之**（backlog C23）。Customer BC 还没落地，现在**不**引入 `CustomerId` VO，也不持有 Customer 对象；等 Customer BC 落地时统一改。想提前改，先问用户
 
 ## 4. 触发后端 agent（与根级 §8 互补）
 
