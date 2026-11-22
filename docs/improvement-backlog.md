@@ -112,10 +112,10 @@ _F1 / F2 同批落地，详见 §E（F1→E33 / F2→E34）。_
 | G7  | 🟢 P2  | ① 类规则 P1 显示"裸跑已不犯"→ 按退役条件拆，拆后用同一任务集复跑确认不退化                                                                | P2             |
 | G8  | ⚪ P3  | `policies/` 拆 `core/` + `java-ddd/`，`.claude/harness.yaml` 声明 profiles；engineering-practices §12–14 下沉                             | P3             |
 | G9  | ⚪ P3  | 一页总览 + `harness-methodology.md` 增"五种成分与演化终局"+ docs 预算（≤ 3 万 token）                                                     | P4             |
-| G12 | 🟢 P2  | K3：CLAUDE.md §9 改成指向 `policies/*.yaml` 的指针，消除与 `ddd-aggregate-boundary` 实际范围的漂移                                        | G5 盘点        |
 | G13 | 🟢 P2  | K4：PreToolUse 加只记日志不拦的 `mcp__*` matcher，让 gitnexus / mysql MCP 调用可观测                                                      | G5 盘点 / P0-6 |
+| G14 | 🟢 P2  | 定：`git reset --hard` / 删 commit 要不要进灰名单？engineering-practices §3 一直要求拦，但没有对应规则（G12 盘点发现）；加了会多弹窗      | G12            |
 
-规则清单（G5）已建：[rule-inventory.md](rule-inventory.md)，盘点发现的缺口登记为 G10–G13（G10 → E57、G11 → E59 已完成）。按退役条件拆规则是 G7，等 G3 出数据。
+规则清单（G5）已建：[rule-inventory.md](rule-inventory.md)，盘点发现的缺口登记为 G10–G13（G10 → E57、G11 → E59、G12 → E60 已完成）。按退役条件拆规则是 G7，等 G3 出数据。
 
 ---
 

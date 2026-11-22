@@ -56,9 +56,12 @@
 
 **灰名单（stdout 输出 `permissionDecision: "ask"` + exit 0，由 Claude Code 原生弹窗请用户确认）：**
 
-- 改 `domain/` 下聚合根 / Repository 接口 / DomainEvent 定义（DDD 边界）
+- 改 `domain/` 下任意 `.java`（DDD 边界：聚合根 / VO / Repository 接口 / 领域事件，`ddd-aggregate-boundary`）
 - 改 `pom.xml` 中 `spring-boot` / 主 ORM（MyBatis/JPA）/ MySQL 驱动版本
-- 删 commit / 批量 rebase / `git reset --hard origin/*`
+- 改写 git 历史（`rebase -i` / `filter-branch` / `filter-repo`）、批量 `git rm -r`
+- ⚠️ 删 commit / `git reset --hard origin/*`：本节原要求拦，**目前没有对应规则**，是否新增待定（backlog G14）
+
+完整清单以 [`policies/*.yaml`](policies/) 为准，本节只列最低要求。
 
 黑名单退出码 2 阻止 + stderr 给原因；灰名单 reason 以 `⚠️ 待人工授权:` 开头，显示在原生确认弹窗里。
 

@@ -4,13 +4,13 @@
 
 ## 文件分工
 
-| 文件            | Action   | 退出码 | 输出前缀         |
-| --------------- | -------- | ------ | ---------------- |
-| `deny.yaml`     | deny     | 2      | `BLOCKED:`       |
-| `ask-user.yaml` | ask_user | 2      | `⚠️ 待人工授权:` |
-| `hints.yaml`    | hint     | 0      | `💡 提示:`       |
+| 文件            | Action   | 退出码                                | 输出前缀         |
+| --------------- | -------- | ------------------------------------- | ---------------- |
+| `deny.yaml`     | deny     | 2                                     | `BLOCKED:`       |
+| `ask-user.yaml` | ask_user | 0（stdout `permissionDecision: ask`） | `⚠️ 待人工授权:` |
+| `hints.yaml`    | hint     | 0                                     | `💡 提示:`       |
 
-`ask_user` 是灰名单：主对话**必须停下**向用户索要授权后才能重试。`hint` 不阻塞，建议性。
+`ask_user` 是灰名单：由 Claude Code 原生弹窗请用户确认，同意后本次调用直接执行（ADR-0009；此前是 exit 2 硬拦）。`hint` 不阻塞，建议性。
 
 ## 规则 schema
 
