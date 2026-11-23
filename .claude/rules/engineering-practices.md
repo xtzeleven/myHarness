@@ -356,15 +356,24 @@ Claude Code 内置 5 种 permission mode：`default` / `acceptEdits` / `plan` / 
 4. **`.git/` / `.claude/` 保护**：Claude Code v2.1.78+ 把这两路径设为受保护，auto / bypassPermissions 也不能写入，本项目无须重复设防
 5. **不在 settings.json 里 `defaultMode: auto`**：把模式切换留给会话级（Shift+Tab）/ CLI flag（`--enable-auto-mode`），避免主仓库强制所有人 auto
 
-**原生 ask 各 mode 实测记录**（ADR-0009 待手工验证项；验证方法：改 `src/main/java/.../domain/order/Order.java` 一行，看是否弹窗、同意后是否一次写入成功）：
+**原生 ask 各 mode 实测记录**（ADR-0009 / backlog G1）：
 
-| Mode                | 是否弹窗 | 同意后一次成功 | 验证日期 / 模型 |
-| ------------------- | -------- | -------------- | --------------- |
-| `default`           | 待验证   | 待验证         |                 |
-| `acceptEdits`       | 待验证   | 待验证         |                 |
-| `plan`              | 待验证   | 待验证         |                 |
-| `auto`              | 待验证   | 待验证         |                 |
-| `bypassPermissions` | 待验证   | 待验证         |                 |
+| Mode                           | 是否弹窗                                              | 同意后一次成功 | 验证日期 / 模型                                      |
+| ------------------------------ | ----------------------------------------------------- | -------------- | ---------------------------------------------------- |
+| `default`（CLI 里叫 `manual`） | ✅                                                    | ✅             | 2026-11-23 / `claude-fable-5-2`，Claude Code 2.1.311 |
+| `acceptEdits`                  | ✅（Edit 本会自动放行，仍被 ask 拦下）                | ✅             | 同上                                                 |
+| `plan`                         | ✅ 退出 plan 后（plan 内模型不调写工具，hook 不触发） | ✅             | 同上                                                 |
+| `auto`                         | ✅                                                    | ✅             | 同上                                                 |
+| `dontAsk`                      | ✅                                                    | ✅             | 同上                                                 |
+| `bypassPermissions`            | ✅                                                    | ✅             | 同上                                                 |
+
+**结论**：没有哪个 mode 会自动放行灰名单的 ask，不需要退回 exit 2。
+
+**验证方法**（`bash .claude/scripts/manual/permission-mode-check.sh`，会真实调用模型）：每个 mode 用 `git archive` 出的临时副本跑 `claude -p`，两个用例：Edit `domain/order/Order.java`（`ddd-aggregate-boundary`）、Bash `git reset --hard HEAD`（`bash-git-reset-hard`）。
+
+- **是否弹窗**：`--permission-prompts none`（没人应答，要确认的一律拒）下两个用例都没执行、审计里有 `ask_user`；`--permission-prompt-tool` 下批准工具收到了确认请求
+- **同意后一次成功**：批准工具一律同意，Edit 只插入一行、reset 确实执行，各批准一次
+- 局限：用的是无界面 `-p` 的确认通道，没有在交互界面里逐个 mode 肉眼看弹窗；两者走同一套权限判定。Claude Code 或模型换代后重跑本脚本
 
 若某 mode 下 ask 被自动放行：该 mode 退回 exit 2 作后备，并在此表记录。
 
