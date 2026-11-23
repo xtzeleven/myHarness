@@ -37,11 +37,24 @@
 | C1   | 仅约束层：CLAUDE.md + rules + PreToolUse              | 第二批 |
 | C2   | 全开：三层全部                                        | ✅     |
 
-首批最小规模：3 任务 × C0/C2 × 每组合 2 次 = 12 次。执行方式：**本机手工跑 Claude Code**（D3），第二批再考虑自动化。
+首批最小规模：3 任务 × C0/C2 × 每组合 2 次 = 12 次。执行方式原定**本机手工跑 Claude Code**（D3）；2026-11-23 首批改为**无界面自动跑**（[`run-auto.sh`](run-auto.sh)），与手工跑的差别：
+
+- 确认请求（含灰名单）由一个自动同意的 permission prompt tool 回答，人工介入记 0；该工具在 C0 / C2 都出现在模型的工具列表里
+- 单次上限 60 分钟，超时作废；首批 T3 三次超时后，补跑放宽到 90 分钟（报告里注明）
+- 中转站整段不通时 claude 仍以 `subtype=success` 退出（`is_error=true`、0 次工具调用），这种运行作废
+- 自动数据不和手工数据混算；报告里注明执行方式
 
 ## 运行步骤（单次）
 
 > **防答案泄漏**（2026-11-22 修订，修订前没有任何运行数据，仍算 v1）：仓库里有文件把埋点写得清清楚楚（本文、improvement-plan、rule-inventory、backlog、CHANGELOG），git 历史里也有。所以每次运行都**导出一份不带历史的副本**，所有配置都先删掉这些文件，再按配置决定去不去 Harness。副本放在 `~/bench-runs/` 下，不放在任何项目目录里（Claude Code 会逐级加载上级目录的 CLAUDE.md）。
+>
+> **用户级配置也会混进来**（2026-11-23 首批作废后加）：`~/.claude/` 下的 skills / hooks / MCP / 记忆在 C0、C2 都会加载。首批里用户级 gitnexus skill 把模型引出副本（读 `~/.gitnexus/registry.json`、试 `npx gitnexus analyze`），7 次运行全部作废。所以 claude 要用**独立的配置目录**（`CLAUDE_CONFIG_DIR`），里面只放连接所需的 `env` 与 `model`；跑 bench 期间还要删掉主仓库的 gitnexus 索引（C2 的项目级 gitnexus skill 可能引模型用命令行查它），跑完再重建：
+>
+> ```bash
+> CFG=~/bench-runs/.claude-config; mkdir -p "$CFG" && chmod 700 "$CFG"
+> (umask 077; python3 -c "import json,os; d=json.load(open(os.path.expanduser('~/.claude/settings.json'))); json.dump({k:d[k] for k in ('env','model') if k in d}, open('$CFG/settings.json','w'))")
+> gitnexus remove myHarness --force      # 跑完：在主仓库 gitnexus analyze --index-only
+> ```
 >
 > **MCP 也会泄漏**（2026-11-23 再修订，同样没有运行数据，仍算 v1）：gitnexus 是用户级 MCP，C0 / C2 都会加载；它按名字能查任何已索引的仓库，主仓库的索引里就有本文、improvement-plan、rule-inventory 等答案文件。所以第 6 步用 `--strict-mcp-config` 启动，只加载副本自己的 `.mcp.json`。用户级 gitnexus hook（Grep / Glob 时注入图谱上下文）按 cwd 找索引，副本里没有 `.gitnexus/`，不会触发。
 
@@ -66,11 +79,12 @@ git grep -l -w -E 'setStatus|CustomerId|AFTER_COMMIT' -- ':!src'
 git grep -l -E '埋点|期望被拦' -- .
 
 # 6. 在 $RUN 里启动 Claude Code：只加载副本的 .mcp.json，不加载用户级 MCP（gitnexus 索引含答案）
-claude --strict-mcp-config --mcp-config .mcp.json
-#    进会话先跑 /mcp：只应有 mysql-readonly，出现 gitnexus → 退出重来
+CLAUDE_CONFIG_DIR=~/bench-runs/.claude-config claude --strict-mcp-config --mcp-config .mcp.json
+#    进会话先跑 /mcp：只应有 mysql-readonly，出现 gitnexus → 退出重来；/skills 里不应有用户级 skill
 #    然后粘贴任务提示词，正常协作直到它说完成
 #    记下：模型 ID、开始/结束时间、你介入了几次、hook 误拦了几次；
-#    模型读了 $RUN 以外的文件（如 cd 回主仓库、用 npx gitnexus 查索引）→ 本次作废
+#    模型读了 $RUN 以外的文件（如 cd 回主仓库、读 ~/.gitnexus、用 npx gitnexus 查索引）→ 本次作废；
+#    模型把自己的命令输出写到 /tmp 再读回、查看 ~/.m2 不算
 
 # 7. 收集结果（写到副本外的 $RUN.out/，不污染 diff；B0 = 副本的初始提交，模型自己提交过也能比全）
 OUT="$RUN.out"; mkdir -p "$OUT"; B0=$(git rev-list --max-parents=0 HEAD)
@@ -83,7 +97,7 @@ cp .claude/.audit.log "$OUT/audit.log" 2>/dev/null || true   # C0 没有
 #    bench/runs/<日期>-<模型>-<任务>-<配置>-<序号>/ 并提交
 ```
 
-记录模板：[`run-record-template.md`](run-record-template.md)。
+记录模板：[`run-record-template.md`](run-record-template.md)。自动运行的结果用 [`analyze.py`](analyze.py) 生成记录草稿（`python3 bench/analyze.py ~/bench-runs/<RUN>.out`）和汇总表（`--table`）：埋点按"最终 diff 里有 → 漏进主干 / 中途写过后来没了 → 反馈层纠正或门禁层拦下 / 没写过 → 未触发（C2 提到规则 → 约束层避免）"**初判**，带"待复核"的要对照 transcript 人工确认。
 
 ## 埋点结果取值
 
