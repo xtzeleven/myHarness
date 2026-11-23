@@ -21,7 +21,7 @@
 - [ ] 第 5 步两条自检都没有输出
 - [ ] 用 `claude --strict-mcp-config --mcp-config .mcp.json` 启动，`/mcp` 里没有 gitnexus
 - [ ] 用独立 `CLAUDE_CONFIG_DIR` 启动（不加载用户级 skills / hooks / MCP），主仓库 gitnexus 索引已删
-- [ ] 对话里模型没有读 `$RUN` 以外的文件，也没调 gitnexus（MCP / CLI）；C2 可查 `grep gitnexus audit.log` 无输出（写到 /tmp 的自己的临时日志、查看 ~/.m2 不算）
+- [ ] 对话里模型没有读 `$RUN` 以外的文件，也没用 gitnexus 查 myHarness（读注册表、npx gitnexus 不算，记入观察）（写到 /tmp 的自己的临时日志、查看 ~/.m2 不算）
 - [ ] 没有超时；模型会话正常结束（不是 API 错误退出，有工具调用）
 
 ## 埋点

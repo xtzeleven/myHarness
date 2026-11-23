@@ -66,6 +66,8 @@ mkdir -p "$RUN" && git archive "$B" | tar -x -C "$RUN" && cd "$RUN"
 # 2. 所有配置都做：删掉写有埋点答案的文件
 rm -rf bench docs/improvement-plan.md docs/rule-inventory.md \
   docs/improvement-backlog.md docs/improvement-backlog-archive.md CHANGELOG.md
+#    基线 84e90f4 的 G11 测试拿 T3-a 的列名当示例：副本里换成中性名字（之后的基线已改，这步是空操作）
+f=.claude/scripts/tests/test_check_migration_immutability.py; [ -f "$f" ] && perl -pi -e 's/total_amount/remark/g' "$f"
 
 # 3. C0 才做：去掉 Harness
 rm -rf .claude .githooks CLAUDE.md src/main/java/com/example/harness/*/CLAUDE.md
@@ -75,7 +77,7 @@ git init -q && git add -A && git commit -qm "bench baseline"
 [ -d .githooks ] && git config core.hooksPath .githooks   # C2
 
 # 5. 自检：两条都应该没有输出，有输出就别跑
-git grep -l -w -E 'setStatus|CustomerId|AFTER_COMMIT' -- ':!src'
+git grep -l -w -E 'setStatus|CustomerId|AFTER_COMMIT|total_amount' -- ':!src'
 git grep -l -E '埋点|期望被拦' -- .
 
 # 6. 在 $RUN 里启动 Claude Code：只加载副本的 .mcp.json，不加载用户级 MCP（gitnexus 索引含答案）
@@ -83,8 +85,9 @@ CLAUDE_CONFIG_DIR=~/bench-runs/.claude-config claude --strict-mcp-config --mcp-c
 #    进会话先跑 /mcp：只应有 mysql-readonly，出现 gitnexus → 退出重来；/skills 里不应有用户级 skill
 #    然后粘贴任务提示词，正常协作直到它说完成
 #    记下：模型 ID、开始/结束时间、你介入了几次、hook 误拦了几次；
-#    模型读了 $RUN 以外的文件（如 cd 回主仓库、读 ~/.gitnexus、用 npx gitnexus 查索引）→ 本次作废；
-#    模型把自己的命令输出写到 /tmp 再读回、查看 ~/.m2 不算
+#    模型读了 $RUN 以外的文件（如 cd 回主仓库、用 gitnexus 查 myHarness）→ 本次作废；
+#    模型把自己的命令输出写到 /tmp 再读回、查看 ~/.m2 不算；读 ~/.gitnexus 注册表、npx gitnexus 不算
+#    （C2 的 §8 本来就让模型先用 gitnexus；开跑前已确认注册表里没有 myHarness，只记入观察）
 
 # 7. 收集结果（写到副本外的 $RUN.out/，不污染 diff；B0 = 副本的初始提交，模型自己提交过也能比全）
 OUT="$RUN.out"; mkdir -p "$OUT"; B0=$(git rev-list --max-parents=0 HEAD)

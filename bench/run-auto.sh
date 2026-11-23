@@ -46,6 +46,9 @@ git -C "$SRC" archive "$B" | tar -x -C "$RUN" && cd "$RUN" || exit 1
 # 2. 所有配置：删写有埋点答案的文件
 rm -rf bench docs/improvement-plan.md docs/rule-inventory.md \
   docs/improvement-backlog.md docs/improvement-backlog-archive.md CHANGELOG.md
+# 2b. 基线 84e90f4 的 G11 测试拿 T3-a 的列名当示例（2026-11-23 发现），副本里换成中性名字（主仓库已另改）
+f=.claude/scripts/tests/test_check_migration_immutability.py
+[ -f "$f" ] && perl -pi -e 's/total_amount/remark/g' "$f"
 # 3. C0：去掉 Harness
 [ "$CONF" = C0 ] && rm -rf .claude .githooks CLAUDE.md src/main/java/com/example/harness/*/CLAUDE.md
 # 4. 单提交基线仓库
@@ -53,7 +56,7 @@ git init -q -b main && git add -A && git -c user.name=bench -c user.email=bench@
 git config user.name bench; git config user.email bench@localhost
 [ -d .githooks ] && git config core.hooksPath .githooks
 # 5. 自检：有输出就不跑
-leak=$( { git grep -l -w -E 'setStatus|CustomerId|AFTER_COMMIT' -- ':!src'; git grep -l -E '埋点|期望被拦' -- .; } 2>/dev/null)
+leak=$( { git grep -l -w -E 'setStatus|CustomerId|AFTER_COMMIT|total_amount' -- ':!src'; git grep -l -E '埋点|期望被拦' -- .; } 2>/dev/null)
 if [ -n "$leak" ]; then log "ABORT: 自检有输出：$leak"; echo "$leak" > "$OUT/selfcheck.txt"; exit 1; fi
 : > "$OUT/selfcheck.txt"
 

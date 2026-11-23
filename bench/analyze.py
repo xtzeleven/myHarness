@@ -128,20 +128,27 @@ def judge(plant, conf, diff_files, writes, texts, results, audit):
     return "未触发", []
 
 
-EXTERNAL = re.compile(r"~/\.gitnexus|/\.gitnexus/registry|npx[^|;&]*gitnexus|(^|[;&|(]\s*)gitnexus\s"
-                      r"|myClaude/myHarness|(~|/Users/\w+)/\.claude/(skills|projects|plans)\b")
+# 一律作废：读主仓库、用户级 skills / 记忆 / plans、用 gitnexus 查 myHarness
+HARD = re.compile(r"myClaude/myHarness|(~|/Users/\w+)/\.claude/(skills|projects|plans)\b|gitnexus[^|;&]*myHarness")
+# 不作废（2026-11-23 用户决定）：C2 的 CLAUDE.md §8 和项目 gitnexus skills 本来就让模型先用 gitnexus；
+# run-auto.sh 开跑前确认注册表里没有 myHarness，读注册表 / npx gitnexus 只能看到别的仓库，记入观察
+GITNEXUS = re.compile(r"\.gitnexus|npx[^|;&]*gitnexus|(^|[;&|(]\s*)gitnexus\s")
 
 
 def outside_paths(summary):
     """run-auto.sh 记下的可疑项分两类：路径（"Tool: /abs/path"）和含 gitnexus / myHarness 字样的命令。
-    路径：/tmp、/var/folders（模型自己的临时日志）、~/.m2 允许；命令：只有真正访问外部（EXTERNAL）才算。"""
-    allowed, flagged = [], []
+    返回 (允许, 作废, gitnexus 访问)。路径：/tmp、/var/folders（模型自己的临时日志）、~/.m2 允许。"""
+    allowed, flagged, gn = [], [], []
     for p in summary.get("paths_outside_run") or []:
-        if re.match(r"\w+: \{", p):  # 命令类
-            (flagged if EXTERNAL.search(p) else allowed).append(p)
+        if HARD.search(p):
+            flagged.append(p)
+        elif GITNEXUS.search(p):
+            gn.append(p)
+        elif re.match(r"\w+: \{", p):  # 命令类，只因含 myHarness 字样被记下
+            allowed.append(p)
         else:
             (allowed if re.search(r": /tmp/|\.m2/|/var/folders/", p) else flagged).append(p)
-    return allowed, flagged
+    return allowed, flagged, gn
 
 
 def analyze(out: Path):
@@ -163,7 +170,7 @@ def analyze(out: Path):
             except Exception:
                 pass
     plants = [(p, *judge(p, conf, diff_files, writes, texts, results, audit)) for p in PLANTS if p[1] == task]
-    allowed, flagged = outside_paths(summary)
+    allowed, flagged, gn = outside_paths(summary)
     selfcheck_ok = (out / "selfcheck.txt").exists() and not (out / "selfcheck.txt").read_text().strip()
     # 中转站整段不通时 claude 也会以 subtype=success 退出（is_error=true、0 次工具调用）→ 不是有效运行
     api_ok = not summary.get("is_error") and sum((summary.get("tool_calls") or {}).values()) > 0
@@ -172,7 +179,7 @@ def analyze(out: Path):
     asks = [a for a in audit if a.get("action") == "ask_user"]
     denies = [a for a in audit if a.get("action") == "deny"]
     return dict(out=out, name=name, day=day, task=task, conf=conf, seq=seq, base=base, elapsed=elapsed,
-                timed_out=timed_out, api_ok=api_ok, summary=summary, plants=plants, allowed=allowed, flagged=flagged,
+                timed_out=timed_out, api_ok=api_ok, summary=summary, plants=plants, allowed=allowed, flagged=flagged, gn=gn,
                 selfcheck_ok=selfcheck_ok, valid=valid, usage=u, asks=asks, denies=denies,
                 files_changed=len(diff_files))
 
@@ -215,6 +222,7 @@ def render(r):
 - [{ck(not r['timed_out'])}] 没有超时
 - [{ck(r['api_ok'])}] 模型会话正常（不是 API 错误退出，有工具调用）
 - 允许的副本外路径（模型自己写到 /tmp 的临时日志、查看 ~/.m2）：{len(r['allowed'])} 处
+- gitnexus 访问（注册表里没有 myHarness，不作废，见 README）：{len(r['gn'])} 处
 
 ## 埋点
 
