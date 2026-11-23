@@ -27,6 +27,14 @@
     cmd_matches: 'git\s+rm\s+-rf?\s'
   reason: 'git rm -r 批量删除'
 
+- id: bash-git-reset-hard
+  tool: Bash
+  when:
+    # --hard 丢弃未提交改动；带 HEAD~N / origin/* 时还会删掉本地 commit（G14）。
+    # 不带 --hard 的 reset（--soft / --mixed）改动留在工作区，不拦
+    cmd_matches: 'git\s+reset\s+([^&|;]*\s)?--hard'
+  reason: 'git reset --hard（丢弃未提交改动 / 删 commit）'
+
 - id: bash-mvn-deploy
   tool: Bash
   when:

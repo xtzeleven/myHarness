@@ -11,6 +11,13 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-23 — G14 `git reset --hard` 进灰名单；G15 gitnexus MCP 只读
+
+#### Added
+
+- 灰名单 `bash-git-reset-hard`：`git reset … --hard`（丢弃未提交改动；带 `HEAD~N` / `origin/*` 时删 commit）走原生确认弹窗。`--soft` / `--mixed` 不拦（改动留在工作区）。engineering-practices §3 一直要求拦但没有规则（G12 盘点发现）。hook 冒烟测试加 4 例
+- mcp-onboarding §3 加 gitnexus 行：用户级 MCP 必须配 `GITNEXUS_MCP_READ_ONLY=1`。`rename` 在 `dry_run:false` 时直接改源码，绕过 Edit/Write 门禁（domain/ 灰名单、format、秘钥检测）；只读后 `rename` / `cypher` / `group_*` 不可用。配置在 `~/.claude.json`，仓库管不到，规则清单 §4 登记
+
 ### 2026-11-23 — bench：运行时不加载用户级 MCP（G3 前置）
 
 #### Fixed
