@@ -11,6 +11,14 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-23 — bench：运行时不加载用户级 MCP（G3 前置）
+
+#### Fixed
+
+- bench 运行步骤第 6 步改为 `claude --strict-mcp-config --mcp-config .mcp.json`，进会话先用 `/mcp` 确认没有 gitnexus。原因：gitnexus 是用户级 MCP，C0 / C2 都会加载，按名字能查主仓库索引，而索引里收了 `bench/README.md`、`improvement-plan.md`、`rule-inventory.md` 等写有埋点答案的文件（实测查询"AFTER_COMMIT 埋点 T2-a"能命中）。记录模板「数据有效性」加对应两条
+- `check-migration-immutability.sh` 头注释删掉"bench 埋点 T3-a"：G11 引入，C0 / C2 都保留 `.github/`，等于告诉模型改已有迁移是陷阱；第 5 步自检能查出来（本次 dry-run 发现）
+- 规则清单：gitnexus 注入块的退役条件不再看 bench（bench 不加载 gitnexus），改看日常会话审计里 `mcp__gitnexus__*` 的调用量
+
 ### 2026-11-23 — G13：MCP 调用进审计（只记不拦）
 
 #### Added

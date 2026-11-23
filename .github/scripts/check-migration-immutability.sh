@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 已入库的 Flyway 版本化迁移不可改（backlog G11 / 规则清单 K1 / bench 埋点 T3-a）
+# 已入库的 Flyway 版本化迁移不可改（backlog G11 / 规则清单 K1）
 #
 # Usage: check-migration-immutability.sh <base> [<head>]
 #   给 head：比较 merge-base(base, head) → head（CI PR 用）
