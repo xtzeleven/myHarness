@@ -67,6 +67,13 @@
 
 **失败要响**（[ADR-0009](../../docs/adr/0009-native-ask-and-fail-closed.md)）：`deny.yaml` 加载失败（缺 PyYAML / 解析失败）→ fail-closed，拦截所有经过 PreToolUse 的调用，只放行 PyYAML 安装命令本身。最硬的几条另在 `settings.json` `permissions.deny` 用原生规则兜底，不依赖 hook。
 
+**原生兜底实测**（backlog G2，2026-11-23，`claude-fable-5-2` / Claude Code 2.1.311）：hook 失效（会话带 `HARNESS_BYPASS=1`，PreToolUse 全放行）且确认请求一律自动同意的最坏情况下，`default` / `acceptEdits` / `auto` / `dontAsk` / `bypassPermissions` 5 个 mode 里 Edit 已有 `.env`、Write 新建 `.env`、`git push --force origin main` 15 组全部被原生规则拦下；同样操作去掉 `permissions.deny` 后都执行成功（对照）。另外两点：
+
+- `Edit(**/.env)` 也管 Write，不用另写 `Write(...)` 规则
+- 文件类 deny 在 PreToolUse hook **之前**生效（`.audit.log` 里没有这次调用，只在 Claude Code 的拒绝记录里）；Bash 类在 hook 之后（审计里有 hook 放行，随后被拒）
+
+只测了 23 条里的 3 条代表规则。复测：`bash .claude/scripts/manual/permission-deny-check.sh`（真实调用模型）。
+
 **达标**：手动构造危险命令时被拦下；正常命令不误伤；灰名单触发时弹出原生确认；PyYAML 缺失时危险命令仍被拦（`test_pre_tool_use.sh` 的 fail-closed 用例）。
 
 ---

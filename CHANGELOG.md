@@ -11,6 +11,13 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-23 — G2：hook 失效时原生 `permissions.deny` 仍拦
+
+#### Added
+
+- engineering-practices §3 记录实测：hook 失效（`HARNESS_BYPASS=1`）且确认请求一律自动同意时，`default` / `acceptEdits` / `auto` / `dontAsk` / `bypassPermissions` 下 Edit 已有 `.env`、Write 新建 `.env`、`git push --force origin main` 15 组全部被原生规则拦下；去掉 `permissions.deny` 的 3 组对照都执行成功。`Edit(**/.env)` 也管 Write；文件类 deny 在 PreToolUse hook 之前生效（`.audit.log` 没有记录），Bash 类在 hook 之后。只测了 23 条中的 3 条代表规则
+- `.claude/scripts/manual/permission-deny-check.sh`：复测脚本（真实调用模型，手工跑）。强推的 origin 是本地临时裸仓库
+
 ### 2026-11-23 — G1：灰名单原生 ask 在各 permission mode 下实测
 
 #### Added
