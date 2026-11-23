@@ -203,9 +203,9 @@ def show_tail(entries, n):
         print(json.dumps(e, ensure_ascii=False))
 
 
-# 活动噪声：PostToolUse 每次 Edit/Write 都记一条，占日志 ~90%。
+# 活动噪声：PostToolUse 每次 Edit/Write 都记一条，占日志 ~90%；mcp_call = 每次 MCP 调用（G13，只观测）。
 # 审计真正关心的是"策略决策"与"异常"，这些从下面的噪声集之外的所有 action 里来。
-NOISE_ACTIONS = {"executed"}
+NOISE_ACTIONS = {"executed", "mcp_call"}
 # 高危信号：出现即需人工确认，--decisions 视图里高亮
 ALERT_ACTIONS = {"bypass", "secret_suspect", "error"}
 

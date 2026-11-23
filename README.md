@@ -145,6 +145,7 @@ CHANGELOG.md                         发布变更记录
     stop-check.sh                    会话结束摘要 + 写 .session.state
     subagent-stop.sh                 解析 sub-agent 输出块写审计
     pre-compact.sh                   压缩前注入"必须保留"提示
+    mcp-observe.sh                   MCP 调用只记审计、不拦
   agents/                            10 个：tdd-cycle-driver / code-reviewer
                                     / ddd-architect / spring-boot-reviewer
                                     / maven-build-doctor / schema-analyst
