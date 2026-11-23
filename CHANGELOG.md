@@ -11,6 +11,13 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-23 — G1：灰名单原生 ask 在各 permission mode 下实测
+
+#### Added
+
+- engineering-practices §15 实测表填完：`default` / `acceptEdits` / `plan` / `auto` / `dontAsk` / `bypassPermissions` 6 个 mode 下灰名单 ask 都会要求确认，同意后一次执行成功；没有 mode 自动放行，不需要退回 exit 2。`acceptEdits` / `bypassPermissions` 本会自动放行 Edit，仍被 ask 拦下；`plan` 内模型不调写工具，退出 plan 后 ask 照常生效。模型 `claude-fable-5-2`，Claude Code 2.1.311
+- `.claude/scripts/manual/permission-mode-check.sh` + `permission-approver.py`：复测脚本（真实调用模型，手工跑）。每个 mode 用临时副本跑 `claude -p`，Edit domain / Bash `git reset --hard` 两个用例 × `--permission-prompts none`（没人应答）/ `--permission-prompt-tool`（自动批准）两轮。局限：走无界面确认通道，没有在交互界面逐个肉眼看弹窗
+
 ### 2026-11-23 — G14 `git reset --hard` 进灰名单；G15 gitnexus MCP 只读
 
 #### Added
