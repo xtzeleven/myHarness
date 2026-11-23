@@ -72,7 +72,7 @@ PreToolUse matcher 改为 `Bash|Edit|Write|MultiEdit|NotebookEdit`；dispatcher 
 - 👍 本机实测：无 PyYAML 时 `rm -rf /` 与 `ls` 都 exit 2（此前 exit 0）；装好后 48 个 hook 用例全绿。
 - 👍 用户授权有了不可绕过的原生通道，CLAUDE.md §9 / engineering-practices §3、§15 同步改写。
 - 👎 依赖缺失时整个会话的 Bash / 写操作都会被拦，直到装好 PyYAML —— 这是有意的；提示里给了修复命令，且安装命令本身被放行。
-- ⚠️ **待手工验证**（无法在 CI 自动化）：原生 ask 在 `default` / `acceptEdits` / `plan` / `auto` / `bypassPermissions` 各 mode 下是否都弹窗；`permissions.deny` 在 hook 失效时是否仍拦。结果记入 engineering-practices §15。若某 mode 下 ask 被自动放行，退回该 mode 用 exit 2 作后备。（2026-11-23 更新：ask 部分已实测，6 个 mode 都生效，无需后备，见 §15 / backlog G1；`permissions.deny` 仍待 G2）
+- ⚠️ **待手工验证**（无法在 CI 自动化）：原生 ask 在 `default` / `acceptEdits` / `plan` / `auto` / `bypassPermissions` 各 mode 下是否都弹窗；`permissions.deny` 在 hook 失效时是否仍拦。结果记入 engineering-practices §15。若某 mode 下 ask 被自动放行，退回该 mode 用 exit 2 作后备。（2026-11-23 更新：ask 部分已实测，6 个 mode 都生效，无需后备，见 §15 / backlog G1；`permissions.deny` 也已实测，hook 失效时 5 个 mode 下都拦，见 §3 / backlog G2）
 
 ## 相关
 

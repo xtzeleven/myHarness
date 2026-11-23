@@ -27,7 +27,7 @@
 | `bash-find-delete-root`                                                                           | ⑤    | 机制   | 保留（原生前缀规则写不出 find 变体）                                                      | —        |
 | `bash-force-push-protected` `bash-force-push-refspec-protected`                                   | ⑤    | 机制   | 保留；`--force` / `-f` 推 main、master 另有原生 deny；`+refspec` 与 `prod` 只有 hook 一层 | —        |
 | `bash-chmod-777-broad` `bash-curl-pipe-sh`                                                        | ⑤    | 机制   | 保留                                                                                      | —        |
-| `write-env-file` `write-key-cert` `write-ssh-key` `write-credential-file` `write-credentials-dir` | ⑤    | 机制   | 保留；原生 `Edit(**/.env)` 等双层（原生层待 G2 实测）                                     | —        |
+| `write-env-file` `write-key-cert` `write-ssh-key` `write-credential-file` `write-credentials-dir` | ⑤    | 机制   | 保留；原生 `Edit(**/.env)` 等双层（原生层 G2 实测：hook 失效时仍拦，也管 Write）          | —        |
 
 ## 2. 灰名单（`ask-user.yaml` · 原生确认弹窗，ADR-0009；6 个 permission mode 实测都弹窗，G1）
 
@@ -56,10 +56,10 @@
 
 ## 4. 原生权限（`settings.json`）
 
-| 规则                                                                               | 成分 | 强制力                                                                                              | 处置                                                                 | 退役条件 |
-| ---------------------------------------------------------------------------------- | ---- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------- |
-| `permissions.deny`（23 条）                                                        | ⑤    | 机制                                                                                                | 保留，硬边界；hook 正则只算"防手滑"。hook 失效时是否仍拦，待 G2 实测 | —        |
-| gitnexus MCP 只读：`GITNEXUS_MCP_READ_ONLY=1`（用户级 `~/.claude.json`，不在仓库） | ⑤    | 机制（gitnexus 自己拒绝 `rename` / `cypher` / `group_*`）；仓库管不到别的机器，靠 mcp-onboarding §3 | 保留（G15）                                                          | —        |
+| 规则                                                                               | 成分 | 强制力                                                                                              | 处置                                                                                     | 退役条件 |
+| ---------------------------------------------------------------------------------- | ---- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | -------- |
+| `permissions.deny`（23 条）                                                        | ⑤    | 机制                                                                                                | 保留，硬边界；hook 正则只算"防手滑"。hook 失效时仍拦（G2 实测 3 条代表规则 × 5 个 mode） | —        |
+| gitnexus MCP 只读：`GITNEXUS_MCP_READ_ONLY=1`（用户级 `~/.claude.json`，不在仓库） | ⑤    | 机制（gitnexus 自己拒绝 `rename` / `cypher` / `group_*`）；仓库管不到别的机器，靠 mcp-onboarding §3 | 保留（G15）                                                                              | —        |
 
 ## 5. CLAUDE.md（每会话注入）
 
