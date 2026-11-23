@@ -59,7 +59,7 @@
 - 改 `domain/` 下任意 `.java`（DDD 边界：聚合根 / VO / Repository 接口 / 领域事件，`ddd-aggregate-boundary`）
 - 改 `pom.xml` 中 `spring-boot` / 主 ORM（MyBatis/JPA）/ MySQL 驱动版本
 - 改写 git 历史（`rebase -i` / `filter-branch` / `filter-repo`）、批量 `git rm -r`
-- ⚠️ 删 commit / `git reset --hard origin/*`：本节原要求拦，**目前没有对应规则**，是否新增待定（backlog G14）
+- `git reset --hard`（丢弃未提交改动 / 删 commit；`--soft` / `--mixed` 不拦）
 
 完整清单以 [`policies/*.yaml`](policies/) 为准，本节只列最低要求。
 

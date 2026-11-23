@@ -124,6 +124,14 @@ run_ask "ask-mysql-sql-file" ".sql 文件喂给" \
   '{"tool_name":"Bash","tool_input":{"command":"mysql mydb < migration.sql"}}'
 run_ask "ask-git-rebase-i" "rebase -i" \
   '{"tool_name":"Bash","tool_input":{"command":"git rebase -i HEAD~3"}}'
+run_ask "ask-git-reset-hard-origin" "reset --hard" \
+  '{"tool_name":"Bash","tool_input":{"command":"git reset --hard origin/main"}}'
+run_ask "ask-git-reset-hard-head" "reset --hard" \
+  '{"tool_name":"Bash","tool_input":{"command":"git reset -q --hard HEAD~2"}}'
+run_case "allow-git-reset-soft" 0 "" \
+  '{"tool_name":"Bash","tool_input":{"command":"git reset --soft HEAD~1"}}'
+run_case "allow-git-reset-mixed" 0 "" \
+  '{"tool_name":"Bash","tool_input":{"command":"git reset HEAD~1"}}'
 run_ask "ask-mvn-deploy" "deploy" \
   '{"tool_name":"Bash","tool_input":{"command":"mvn deploy"}}'
 

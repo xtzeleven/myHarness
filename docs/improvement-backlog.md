@@ -104,18 +104,16 @@ _F1 / F2 同批落地，详见 §E（F1→E33 / F2→E34）。_
 
 > 阶段与状态见 [roadmap M9](roadmap.md)。P0 已落地项记在 CHANGELOG 2026-11-21，这里只列**没做完的**。
 
-| #   | 优先级 | 内容                                                                                                                                                                                                                                                                                                         | 来源        |
-| --- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
-| G1  | 🔴 P0  | 原生 ask 在 5 种 permission mode 下逐个手工验证，结果填 engineering-practices §15 实测表；不弹窗的 mode 退回 exit 2                                                                                                                                                                                          | P0-3        |
-| G2  | 🔴 P0  | 手工验证 `permissions.deny`：临时让 hook 失效（无 PyYAML 的 python 或 `HARNESS_BYPASS=1 claude`）后写 `.env` / 强推 main 仍被原生规则拦下                                                                                                                                                                    | P0-5        |
-| G3  | 🟡 P1  | 首批对照实验：3 任务 × C0/C2 × 2 次，手工跑（D3），出首份报告 + 代际总表第一行                                                                                                                                                                                                                               | P1 / bench/ |
-| G7  | 🟢 P2  | ① 类规则 P1 显示"裸跑已不犯"→ 按退役条件拆，拆后用同一任务集复跑确认不退化                                                                                                                                                                                                                                   | P2          |
-| G8  | ⚪ P3  | `policies/` 拆 `core/` + `java-ddd/`，`.claude/harness.yaml` 声明 profiles；engineering-practices §12–14 下沉                                                                                                                                                                                                | P3          |
-| G9  | ⚪ P3  | 一页总览 + `harness-methodology.md` 增"五种成分与演化终局"+ docs 预算（≤ 3 万 token）                                                                                                                                                                                                                        | P4          |
-| G14 | 🟢 P2  | 定：`git reset --hard` / 删 commit 要不要进灰名单？engineering-practices §3 一直要求拦，但没有对应规则（G12 盘点发现）；加了会多弹窗                                                                                                                                                                         | G12         |
-| G15 | 🟢 P2  | 定：gitnexus MCP 写类工具怎么管？`rename` 在 `dry_run:false` 时直接改源码，绕过 Edit/Write 门禁（domain/ 灰名单、format、秘钥检测）；`cypher` / `group_sync` 也非只读。选项：用户级 MCP 配置加 `GITNEXUS_MCP_READ_ONLY=1`（gitnexus 自带）/ 灰名单加 `mcp__gitnexus__rename` 规则 / 不管。mysql MCP 已锁只读 | G13 / P0-6  |
+| #   | 优先级 | 内容                                                                                                                                      | 来源        |
+| --- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| G1  | 🔴 P0  | 原生 ask 在 5 种 permission mode 下逐个手工验证，结果填 engineering-practices §15 实测表；不弹窗的 mode 退回 exit 2                       | P0-3        |
+| G2  | 🔴 P0  | 手工验证 `permissions.deny`：临时让 hook 失效（无 PyYAML 的 python 或 `HARNESS_BYPASS=1 claude`）后写 `.env` / 强推 main 仍被原生规则拦下 | P0-5        |
+| G3  | 🟡 P1  | 首批对照实验：3 任务 × C0/C2 × 2 次，手工跑（D3），出首份报告 + 代际总表第一行                                                            | P1 / bench/ |
+| G7  | 🟢 P2  | ① 类规则 P1 显示"裸跑已不犯"→ 按退役条件拆，拆后用同一任务集复跑确认不退化                                                                | P2          |
+| G8  | ⚪ P3  | `policies/` 拆 `core/` + `java-ddd/`，`.claude/harness.yaml` 声明 profiles；engineering-practices §12–14 下沉                             | P3          |
+| G9  | ⚪ P3  | 一页总览 + `harness-methodology.md` 增"五种成分与演化终局"+ docs 预算（≤ 3 万 token）                                                     | P4          |
 
-规则清单（G5）已建：[rule-inventory.md](rule-inventory.md)，盘点发现的缺口登记为 G10–G13（G10 → E57、G11 → E59、G12 → E60、G13 → E61 已完成）。按退役条件拆规则是 G7，等 G3 出数据。
+规则清单（G5）已建：[rule-inventory.md](rule-inventory.md)，盘点发现的缺口登记为 G10–G13（G10 → E57、G11 → E59、G12 → E60、G13 → E61 已完成；后续发现的 G14 → E63、G15 → E64 已完成）。按退役条件拆规则是 G7，等 G3 出数据。
 
 ---
 

@@ -127,14 +127,15 @@ done
 
 ## 3. MCP 分类与默认设置
 
-| 类别                        | 默认权限                                 | 关键 env                                | 关联 agent                 | 范例            |
-| --------------------------- | ---------------------------------------- | --------------------------------------- | -------------------------- | --------------- |
-| 数据库（只读）              | readonly + 账号层 SELECT only            | `*_HOST` `*_RO_USER` `*_RO_PASS` `*_DB` | schema-analyst             | mysql-readonly  |
-| 数据库（读写）              | **禁用**；除非 migration-author 显式需要 | —                                       | —                          | —               |
-| Issue 跟踪（Linear / Jira） | readonly 优先                            | `*_API_TOKEN`                           | （未启用）                 | linear-readonly |
-| Chat（Slack / Teams）       | 只读取消息历史                           | `*_BOT_TOKEN`                           | （未启用）                 | slack-readonly  |
-| 文件系统                    | 沙箱目录                                 | `<NAME>_ROOT`                           | —                          | filesystem      |
-| 外部 API（GitHub / GitLab） | repo:read scope                          | `GH_TOKEN`                              | docs-keeper（如查 issues） | github-readonly |
+| 类别                         | 默认权限                                                                                                                  | 关键 env                                | 关联 agent                       | 范例                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | -------------------------------- | -------------------------------------------------- |
+| 数据库（只读）               | readonly + 账号层 SELECT only                                                                                             | `*_HOST` `*_RO_USER` `*_RO_PASS` `*_DB` | schema-analyst                   | mysql-readonly                                     |
+| 数据库（读写）               | **禁用**；除非 migration-author 显式需要                                                                                  | —                                       | —                                | —                                                  |
+| Issue 跟踪（Linear / Jira）  | readonly 优先                                                                                                             | `*_API_TOKEN`                           | （未启用）                       | linear-readonly                                    |
+| Chat（Slack / Teams）        | 只读取消息历史                                                                                                            | `*_BOT_TOKEN`                           | （未启用）                       | slack-readonly                                     |
+| 文件系统                     | 沙箱目录                                                                                                                  | `<NAME>_ROOT`                           | —                                | filesystem                                         |
+| 代码索引（gitnexus，用户级） | 只读：env `GITNEXUS_MCP_READ_ONLY=1`（关掉 `rename` / `cypher` / `group_*`；`rename` 会直接改源码，绕过 Edit/Write 门禁） | `GITNEXUS_MCP_READ_ONLY`                | —（重构改名走 Edit，受门禁约束） | gitnexus（配在 `~/.claude.json`，不在本仓库，G15） |
+| 外部 API（GitHub / GitLab）  | repo:read scope                                                                                                           | `GH_TOKEN`                              | docs-keeper（如查 issues）       | github-readonly                                    |
 
 **规则**：
 
