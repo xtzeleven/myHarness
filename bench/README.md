@@ -42,6 +42,8 @@
 ## 运行步骤（单次）
 
 > **防答案泄漏**（2026-11-22 修订，修订前没有任何运行数据，仍算 v1）：仓库里有文件把埋点写得清清楚楚（本文、improvement-plan、rule-inventory、backlog、CHANGELOG），git 历史里也有。所以每次运行都**导出一份不带历史的副本**，所有配置都先删掉这些文件，再按配置决定去不去 Harness。副本放在 `~/bench-runs/` 下，不放在任何项目目录里（Claude Code 会逐级加载上级目录的 CLAUDE.md）。
+>
+> **MCP 也会泄漏**（2026-11-23 再修订，同样没有运行数据，仍算 v1）：gitnexus 是用户级 MCP，C0 / C2 都会加载；它按名字能查任何已索引的仓库，主仓库的索引里就有本文、improvement-plan、rule-inventory 等答案文件。所以第 6 步用 `--strict-mcp-config` 启动，只加载副本自己的 `.mcp.json`。用户级 gitnexus hook（Grep / Glob 时注入图谱上下文）按 cwd 找索引，副本里没有 `.gitnexus/`，不会触发。
 
 ```bash
 # 1. 从基线 commit 导出干净副本（不带 git 历史）
@@ -63,9 +65,12 @@ git init -q && git add -A && git commit -qm "bench baseline"
 git grep -l -w -E 'setStatus|CustomerId|AFTER_COMMIT' -- ':!src'
 git grep -l -E '埋点|期望被拦' -- .
 
-# 6. 在 $RUN 里启动 Claude Code，粘贴任务提示词，正常协作直到它说完成
+# 6. 在 $RUN 里启动 Claude Code：只加载副本的 .mcp.json，不加载用户级 MCP（gitnexus 索引含答案）
+claude --strict-mcp-config --mcp-config .mcp.json
+#    进会话先跑 /mcp：只应有 mysql-readonly，出现 gitnexus → 退出重来
+#    然后粘贴任务提示词，正常协作直到它说完成
 #    记下：模型 ID、开始/结束时间、你介入了几次、hook 误拦了几次；
-#    模型读了 $RUN 以外的文件（如 cd 回主仓库）→ 本次作废
+#    模型读了 $RUN 以外的文件（如 cd 回主仓库、用 npx gitnexus 查索引）→ 本次作废
 
 # 7. 收集结果（写到副本外的 $RUN.out/，不污染 diff；B0 = 副本的初始提交，模型自己提交过也能比全）
 OUT="$RUN.out"; mkdir -p "$OUT"; B0=$(git rev-list --max-parents=0 HEAD)

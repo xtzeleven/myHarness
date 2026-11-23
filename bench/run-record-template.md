@@ -19,7 +19,8 @@
 
 - [ ] 用 `git archive` 导出副本（不是 worktree），副本里只有一个提交
 - [ ] 第 5 步两条自检都没有输出
-- [ ] 对话里模型没有读 `$RUN` 以外的文件
+- [ ] 用 `claude --strict-mcp-config --mcp-config .mcp.json` 启动，`/mcp` 里没有 gitnexus
+- [ ] 对话里模型没有读 `$RUN` 以外的文件，也没调 gitnexus（MCP / CLI）；C2 可查 `grep gitnexus audit.log` 无输出
 
 ## 埋点
 
