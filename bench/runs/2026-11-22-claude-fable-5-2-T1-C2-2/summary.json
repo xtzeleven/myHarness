@@ -1,0 +1,46 @@
+{
+  "model": "claude-fable-5-2",
+  "result": "success",
+  "usage": {
+    "input_tokens": 175534,
+    "cache_creation_input_tokens": 127136,
+    "cache_read_input_tokens": 1346815,
+    "output_tokens": 22468,
+    "output_tokens_details": {
+      "thinking_tokens": 7670
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 127136
+    },
+    "inference_geo": "",
+    "iterations": [],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "tool_calls": {
+    "Bash": 13,
+    "Read": 9,
+    "AskUserQuestion": 1,
+    "Edit": 6,
+    "Write": 5
+  },
+  "gitnexus_mcp_loaded": false,
+  "paths_outside_run": [
+    "Bash: {\"command\": \"cd /Users/rw/bench-runs/2026-11-22-T1-C2-2 && ls -a; ls ~/.m2/wrapper/dists 2>/dev/null; ls ~/.m2/wrapper/dists/* 2>/dev/null; java -version 2>&1; ",
+    "Bash: {\"command\": \"grep -rn -E \\\"OrderStatus|REJECTED|EXPIRED|OrderController\\\\(|GlobalExceptionHandler\\\" src docs README.md .github .claude/agents 2>/dev/null | grep"
+  ],
+  "audit_actions": {
+    "executed": 11,
+    "ask_user": 6
+  },
+  "approvals": 24,
+  "mvn_verify_exit": "0",
+  "migration_check_exit": "0",
+  "api_errors": 0
+}

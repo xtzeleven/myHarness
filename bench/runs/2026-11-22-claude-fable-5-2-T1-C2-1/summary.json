@@ -1,0 +1,58 @@
+{
+  "model": "claude-fable-5-2",
+  "result": "success",
+  "usage": {
+    "input_tokens": 6994,
+    "cache_creation_input_tokens": 139645,
+    "cache_read_input_tokens": 939225,
+    "output_tokens": 18987,
+    "output_tokens_details": {
+      "thinking_tokens": 6120
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 139645,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "",
+    "iterations": [
+      {
+        "input_tokens": 1490,
+        "output_tokens": 1096,
+        "cache_read_input_tokens": 112810,
+        "cache_creation_input_tokens": 1372,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1372
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "tool_calls": {
+    "Bash": 13,
+    "Read": 1,
+    "AskUserQuestion": 1,
+    "Edit": 4,
+    "Write": 4
+  },
+  "gitnexus_mcp_loaded": false,
+  "paths_outside_run": [
+    "Bash: {\"command\": \"cat docs/m8-event-storm.md | sed -n 1,110p; echo ---; grep -rln \\\"OrderStatus\\\" src; echo ---; ls ~/.m2/wrapper/dists/apache-maven-3.9.9/; ls -a | ",
+    "Bash: {\"command\": \"grep -n -i -E \\\"cancel|取消|CANCEL\\\" -r docs README.md src bench/README.md 2>/dev/null | head -40; echo ---; grep -rn \\\"OrderStatus\\\" src --include=*"
+  ],
+  "audit_actions": {
+    "ask_user": 6,
+    "executed": 8
+  },
+  "approvals": 22,
+  "mvn_verify_exit": "0",
+  "migration_check_exit": "0",
+  "api_errors": 0
+}

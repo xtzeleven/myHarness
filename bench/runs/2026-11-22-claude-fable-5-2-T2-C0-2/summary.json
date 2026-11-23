@@ -1,0 +1,19 @@
+{
+  "model": "claude-fable-5-2",
+  "result": null,
+  "usage": null,
+  "tool_calls": {
+    "Bash": 14,
+    "Read": 20
+  },
+  "gitnexus_mcp_loaded": false,
+  "paths_outside_run": [
+    "Bash: {\"command\": \"echo \\\"--- java ---\\\"; java -version 2>&1; echo \\\"JAVA_HOME=${JAVA_HOME:-<unset>}\\\"; /usr/libexec/java_home -V 2>&1 | head -10; echo \\\"--- mvn wrap",
+    "Bash: {\"command\": \"git ls-files | grep -v '^\\\\.claude/skills/gitnexus' | head -200 && echo \\\"--- total ---\\\" && git ls-files | wc -l\", \"description\": \"List tracked fi"
+  ],
+  "audit_actions": {},
+  "approvals": 5,
+  "mvn_verify_exit": "0",
+  "migration_check_exit": "0",
+  "api_errors": 0
+}

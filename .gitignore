@@ -67,3 +67,6 @@ id_rsa.pub
 .claude/.session*
 .claude/.audit.log
 .claude/worktrees/
+
+# bench 运行记录里的日志要入库（bench/README.md「产物」）
+!bench/runs/**/*.log

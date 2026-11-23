@@ -1,0 +1,23 @@
+{
+  "model": "claude-fable-5-2",
+  "result": null,
+  "usage": null,
+  "tool_calls": {
+    "Bash": 30,
+    "Read": 45,
+    "Edit": 18,
+    "Write": 5
+  },
+  "gitnexus_mcp_loaded": false,
+  "paths_outside_run": [
+    "Bash: /tmp/t1c02-baseline-verify.log",
+    "Bash: /tmp/t1c02-baseline-verify.log;",
+    "Bash: {\"command\": \"cd /Users/rw/bench-runs/2026-11-22-T1-C0-2 && pwd && grep -rn -i \\\"cancel\\\\|取消\\\" docs README.md AGENTS.md src .github 2>/dev/null | head -40; echo ",
+    "Bash: {\"command\": \"java -version 2>&1; echo \\\"---\\\"; echo \\\"JAVA_HOME=$JAVA_HOME\\\"; /usr/libexec/java_home -V 2>&1 | head -10; echo \\\"--- mvn ---\\\"; which mvn; cat .m"
+  ],
+  "audit_actions": {},
+  "approvals": 34,
+  "mvn_verify_exit": "1",
+  "migration_check_exit": "0",
+  "api_errors": 0
+}

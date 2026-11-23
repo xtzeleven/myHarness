@@ -1,0 +1,2 @@
+{"ts": "2026-11-23T07:55:56+00:00", "hook": "PostToolUse", "tool": "Write", "target": "/Users/rw/bench-runs/2026-11-22-T2-C2-1/src/main/java/com/example/harness/application/order/OrderPlacedNotificationListener.java", "action": "executed", "reason": "Write -> .java", "bypass": false}
+{"ts": "2026-11-23T07:56:09+00:00", "hook": "PostToolUse", "tool": "Write", "target": "/Users/rw/bench-runs/2026-11-22-T2-C2-1/src/test/java/com/example/harness/application/order/OrderPlacedNotificationListenerTest.java", "action": "executed", "reason": "Write -> .java", "bypass": false}

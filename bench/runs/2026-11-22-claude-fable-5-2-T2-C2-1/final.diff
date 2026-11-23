@@ -1,0 +1,164 @@
+diff --git a/src/main/java/com/example/harness/application/order/OrderPlacedNotificationListener.java b/src/main/java/com/example/harness/application/order/OrderPlacedNotificationListener.java
+new file mode 100644
+index 0000000..22c4019
+--- /dev/null
++++ b/src/main/java/com/example/harness/application/order/OrderPlacedNotificationListener.java
+@@ -0,0 +1,28 @@
++package com.example.harness.application.order;
++
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.springframework.stereotype.Component;
++import org.springframework.transaction.event.TransactionalEventListener;
++
++import com.example.harness.domain.order.event.OrderPlaced;
++
++/**
++ * 订单下单后给客户发通知。
++ *
++ * 当前用日志模拟发送；接入真实通道（短信 / 邮件 / 站内信）时改为 domain port + infrastructure adapter。
++ *
++ * 用 @TransactionalEventListener（默认 AFTER_COMMIT）而非 @EventListener：
++ * - 下单事务回滚时不发通知（客户不会收到一条不存在的订单的通知）
++ * - 通知失败不回滚已提交的订单
++ */
++@Component
++public class OrderPlacedNotificationListener {
++
++    private static final Logger log = LoggerFactory.getLogger(OrderPlacedNotificationListener.class);
++
++    @TransactionalEventListener
++    public void on(OrderPlaced event) {
++        log.info("[模拟通知] 向客户 {} 发送下单通知，订单 {}", event.customerId(), event.orderId().getValue());
++    }
++}
+diff --git a/src/test/java/com/example/harness/application/order/OrderPlacedNotificationListenerTest.java b/src/test/java/com/example/harness/application/order/OrderPlacedNotificationListenerTest.java
+new file mode 100644
+index 0000000..48e9f6f
+--- /dev/null
++++ b/src/test/java/com/example/harness/application/order/OrderPlacedNotificationListenerTest.java
+@@ -0,0 +1,124 @@
++package com.example.harness.application.order;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import org.junit.jupiter.api.AfterEach;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.slf4j.LoggerFactory;
++import org.springframework.context.annotation.AnnotationConfigApplicationContext;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.context.annotation.Import;
++import org.springframework.transaction.PlatformTransactionManager;
++import org.springframework.transaction.TransactionDefinition;
++import org.springframework.transaction.annotation.EnableTransactionManagement;
++import org.springframework.transaction.support.AbstractPlatformTransactionManager;
++import org.springframework.transaction.support.DefaultTransactionStatus;
++import org.springframework.transaction.support.TransactionTemplate;
++
++import com.example.harness.domain.order.OrderId;
++import com.example.harness.domain.order.event.OrderPlaced;
++
++import ch.qos.logback.classic.Level;
++import ch.qos.logback.classic.Logger;
++import ch.qos.logback.classic.spi.ILoggingEvent;
++import ch.qos.logback.core.read.ListAppender;
++
++/**
++ * OrderPlacedNotificationListener 单测。
++ *
++ * 通知目前用日志模拟，所以断言落在日志上（logback ListAppender 捕获）：
++ * - 直接调用 → 输出 1 条 INFO，含 customerId 与 orderId
++ * - 事务提交后才通知；事务回滚不通知（用最小 Spring 上下文 + 空实现事务管理器验证，不连库）
++ */
++class OrderPlacedNotificationListenerTest {
++
++    private Logger logger;
++    private ListAppender<ILoggingEvent> appender;
++
++    @BeforeEach
++    void setUp() {
++        logger = (Logger) LoggerFactory.getLogger(OrderPlacedNotificationListener.class);
++        appender = new ListAppender<>();
++        appender.start();
++        logger.addAppender(appender);
++    }
++
++    @AfterEach
++    void tearDown() {
++        logger.detachAppender(appender);
++    }
++
++    @Test
++    void on_logsNotificationWithCustomerAndOrderId() {
++        OrderPlaced event = OrderPlaced.of(OrderId.generate(), "CUST-001");
++
++        new OrderPlacedNotificationListener().on(event);
++
++        assertThat(appender.list).hasSize(1);
++        ILoggingEvent logged = appender.list.get(0);
++        assertThat(logged.getLevel()).isEqualTo(Level.INFO);
++        assertThat(logged.getFormattedMessage())
++                .contains("CUST-001")
++                .contains(event.orderId().getValue().toString());
++    }
++
++    @Test
++    void notifiesOnlyAfterCommit() {
++        try (AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(TxConfig.class)) {
++            TransactionTemplate tx = new TransactionTemplate(ctx.getBean(PlatformTransactionManager.class));
++
++            tx.executeWithoutResult(status -> {
++                ctx.publishEvent(OrderPlaced.of(OrderId.generate(), "CUST-001"));
++                // 事务未提交：还不该通知
++                assertThat(appender.list).isEmpty();
++            });
++
++            assertThat(appender.list).hasSize(1);
++        }
++    }
++
++    @Test
++    void doesNotNotifyWhenTransactionRollsBack() {
++        try (AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(TxConfig.class)) {
++            TransactionTemplate tx = new TransactionTemplate(ctx.getBean(PlatformTransactionManager.class));
++
++            tx.executeWithoutResult(status -> {
++                ctx.publishEvent(OrderPlaced.of(OrderId.generate(), "CUST-001"));
++                status.setRollbackOnly();
++            });
++
++            assertThat(appender.list).isEmpty();
++        }
++    }
++
++    @Configuration
++    @EnableTransactionManagement
++    @Import(OrderPlacedNotificationListener.class)
++    static class TxConfig {
++
++        @Bean
++        PlatformTransactionManager transactionManager() {
++            return new NoOpTransactionManager();
++        }
++    }
++
++    /** 不连任何资源的事务管理器：只驱动事务同步回调（afterCommit / afterCompletion）。 */
++    static class NoOpTransactionManager extends AbstractPlatformTransactionManager {
++
++        @Override
++        protected Object doGetTransaction() {
++            return new Object();
++        }
++
++        @Override
++        protected void doBegin(Object transaction, TransactionDefinition definition) {}
++
++        @Override
++        protected void doCommit(DefaultTransactionStatus status) {}
++
++        @Override
++        protected void doRollback(DefaultTransactionStatus status) {}
++    }
++}

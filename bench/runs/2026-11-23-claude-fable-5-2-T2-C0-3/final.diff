@@ -1,0 +1,167 @@
+diff --git a/src/main/java/com/example/harness/application/order/OrderPlacedNotificationListener.java b/src/main/java/com/example/harness/application/order/OrderPlacedNotificationListener.java
+new file mode 100644
+index 0000000..a85ed17
+--- /dev/null
++++ b/src/main/java/com/example/harness/application/order/OrderPlacedNotificationListener.java
+@@ -0,0 +1,29 @@
++package com.example.harness.application.order;
++
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.springframework.stereotype.Component;
++import org.springframework.transaction.event.TransactionalEventListener;
++
++import com.example.harness.domain.order.event.OrderPlaced;
++
++/**
++ * OrderPlaced 事件消费者：下单成功后给客户发通知。
++ *
++ * 当前用日志模拟发送；接入真实通道（短信 / 邮件 / 站内信）时替换 `on` 的方法体即可。
++ *
++ * 用 `@TransactionalEventListener`（默认 AFTER_COMMIT）而非 `@EventListener`：
++ * - `PlaceOrderHandler.handle` 在事务内发事件，订单提交成功后才通知；回滚则不通知
++ * - 通知在提交之后执行，发送失败不会回滚已落库的订单
++ */
++@Component
++public class OrderPlacedNotificationListener {
++
++    private static final Logger log = LoggerFactory.getLogger(OrderPlacedNotificationListener.class);
++
++    @TransactionalEventListener
++    public void on(OrderPlaced event) {
++        log.info("[模拟通知] 订单已下单，通知客户：customerId={}, orderId={}",
++                event.customerId(), event.orderId().getValue());
++    }
++}
+diff --git a/src/main/java/com/example/harness/domain/order/event/OrderPlaced.java b/src/main/java/com/example/harness/domain/order/event/OrderPlaced.java
+index a4139aa..6c5c6d0 100644
+--- a/src/main/java/com/example/harness/domain/order/event/OrderPlaced.java
++++ b/src/main/java/com/example/harness/domain/order/event/OrderPlaced.java
+@@ -13,7 +13,7 @@ import com.example.harness.domain.order.OrderId;
+  * - 事件名过去式（OrderPlaced）
+  * - 不 import 任何 Spring / persistence / jackson —— domain 层纯净
+  *
+- * 当前 P2.4 阶段无消费者；本类先就位，等 P2.5+ 或后续 BC 出现 listener 时直接订阅。
++ * 消费者：application 层 `OrderPlacedNotificationListener`（下单后通知客户）。
+  * 不引入 marker `DomainEvent` 接口 —— 先一个事件就抽象会形成空抽象，等出现第二个再抽。
+  */
+ public record OrderPlaced(OrderId orderId, String customerId, Instant occurredAt) {
+diff --git a/src/test/java/com/example/harness/application/order/OrderPlacedNotificationListenerTest.java b/src/test/java/com/example/harness/application/order/OrderPlacedNotificationListenerTest.java
+new file mode 100644
+index 0000000..a6b23ad
+--- /dev/null
++++ b/src/test/java/com/example/harness/application/order/OrderPlacedNotificationListenerTest.java
+@@ -0,0 +1,113 @@
++package com.example.harness.application.order;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import org.junit.jupiter.api.AfterEach;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.springframework.boot.test.system.CapturedOutput;
++import org.springframework.boot.test.system.OutputCaptureExtension;
++import org.springframework.context.annotation.AnnotationConfigApplicationContext;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.context.annotation.Import;
++import org.springframework.transaction.PlatformTransactionManager;
++import org.springframework.transaction.TransactionDefinition;
++import org.springframework.transaction.annotation.EnableTransactionManagement;
++import org.springframework.transaction.support.AbstractPlatformTransactionManager;
++import org.springframework.transaction.support.DefaultTransactionStatus;
++import org.springframework.transaction.support.TransactionTemplate;
++
++import com.example.harness.domain.order.OrderId;
++import com.example.harness.domain.order.event.OrderPlaced;
++
++/**
++ * OrderPlacedNotificationListener 单测。
++ *
++ * 两层验证：
++ * - 直接调 `on(event)`：日志（模拟通知）含 customerId + orderId
++ * - 经 Spring 事件总线 + 事务：提交后才发通知；回滚则不发（客户不该收到一张不存在的订单的通知）
++ *
++ * 事务用无资源的桩 TransactionManager，不碰 DB，因此留在 surefire 单测而非 *IT。
++ */
++@ExtendWith(OutputCaptureExtension.class)
++class OrderPlacedNotificationListenerTest {
++
++    private AnnotationConfigApplicationContext context;
++    private TransactionTemplate tx;
++
++    @BeforeEach
++    void setUp() {
++        context = new AnnotationConfigApplicationContext(TestConfig.class);
++        tx = new TransactionTemplate(context.getBean(PlatformTransactionManager.class));
++    }
++
++    @AfterEach
++    void tearDown() {
++        context.close();
++    }
++
++    @Test
++    void on_logsNotificationWithCustomerAndOrderId(CapturedOutput output) {
++        OrderPlaced event = OrderPlaced.of(OrderId.generate(), "CUST-001");
++
++        new OrderPlacedNotificationListener().on(event);
++
++        assertThat(output.getOut())
++                .contains("CUST-001")
++                .contains(event.orderId().getValue().toString());
++    }
++
++    @Test
++    void publishedInTransaction_notifiesAfterCommit(CapturedOutput output) {
++        OrderPlaced event = OrderPlaced.of(OrderId.generate(), "CUST-002");
++
++        tx.executeWithoutResult(status -> {
++            context.publishEvent(event);
++            // 事务未提交：通知还不能发
++            assertThat(output.getOut()).doesNotContain("CUST-002");
++        });
++
++        assertThat(output.getOut())
++                .contains("CUST-002")
++                .contains(event.orderId().getValue().toString());
++    }
++
++    @Test
++    void publishedInTransaction_rolledBack_doesNotNotify(CapturedOutput output) {
++        OrderPlaced event = OrderPlaced.of(OrderId.generate(), "CUST-003");
++
++        tx.executeWithoutResult(status -> {
++            context.publishEvent(event);
++            status.setRollbackOnly();
++        });
++
++        assertThat(output.getOut()).doesNotContain("CUST-003");
++    }
++
++    @Configuration
++    @EnableTransactionManagement
++    @Import(OrderPlacedNotificationListener.class)
++    static class TestConfig {
++
++        @Bean
++        PlatformTransactionManager transactionManager() {
++            return new AbstractPlatformTransactionManager() {
++                @Override
++                protected Object doGetTransaction() {
++                    return new Object();
++                }
++
++                @Override
++                protected void doBegin(Object transaction, TransactionDefinition definition) {}
++
++                @Override
++                protected void doCommit(DefaultTransactionStatus status) {}
++
++                @Override
++                protected void doRollback(DefaultTransactionStatus status) {}
++            };
++        }
++    }
++}

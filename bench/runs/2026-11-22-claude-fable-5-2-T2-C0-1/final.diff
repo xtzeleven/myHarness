@@ -1,0 +1,185 @@
+diff --git a/src/main/java/com/example/harness/application/order/OrderPlacedNotificationListener.java b/src/main/java/com/example/harness/application/order/OrderPlacedNotificationListener.java
+new file mode 100644
+index 0000000..62d00af
+--- /dev/null
++++ b/src/main/java/com/example/harness/application/order/OrderPlacedNotificationListener.java
+@@ -0,0 +1,34 @@
++package com.example.harness.application.order;
++
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.springframework.stereotype.Component;
++import org.springframework.transaction.event.TransactionPhase;
++import org.springframework.transaction.event.TransactionalEventListener;
++
++import com.example.harness.domain.order.event.OrderPlaced;
++
++/**
++ * 订单下单成功后通知客户（OrderPlaced 的第一个消费者）。
++ *
++ * 当前"发送"用日志模拟；接入真实渠道（站内信 / 邮件 / SMS）时把 log 换成对发送端口的调用即可，
++ * 端口抽象等真有第二种实现时再抽（同 OrderPlaced 不提前抽 marker 接口的取舍）。
++ *
++ * 触发时机用 AFTER_COMMIT 而不是普通 `@EventListener`：
++ * - PlaceOrderHandler 在 `@Transactional` 内发事件，同步监听会在提交前执行 ——
++ *   事务若随后回滚，客户会收到一条不存在订单的"下单成功"
++ * - 提交后才通知，通知失败也不会反向回滚已成功的下单
++ *
++ * `fallbackExecution = true`：事务外发布时立即执行，而不是被 Spring 静默丢弃。
++ */
++@Component
++public class OrderPlacedNotificationListener {
++
++    private static final Logger log = LoggerFactory.getLogger(OrderPlacedNotificationListener.class);
++
++    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
++    public void onOrderPlaced(OrderPlaced event) {
++        log.info("[模拟通知] 下单成功通知已发送：customerId={}, orderId={}",
++                event.customerId(), event.orderId().getValue());
++    }
++}
+diff --git a/src/test/java/com/example/harness/application/order/OrderPlacedNotificationListenerTest.java b/src/test/java/com/example/harness/application/order/OrderPlacedNotificationListenerTest.java
+new file mode 100644
+index 0000000..7433f70
+--- /dev/null
++++ b/src/test/java/com/example/harness/application/order/OrderPlacedNotificationListenerTest.java
+@@ -0,0 +1,139 @@
++package com.example.harness.application.order;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.List;
++
++import org.junit.jupiter.api.AfterEach;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.slf4j.LoggerFactory;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.context.ApplicationEventPublisher;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.context.annotation.Import;
++import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
++import org.springframework.transaction.PlatformTransactionManager;
++import org.springframework.transaction.TransactionDefinition;
++import org.springframework.transaction.annotation.EnableTransactionManagement;
++import org.springframework.transaction.support.AbstractPlatformTransactionManager;
++import org.springframework.transaction.support.DefaultTransactionStatus;
++import org.springframework.transaction.support.TransactionTemplate;
++
++import com.example.harness.domain.order.OrderId;
++import com.example.harness.domain.order.event.OrderPlaced;
++
++import ch.qos.logback.classic.Level;
++import ch.qos.logback.classic.Logger;
++import ch.qos.logback.classic.spi.ILoggingEvent;
++import ch.qos.logback.core.read.ListAppender;
++
++/**
++ * OrderPlacedNotificationListener 测试。
++ *
++ * 不直接调 listener 方法，而是经真实的 Spring 事件广播 + 事务同步触发，
++ * 这样 `@TransactionalEventListener` 的装配与触发时机（提交后 / 回滚不发 / 无事务兜底）才真正被验证。
++ * 事务用一个 no-op 的 PlatformTransactionManager 驱动 —— 只需要事务同步回调，不需要数据库。
++ *
++ * "发送"目前是日志模拟，所以断言落在 listener 的 logger 上（logback ListAppender 抓取）。
++ */
++@SpringJUnitConfig(OrderPlacedNotificationListenerTest.Config.class)
++class OrderPlacedNotificationListenerTest {
++
++    @Configuration
++    @EnableTransactionManagement
++    @Import(OrderPlacedNotificationListener.class)
++    static class Config {
++
++        @Bean
++        PlatformTransactionManager transactionManager() {
++            return new NoOpTransactionManager();
++        }
++    }
++
++    /** 不连任何资源，只走 Spring 的事务同步生命周期（begin / commit / rollback 回调）。 */
++    static class NoOpTransactionManager extends AbstractPlatformTransactionManager {
++
++        @Override
++        protected Object doGetTransaction() {
++            return new Object();
++        }
++
++        @Override
++        protected void doBegin(Object transaction, TransactionDefinition definition) {}
++
++        @Override
++        protected void doCommit(DefaultTransactionStatus status) {}
++
++        @Override
++        protected void doRollback(DefaultTransactionStatus status) {}
++    }
++
++    @Autowired private ApplicationEventPublisher publisher;
++    @Autowired private PlatformTransactionManager transactionManager;
++
++    private Logger listenerLogger;
++    private ListAppender<ILoggingEvent> appender;
++
++    @BeforeEach
++    void attachAppender() {
++        listenerLogger = (Logger) LoggerFactory.getLogger(OrderPlacedNotificationListener.class);
++        appender = new ListAppender<>();
++        appender.start();
++        listenerLogger.addAppender(appender);
++    }
++
++    @AfterEach
++    void detachAppender() {
++        listenerLogger.detachAppender(appender);
++    }
++
++    private List<ILoggingEvent> notifications() {
++        return List.copyOf(appender.list);
++    }
++
++    @Test
++    void orderPlaced_notifiesCustomerOnlyAfterCommit() {
++        OrderPlaced event = OrderPlaced.of(OrderId.generate(), "CUST-001");
++
++        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
++            publisher.publishEvent(event);
++            // 事务还没提交：订单可能回滚，此时不能通知
++            assertThat(notifications()).isEmpty();
++        });
++
++        assertThat(notifications()).hasSize(1);
++        ILoggingEvent notification = notifications().get(0);
++        assertThat(notification.getLevel()).isEqualTo(Level.INFO);
++        assertThat(notification.getFormattedMessage())
++                .contains("CUST-001")
++                .contains(event.orderId().getValue().toString());
++    }
++
++    /** 下单事务回滚 = 订单不存在，不能给客户发"下单成功"。 */
++    @Test
++    void orderPlaced_inRolledBackTransaction_doesNotNotify() {
++        OrderPlaced event = OrderPlaced.of(OrderId.generate(), "CUST-001");
++
++        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
++            publisher.publishEvent(event);
++            status.setRollbackOnly();
++        });
++
++        assertThat(notifications()).isEmpty();
++    }
++
++    /** 事务外发布（fallbackExecution）：立即通知，而不是被 Spring 静默丢弃。 */
++    @Test
++    void orderPlaced_withoutTransaction_notifiesImmediately() {
++        OrderPlaced event = OrderPlaced.of(OrderId.generate(), "CUST-002");
++
++        publisher.publishEvent(event);
++
++        assertThat(notifications()).hasSize(1);
++        assertThat(notifications().get(0).getFormattedMessage())
++                .contains("CUST-002")
++                .contains(event.orderId().getValue().toString());
++    }
++}
