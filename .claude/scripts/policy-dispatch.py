@@ -462,7 +462,25 @@ def main() -> int:
     return 0
 
 
+def observe_mcp() -> int:
+    """G13：MCP 调用只记审计，不评估规则、不拦（由 mcp-observe.sh 以 --observe-mcp 调用）。"""
+    try:
+        payload = json.loads(sys.stdin.read())
+        tool_input = payload.get("tool_input")
+        target = json.dumps(tool_input, ensure_ascii=False, sort_keys=True) if tool_input else ""
+        audit_log(
+            "mcp_call", "observe only",
+            tool=str(payload.get("tool_name") or ""), target=target,
+            permission_mode=str(payload.get("permission_mode") or ""),
+        )
+    except Exception:
+        pass
+    return 0
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--observe-mcp":
+        sys.exit(observe_mcp())
     # 显式 validate 模式：CI / 本地手测用，不读 stdin payload，只校验 yaml schema
     if len(sys.argv) > 1 and sys.argv[1] == "--validate":
         try:

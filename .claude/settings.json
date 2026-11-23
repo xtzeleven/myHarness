@@ -63,6 +63,15 @@
             "command": "bash .claude/hooks/pre-tool-use.sh"
           }
         ]
+      },
+      {
+        "matcher": "mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/mcp-observe.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [

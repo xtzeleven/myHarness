@@ -11,6 +11,18 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-23 — G13：MCP 调用进审计（只记不拦）
+
+#### Added
+
+- PreToolUse 新增 matcher `mcp__.*` → `.claude/hooks/mcp-observe.sh`（调 `policy-dispatch.py --observe-mcp`）：每次 MCP 调用写一行审计 `action=mcp_call`，记 `mcp__<server>__<tool>` 和入参前 200 字符。不评估任何规则；找不到 python、payload 非法、写日志失败一律 exit 0，观测不变成门禁。MCP 没并进 `pre-tool-use.sh` 的 matcher，是为了避免缺 PyYAML 时的 fail-closed 把 MCP 也拦掉（规则清单 K4）
+- `test_mcp_observe.py` 8 例（真实跑 hook：记录内容、不做门禁、截断、非法 payload、无 python、settings 注册与 matcher 互斥）
+
+#### Changed
+
+- `audit-log-summary.py`：`mcp_call` 归入活动噪声，`--decisions` 视图不显示；用量看 `--by-tool`
+- backlog 新增 G15：gitnexus MCP 的 `rename`（`dry_run:false`）会直接改源码、绕过 Edit/Write 门禁，要不要拦待定（P0-6 遗留评估；mysql MCP 已锁只读）
+
 ### 2026-11-22 — G12：CLAUDE.md §9 改为指向规则文件
 
 #### Changed
