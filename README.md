@@ -82,7 +82,7 @@
 | P2.6       | Flyway 迁移 `V1__create_orders.sql`                                                         | ✅            |
 | 端到端验证 | `./mvnw verify` 本机（macOS / JDK 17 / Docker 29）跑通：单测 + ArchUnit + Testcontainers IT | ✅ 2026-11-21 |
 
-**下一步**：M9-P1 首批对照实验（[`bench/`](bench/README.md)，T1–T3 本身就是 order 的真实功能）。[ADR-0008](docs/adr/0008-process-capability-expansion.md) Tier 2–4 冻结到 P1 出数据后再评估（D4）。
+**下一步**：M9-P1 首批对照实验已出[报告](bench/reports/2026-11-23-claude-fable-5-2.md)（8 个埋点在 C0 / C2 下全部未触发，区分度不够）；接下来是任务集 v2 和第二代模型的数据（[`bench/`](bench/README.md)）。[ADR-0008](docs/adr/0008-process-capability-expansion.md) Tier 2–4 冻结到 P1 出数据后再评估（D4）。
 
 ## 🚀 快速上手
 
@@ -97,7 +97,7 @@
 >
 > ```bash
 > bash .claude/scripts/verify-setup.sh             # 环境预检（先跑这个）
-> bash .claude/hooks/tests/test_pre_tool_use.sh   # 48 case
+> bash .claude/hooks/tests/test_pre_tool_use.sh   # 52 case
 > bash .claude/hooks/tests/test_subagent_stop.sh  # 6 case
 > python .claude/scripts/policy-dispatch.py --validate
 > ```

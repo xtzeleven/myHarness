@@ -1,0 +1,386 @@
+diff --git a/src/main/java/com/example/harness/domain/CLAUDE.md b/src/main/java/com/example/harness/domain/CLAUDE.md
+index fdbef0f..d51dcc0 100644
+--- a/src/main/java/com/example/harness/domain/CLAUDE.md
++++ b/src/main/java/com/example/harness/domain/CLAUDE.md
+@@ -44,7 +44,7 @@
+ - **枚举**：`OrderStatus`（PENDING / CONFIRMED / REJECTED / EXPIRED）
+ - **事件**：`OrderPlaced`（位于 `event/`）
+ - **Repository 接口**：`OrderRepository`（位于 `repository/`），实现在 `infrastructure/`
+-- **Domain Exception**：`EmptyOrderException`
++- **Domain Exception**：`EmptyOrderException` / `OrderAmountLimitExceededException`
+ - **对 Customer 的引用**：`customerId` 用裸 `String`，**有意为之**（backlog C23）。Customer BC 还没落地，现在**不**引入 `CustomerId` VO，也不持有 Customer 对象；等 Customer BC 落地时统一改。想提前改，先问用户
+ 
+ ## 4. 触发后端 agent（与根级 §8 互补）
+diff --git a/src/main/java/com/example/harness/domain/order/Order.java b/src/main/java/com/example/harness/domain/order/Order.java
+index c970c2d..19cf764 100644
+--- a/src/main/java/com/example/harness/domain/order/Order.java
++++ b/src/main/java/com/example/harness/domain/order/Order.java
+@@ -1,5 +1,6 @@
+ package com.example.harness.domain.order;
+ 
++import java.math.BigDecimal;
+ import java.util.List;
+ import java.util.Objects;
+ 
+@@ -18,6 +19,9 @@ import java.util.Objects;
+  */
+ public class Order {
+ 
++    /** 单笔订单总金额上限（含）：总金额超过即下单失败。 */
++    public static final BigDecimal MAX_TOTAL_AMOUNT = new BigDecimal("100000");
++
+     private final OrderId id;
+     private final String customerId;
+     private final List<OrderItem> items;
+@@ -34,12 +38,18 @@ public class Order {
+      * 创建新订单（PENDING 状态）。
+      *
+      * @throws EmptyOrderException items 为 null 或空
++     * @throws OrderAmountLimitExceededException 总金额超过 {@link #MAX_TOTAL_AMOUNT}
+      */
+     public static Order place(String customerId, List<OrderItem> items) {
+         Objects.requireNonNull(customerId, "customerId must not be null");
+         if (items == null || items.isEmpty()) {
+             throw new EmptyOrderException("订单至少包含 1 个 OrderItem");
+         }
++        BigDecimal total = sum(items);
++        if (total.compareTo(MAX_TOTAL_AMOUNT) > 0) {
++            throw new OrderAmountLimitExceededException(
++                    "订单总金额 " + total.toPlainString() + " 超过上限 " + MAX_TOTAL_AMOUNT.toPlainString());
++        }
+         return new Order(
+                 OrderId.generate(),
+                 customerId,
+@@ -77,6 +87,17 @@ public class Order {
+         return status;
+     }
+ 
++    /** 订单总金额：各行 quantity × unitPrice 之和（由 items 派生，不单独存字段）。 */
++    public BigDecimal totalAmount() {
++        return sum(items);
++    }
++
++    private static BigDecimal sum(List<OrderItem> items) {
++        return items.stream()
++                .map(i -> i.getUnitPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
++                .reduce(BigDecimal.ZERO, BigDecimal::add);
++    }
++
+     @Override
+     public boolean equals(Object o) {
+         if (this == o) return true;
+diff --git a/src/main/java/com/example/harness/domain/order/OrderAmountLimitExceededException.java b/src/main/java/com/example/harness/domain/order/OrderAmountLimitExceededException.java
+new file mode 100644
+index 0000000..78617d0
+--- /dev/null
++++ b/src/main/java/com/example/harness/domain/order/OrderAmountLimitExceededException.java
+@@ -0,0 +1,13 @@
++package com.example.harness.domain.order;
++
++/**
++ * 创建订单时总金额超过 {@link Order#MAX_TOTAL_AMOUNT} 触发的 domain 异常。
++ *
++ * interfaces 层负责翻译为 HTTP 4xx，本类不直接暴露给外部协议。
++ */
++public class OrderAmountLimitExceededException extends RuntimeException {
++
++    public OrderAmountLimitExceededException(String message) {
++        super(message);
++    }
++}
+diff --git a/src/main/java/com/example/harness/infrastructure/order/persistence/OrderPO.java b/src/main/java/com/example/harness/infrastructure/order/persistence/OrderPO.java
+index 261206c..92f21fd 100644
+--- a/src/main/java/com/example/harness/infrastructure/order/persistence/OrderPO.java
++++ b/src/main/java/com/example/harness/infrastructure/order/persistence/OrderPO.java
+@@ -1,5 +1,6 @@
+ package com.example.harness.infrastructure.order.persistence;
+ 
++import java.math.BigDecimal;
+ import java.util.List;
+ 
+ import com.baomidou.mybatisplus.annotation.IdType;
+@@ -39,4 +40,7 @@ public class OrderPO {
+     /** items 经 Jackson 序列化为 JSON 存入列 `items_json`。 */
+     @TableField(value = "items_json", typeHandler = JacksonTypeHandler.class)
+     private List<OrderItem> items;
++
++    /** 订单总金额，对应列 `total_amount`；save 时由 {@code Order.totalAmount()} 写入，重建聚合时不读回（总金额由 items 派生）。 */
++    private BigDecimal totalAmount;
+ }
+diff --git a/src/main/java/com/example/harness/infrastructure/order/persistence/OrderPersistenceAdapter.java b/src/main/java/com/example/harness/infrastructure/order/persistence/OrderPersistenceAdapter.java
+index 0c43331..435736f 100644
+--- a/src/main/java/com/example/harness/infrastructure/order/persistence/OrderPersistenceAdapter.java
++++ b/src/main/java/com/example/harness/infrastructure/order/persistence/OrderPersistenceAdapter.java
+@@ -60,7 +60,8 @@ public class OrderPersistenceAdapter implements OrderRepository {
+                 o.id().getValue().toString(),
+                 o.customerId(),
+                 o.status().name(),
+-                o.items());
++                o.items(),
++                o.totalAmount());
+     }
+ 
+     private static Order toDomain(OrderPO po) {
+diff --git a/src/main/java/com/example/harness/interfaces/order/GlobalExceptionHandler.java b/src/main/java/com/example/harness/interfaces/order/GlobalExceptionHandler.java
+index ba52cc4..ae297db 100644
+--- a/src/main/java/com/example/harness/interfaces/order/GlobalExceptionHandler.java
++++ b/src/main/java/com/example/harness/interfaces/order/GlobalExceptionHandler.java
+@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
+ import org.springframework.web.bind.annotation.RestControllerAdvice;
+ 
+ import com.example.harness.domain.order.EmptyOrderException;
++import com.example.harness.domain.order.OrderAmountLimitExceededException;
+ 
+ /**
+  * Order BC 边界的异常翻译器。
+@@ -19,7 +20,7 @@ import com.example.harness.domain.order.EmptyOrderException;
+  * 按 engineering-practices §13："domain 层抛 domain exception，interfaces 层翻译为 HTTP"。
+  *
+  * 不暴露 stacktrace（满足 P2.5 AC#3）；错误体含字段名 + 简要原因。
+- * 当前仅注册 Order BC 涉及的两类异常；其他 BC 出现时各自补 advice，不堆在本类。
++ * 当前仅注册 Order BC 涉及的三类异常；其他 BC 出现时各自补 advice，不堆在本类。
+  */
+ @RestControllerAdvice(basePackageClasses = OrderController.class)
+ public class GlobalExceptionHandler {
+@@ -31,6 +32,13 @@ public class GlobalExceptionHandler {
+                 .body(errorBody("EMPTY_ORDER", ex.getMessage(), List.of()));
+     }
+ 
++    @ExceptionHandler(OrderAmountLimitExceededException.class)
++    public ResponseEntity<Map<String, Object>> handleOrderAmountLimitExceeded(OrderAmountLimitExceededException ex) {
++        return ResponseEntity
++                .status(HttpStatus.BAD_REQUEST)
++                .body(errorBody("ORDER_AMOUNT_LIMIT_EXCEEDED", ex.getMessage(), List.of()));
++    }
++
+     @ExceptionHandler(MethodArgumentNotValidException.class)
+     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
+         List<Map<String, String>> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+diff --git a/src/main/resources/db/migration/V2__add_orders_total_amount.sql b/src/main/resources/db/migration/V2__add_orders_total_amount.sql
+new file mode 100644
+index 0000000..573f3cd
+--- /dev/null
++++ b/src/main/resources/db/migration/V2__add_orders_total_amount.sql
+@@ -0,0 +1,16 @@
++-- V2__add_orders_total_amount.sql
++-- orders 加 total_amount：单笔订单总金额（Σ quantity × unitPrice）。
++--
++-- 字段映射（延续 V1 的约定）：
++--   OrderPO.totalAmount BigDecimal      → total_amount  DECIMAL(12,2) NULL
++--
++-- 设计选择：
++-- 1. NULLABLE、不带 DEFAULT：存量行没有记录过总金额，留 NULL 表示"未记录"，不用 0 冒充（0 是合法的总金额）。
++--    新订单由应用在 save 时写入。回填存量 + 收紧 NOT NULL 按"加列 → 回填 → NOT NULL"的安全顺序另出版本。
++-- 2. DECIMAL(12,2)：金额按 2 位小数存，超出 2 位的小数由 MySQL 四舍五入。
++--    上限 100000 的校验在 domain（Order.place），本列不加 CHECK，避免规则两处维护。
++-- 3. 兼容与回滚：旧版本应用不读写本列，可与新 schema 共存；新版本应用依赖本列，须先执行本迁移。
++--    回滚用新版本迁移 DROP COLUMN（本文件入库后不可改）。
++
++ALTER TABLE orders
++    ADD COLUMN total_amount DECIMAL(12, 2) NULL;
+diff --git a/src/test/java/com/example/harness/application/order/PlaceOrderHandlerTest.java b/src/test/java/com/example/harness/application/order/PlaceOrderHandlerTest.java
+index ae22172..1ef8506 100644
+--- a/src/test/java/com/example/harness/application/order/PlaceOrderHandlerTest.java
++++ b/src/test/java/com/example/harness/application/order/PlaceOrderHandlerTest.java
+@@ -18,6 +18,7 @@ import org.springframework.context.ApplicationEventPublisher;
+ 
+ import com.example.harness.domain.order.EmptyOrderException;
+ import com.example.harness.domain.order.Order;
++import com.example.harness.domain.order.OrderAmountLimitExceededException;
+ import com.example.harness.domain.order.OrderId;
+ import com.example.harness.domain.order.OrderItem;
+ import com.example.harness.domain.order.event.OrderPlaced;
+@@ -85,4 +86,18 @@ class PlaceOrderHandlerTest {
+         verify(repository, never()).save(any());
+         verify(publisher, never()).publishEvent(any());
+     }
++
++    /** 总金额超限：domain 层抛 OrderAmountLimitExceededException，application 不 catch；repo/publisher 不被触达。 */
++    @Test
++    void handle_withTotalOverLimit_propagatesOrderAmountLimitExceededException() {
++        PlaceOrderCommand cmd = new PlaceOrderCommand(
++                "CUST-001",
++                List.of(item("SKU-1", 1, "100000.01")));
++
++        assertThatThrownBy(() -> handler.handle(cmd))
++                .isInstanceOf(OrderAmountLimitExceededException.class);
++
++        verify(repository, never()).save(any());
++        verify(publisher, never()).publishEvent(any());
++    }
+ }
+diff --git a/src/test/java/com/example/harness/domain/order/OrderTest.java b/src/test/java/com/example/harness/domain/order/OrderTest.java
+index d98377e..1c0267f 100644
+--- a/src/test/java/com/example/harness/domain/order/OrderTest.java
++++ b/src/test/java/com/example/harness/domain/order/OrderTest.java
+@@ -42,6 +42,48 @@ class OrderTest {
+                 .isInstanceOf(EmptyOrderException.class);
+     }
+ 
++    /** 总金额 = Σ quantity × unitPrice（由 items 派生）。 */
++    @Test
++    void totalAmount_sumsQuantityTimesUnitPriceOverItems() {
++        Order order = Order.place(
++                "CUST-001",
++                List.of(item("SKU-1", 2, "9.90"), item("SKU-2", 3, "0.10")));
++
++        assertThat(order.totalAmount()).isEqualByComparingTo("20.10");
++    }
++
++    /** 总金额恰好等于上限 100000：允许下单（上限含边界）。 */
++    @Test
++    void place_withTotalEqualToLimit_succeeds() {
++        Order order = Order.place(
++                "CUST-001",
++                List.of(item("SKU-1", 2, "30000.00"), item("SKU-2", 1, "40000.00")));
++
++        assertThat(order.status()).isEqualTo(OrderStatus.PENDING);
++    }
++
++    /** 总金额（Σ quantity × unitPrice）超过上限，哪怕只多 0.01：下单失败。 */
++    @Test
++    void place_withTotalOverLimit_throwsOrderAmountLimitExceededException() {
++        assertThatThrownBy(() -> Order.place(
++                        "CUST-001",
++                        List.of(item("SKU-1", 2, "30000.00"), item("SKU-2", 1, "40000.01"))))
++                .isInstanceOf(OrderAmountLimitExceededException.class)
++                .hasMessageContaining("100000.01");
++    }
++
++    /** 上限只约束下单：reconstitute 不校验，历史上已存在的超限订单仍能从 Repository 读回。 */
++    @Test
++    void reconstitute_doesNotApplyAmountLimit() {
++        Order order = Order.reconstitute(
++                OrderId.generate(),
++                "CUST-001",
++                List.of(item("SKU-1", 1, "100000.01")),
++                OrderStatus.PENDING);
++
++        assertThat(order.totalAmount()).isEqualByComparingTo("100000.01");
++    }
++
+     @Test
+     void items_isImmutable() {
+         List<OrderItem> mutable = new ArrayList<>();
+diff --git a/src/test/java/com/example/harness/infrastructure/order/persistence/OrderPersistenceAdapterIT.java b/src/test/java/com/example/harness/infrastructure/order/persistence/OrderPersistenceAdapterIT.java
+index 1de67f4..97750ab 100644
+--- a/src/test/java/com/example/harness/infrastructure/order/persistence/OrderPersistenceAdapterIT.java
++++ b/src/test/java/com/example/harness/infrastructure/order/persistence/OrderPersistenceAdapterIT.java
+@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Tag;
+ import org.junit.jupiter.api.Test;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.jdbc.core.JdbcTemplate;
+ import org.springframework.test.context.DynamicPropertyRegistry;
+ import org.springframework.test.context.DynamicPropertySource;
+ import org.testcontainers.containers.MySQLContainer;
+@@ -29,6 +30,7 @@ import com.example.harness.domain.order.repository.OrderRepository;
+  * - P2.3 AC#2：`repo.save(order)` 后 `repo.findById(id)` 取回，与原对象 equals
+  * - P2.6 AC#1：Flyway V1__create_orders.sql 跑通，表存在
+  * - P2.6 AC#2：重复 migrate 报告 "no migration necessary"（Flyway 自身在 schema_history 已有 V1 后跳过）
++ * - total_amount（V2__add_orders_total_amount.sql）：save 写入总金额；存量 NULL 行仍能读回
+  *
+  * 文件后缀 `*IT.java` 走 Failsafe 约定：pom.xml 已注册 maven-failsafe-plugin，
+  * `mvn verify` 在 integration-test 阶段自动触发本测（surefire 跑 *Test，failsafe 跑 *IT）。
+@@ -64,6 +66,8 @@ class OrderPersistenceAdapterIT {
+ 
+     @Autowired private OrderRepository repository;
+ 
++    @Autowired private JdbcTemplate jdbcTemplate;
++
+     @Test
+     void save_then_findById_returnsEqualOrder() {
+         Order order = Order.place(
+@@ -107,4 +111,54 @@ class OrderPersistenceAdapterIT {
+         Optional<Order> loaded = repository.findById(OrderId.generate());
+         assertThat(loaded).isEmpty();
+     }
++
++    /** V2：save 把聚合的总金额（Σ quantity × unitPrice）写入 total_amount 列。直接读原始列，不经 OrderPO 映射。 */
++    @Test
++    void save_persistsTotalAmountColumn() {
++        Order order = Order.place(
++                "CUST-IT-4",
++                List.of(
++                        new OrderItem("SKU-1", 2, new BigDecimal("9.90")),
++                        new OrderItem("SKU-2", 3, new BigDecimal("0.10"))));
++
++        repository.save(order);
++
++        assertThat(storedTotalAmount(order.id())).isEqualByComparingTo("20.10");
++    }
++
++    /** unitPrice 小数位不受限：总金额超过 2 位小数时按列精度 DECIMAL(12,2) 四舍五入入库，save 不因此失败。 */
++    @Test
++    void save_totalAmountWithMoreThanTwoDecimals_isRoundedToColumnScale() {
++        Order order = Order.place(
++                "CUST-IT-5",
++                List.of(new OrderItem("SKU-1", 1, new BigDecimal("0.125"))));
++
++        repository.save(order);
++
++        assertThat(storedTotalAmount(order.id())).isEqualByComparingTo("0.13");
++    }
++
++    /** 存量行（V2 之前写入，total_amount 为 NULL）仍能读回：新列可空，重建聚合不依赖它。 */
++    @Test
++    void findById_legacyRowWithNullTotalAmount_stillLoads() {
++        OrderId id = OrderId.generate();
++        jdbcTemplate.update(
++                "INSERT INTO orders (id, customer_id, status, items_json) VALUES (?, ?, ?, ?)",
++                id.getValue().toString(),
++                "CUST-IT-6",
++                "PENDING",
++                "[{\"sku\":\"SKU-1\",\"quantity\":1,\"unitPrice\":1.00}]");
++
++        Optional<Order> loaded = repository.findById(id);
++
++        assertThat(loaded).isPresent();
++        assertThat(loaded.get().totalAmount()).isEqualByComparingTo("1.00");
++    }
++
++    private BigDecimal storedTotalAmount(OrderId id) {
++        return jdbcTemplate.queryForObject(
++                "SELECT total_amount FROM orders WHERE id = ?",
++                BigDecimal.class,
++                id.getValue().toString());
++    }
+ }
+diff --git a/src/test/java/com/example/harness/interfaces/order/OrderControllerTest.java b/src/test/java/com/example/harness/interfaces/order/OrderControllerTest.java
+index 0c0e4d7..05ccf07 100644
+--- a/src/test/java/com/example/harness/interfaces/order/OrderControllerTest.java
++++ b/src/test/java/com/example/harness/interfaces/order/OrderControllerTest.java
+@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
+ import com.example.harness.application.order.PlaceOrderCommand;
+ import com.example.harness.application.order.PlaceOrderHandler;
+ import com.example.harness.domain.order.EmptyOrderException;
++import com.example.harness.domain.order.OrderAmountLimitExceededException;
+ import com.example.harness.domain.order.OrderId;
+ 
+ /**
+@@ -115,4 +116,25 @@ class OrderControllerTest {
+                 .andExpect(status().isBadRequest())
+                 .andExpect(jsonPath("$.code").value("EMPTY_ORDER"));
+     }
++
++    /** domain 抛 OrderAmountLimitExceededException → 400 + ORDER_AMOUNT_LIMIT_EXCEEDED 业务错误码，message 带出超限金额。 */
++    @Test
++    void placeOrder_domainOrderAmountLimitExceededException_returns400AmountLimitCode() throws Exception {
++        when(placeOrderHandler.handle(any(PlaceOrderCommand.class)))
++                .thenThrow(new OrderAmountLimitExceededException("订单总金额 100000.01 超过上限 100000"));
++
++        String body = """
++                {
++                  "customerId": "CUST-001",
++                  "items": [
++                    {"sku": "SKU-1", "quantity": 1, "unitPrice": 100000.01}
++                  ]
++                }
++                """;
++
++        mvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(body))
++                .andExpect(status().isBadRequest())
++                .andExpect(jsonPath("$.code").value("ORDER_AMOUNT_LIMIT_EXCEEDED"))
++                .andExpect(jsonPath("$.message").value(containsString("100000.01")));
++    }
+ }

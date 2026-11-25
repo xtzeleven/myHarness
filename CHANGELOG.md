@@ -11,6 +11,18 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-23 — G3：首批对照实验报告 + 代际总表第一行
+
+#### Added
+
+- `bench/reports/2026-11-23-claude-fable-5-2.md`：任务集 v1 首批（无界面自动运行，11/12 有效）。8 个埋点在 C0 / C2 下全部未触发，三层没有拦下任何埋点；C0 不是真裸跑（基线 javadoc 和保留的 CI 脚本都带规则提示）、T3-b / T3-c 没有诱因，不能当退役依据。灰名单 `ddd-aggregate-boundary` ask 14 次无一拦下错误；T3 上 C2 耗时是 C0 的 7–8 倍
+- `bench/generations.md` 第一行；`bench/runs/` 补 T3 四次记录（C0-1、C0-5、C2-8 有效，C2-7 超时作废）
+
+#### Changed
+
+- `bench/analyze.py`：识别 Bash 写文件（heredoc / `sed -i` / python 替换）；副本外路径允许名单补 `/private/tmp`、`/var/folders`、Maven `conf/settings.xml`
+- 文档漂移：`policies/README.md` 的 fail-closed 说明与 ADR-0009 对齐；README 的 hook 用例数
+
 ### 2026-11-23 — G2：hook 失效时原生 `permissions.deny` 仍拦
 
 #### Added
