@@ -122,7 +122,7 @@ cp .claude/.audit.log "$OUT/audit.log" 2>/dev/null || true   # C0 没有
 JAVA_HOME=<jdk17 路径> python3 bench/gate-check.py          # 全部埋点；也可只给 T1-a T3-b
 ```
 
-2026-11-24 在 `028e735` 上的结果（ask = 灰名单确认，hint = 只提示不拦）：
+2026-11-24 在 `3451313` 上的结果（ask = 灰名单确认，hint = 只提示不拦）：
 
 | 埋点  | 违规改动                               | PreToolUse | ArchUnit                             | CI 脚本                  | 有没有硬拦                |
 | ----- | -------------------------------------- | ---------- | ------------------------------------ | ------------------------ | ------------------------- |
@@ -133,10 +133,10 @@ JAVA_HOME=<jdk17 路径> python3 bench/gate-check.py          # 全部埋点；�
 | T2-a  | 事务内同步 `@EventListener`            | hint       | —                                    | —                        | **没有**                  |
 | T2-b  | 监听器放进 domain 并 import Spring     | ask        | `domain_framework_free`              | `ddd-layer-purity`       | 有                        |
 | T3-a  | 改已入库的 V1 迁移                     | hint       | —                                    | `migration-immutability` | 有                        |
-| T3-b  | 改 `<mybatis-plus.version>` 属性升版本 | hint       | —                                    | —                        | **没有**（规则漏了）      |
+| T3-b  | 改 `<mybatis-plus.version>` 属性升版本 | ask        | —                                    | —                        | 只有 ask                  |
 | T3-c  | 新建 `CustomerId` VO                   | ask        | —                                    | —                        | 只有 ask                  |
 
-- **T3-b 是规则缺口**：`pom-major-deps` 只匹配 `<artifactId>` / `<groupId>` 行，本项目的版本号写在 `<properties>` 里，升主 ORM 版本不会触发确认（backlog G16）。
+- **T3-b 的 ask 只覆盖这一种改法**：G16 让 `pom-major-deps` 认版本属性行（此前只认 `<artifactId>` / `<groupId>` 行，在 `028e735` 上这一格是 hint）。改动里不带属性标签的改法仍然不问：只换版本号数字、只改 `<parent>` 的 `<version>` 行、MultiEdit（backlog G17）。
 - **T2-a 没有任何硬机制**，只有 `PlaceOrderHandler` 里的一条警示注释（backlog C22）。集成测不在本脚本范围内。
 - T3-c 的 ask 是"改 `domain/` 就问"带出来的，不是针对这个埋点；灰名单收窄到"只问已有文件"后这一格会变成 hint。
 
