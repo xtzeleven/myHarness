@@ -44,13 +44,15 @@
 - id: ddd-aggregate-boundary
   tool: [Edit, Write, MultiEdit]
   when:
-    # domain 层下所有 .java 改动都要人工授权。
+    # 修改 domain 层已有 .java 要人工授权；新建文件不问。
     # 早期用 basename 后缀（Aggregate|Repository|Event）匹配，但本项目聚合根按
     # DDD 地道风格用业务名直接命名（Order.java 而非 OrderAggregateRoot.java），
     # 后缀正则漏掉了最核心的聚合根本身 → 改为 domain/ 下全 .java 拦。
-    # domain 层本就不该频繁改，多问一次授权符合"边界慎改"初衷。
+    # 2026-11-25 收窄到已有文件：G3 首批 C2 共问了 14 次，没有一次拦下错误，
+    # 其中 5 次是新建文件；新建的内容仍由 ArchUnit / ddd-layer-purity 把关。
     file_path_matches: 'src/main/java/.*/domain/.*\.java$'
-  reason: 'DDD 边界改动：domain 层 .java（聚合根 / VO / Repository 接口 / 领域事件）'
+    file_exists: true
+  reason: 'DDD 边界改动：修改 domain 层已有 .java（聚合根 / VO / Repository 接口 / 领域事件）'
 
 - id: pom-major-deps
   tool: [Edit, Write, MultiEdit]

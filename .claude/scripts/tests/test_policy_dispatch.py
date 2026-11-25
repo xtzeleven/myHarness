@@ -121,6 +121,19 @@ def test_file_path_matches(policy_dispatch):
     )
 
 
+def test_file_exists_distinguishes_edit_from_create(policy_dispatch, tmp_path):
+    # true 只管已有文件，false 只管新建；没有路径（如 Bash）一律不命中
+    existing = tmp_path / "Order.java"
+    existing.write_text("class Order {}", encoding="utf-8")
+    missing = tmp_path / "CustomerId.java"
+    kw = dict(cmd="", file_basename="x.java", new_content="")
+    assert policy_dispatch.matches_when({"file_exists": True}, file_path=str(existing), **kw)
+    assert not policy_dispatch.matches_when({"file_exists": True}, file_path=str(missing), **kw)
+    assert policy_dispatch.matches_when({"file_exists": False}, file_path=str(missing), **kw)
+    assert not policy_dispatch.matches_when({"file_exists": False}, file_path=str(existing), **kw)
+    assert not policy_dispatch.matches_when({"file_exists": False}, file_path="", **kw)
+
+
 def test_new_content_present_false_triggers_on_empty(policy_dispatch):
     # new_content_present: false —— 仅当内容为空触发（整文件改写场景）
     when = {"new_content_present": False}

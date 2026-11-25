@@ -26,6 +26,7 @@
     file_basename_not_in: [...] # Edit/Write: basename 排除（白名单豁免）
     file_basename_matches: <ERE> # Edit/Write: basename 正则
     file_path_matches: <ERE> # Edit/Write: 完整路径正则
+    file_exists: true # Edit/Write: 目标文件是否已在磁盘上（true = 只管改已有文件；false = 只管新建）
     new_content_imatches: <ERE> # Edit/Write: tool_input.new_string / .content 大小写不敏感
     new_content_present: false # Edit/Write: 仅当 new_content 为空时触发（如 pom.xml 整文件改写）
   reason: "<给主对话看的原因>"

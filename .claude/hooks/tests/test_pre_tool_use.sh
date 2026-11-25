@@ -165,13 +165,18 @@ run_case "deny-write-id_rsa" 2 "SSH 密钥" \
 # --- DDD 边界 / 主依赖（灰名单 ask_user）---
 echo ""
 echo "## DDD / 主依赖灰名单"
-run_ask "ask-domain-aggregate" "DDD 边界" \
+# 规则只问"修改已有文件"：先在 tempdir 里建出这些文件，没建的 OrderAggregateRoot.java 当新建
+mkdir -p src/main/java/com/x/domain/order src/main/java/x/domain/order
+touch src/main/java/com/x/domain/order/{Order,OrderId,OrderRepository,OrderPlacedEvent}.java \
+  src/main/java/x/domain/order/OrderAggregate.java
+run_case "allow-domain-new-file" 0 "" \
   '{"tool_name":"Write","tool_input":{"file_path":"src/main/java/com/x/domain/order/OrderAggregateRoot.java","content":"package x;"}}'
 run_ask "ask-domain-repository" "DDD 边界" \
   '{"tool_name":"Edit","tool_input":{"file_path":"src/main/java/com/x/domain/order/OrderRepository.java","new_string":"// repo"}}'
+# Write 覆盖已有文件也算改，仍然问
 run_ask "ask-domain-event" "DDD 边界" \
   '{"tool_name":"Write","tool_input":{"file_path":"src/main/java/com/x/domain/order/OrderPlacedEvent.java","content":"..."}}'
-# 业务名聚合根（无 Aggregate 后缀）+ domain 下 VO —— 规则窄修后 domain 下任意 .java 都应触发。
+# 业务名聚合根（无 Aggregate 后缀）+ domain 下 VO —— domain 下已有的 .java 不看文件名都应触发。
 # 防回归：此前规则只认 (Aggregate|Repository|Event) 后缀，真实聚合根 Order.java 漏网（见 CHANGELOG）。
 run_ask "ask-domain-aggregate-plainname" "DDD 边界" \
   '{"tool_name":"Write","tool_input":{"file_path":"src/main/java/com/x/domain/order/Order.java","content":"package x;"}}'
@@ -193,8 +198,9 @@ run_ask "ask-pom-bare-rewrite" "整文件改写" \
 #     dispatcher 必须 normalize 才能让 file_path_matches 正斜杠正则生效 ---
 echo ""
 echo "## Windows path (D9)"
+# 用相对路径：规则只问已有文件，D:\... 在 CI（Linux）上不存在
 run_ask "ask-domain-aggregate-winpath" "DDD 边界" \
-  '{"tool_name":"Write","tool_input":{"file_path":"D:\\dev\\src\\main\\java\\com\\x\\domain\\order\\OrderAggregateRoot.java","content":"package x;"}}'
+  '{"tool_name":"Write","tool_input":{"file_path":"src\\main\\java\\com\\x\\domain\\order\\Order.java","content":"package x;"}}'
 run_case "allow-application-winpath" 0 "" \
   '{"tool_name":"Write","tool_input":{"file_path":"D:\\dev\\src\\main\\java\\com\\x\\application\\PlaceOrderHandler.java","content":"package x;"}}'
 

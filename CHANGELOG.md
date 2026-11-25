@@ -11,6 +11,15 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-25 — 灰名单 `ddd-aggregate-boundary` 收窄到已有文件
+
+#### Changed
+
+- 灰名单 `ddd-aggregate-boundary`：只在修改 `domain/` 下已有 `.java` 时请用户确认，新建文件不再问（Write 覆盖已有文件仍然问）。依据：G3 首批 C2 有效运行里这条规则问了 14 次，没有一次拦下错误，其中 5 次是新建文件；新建文件的内容仍由 ArchUnit 和 `ddd-layer-purity` 把关。Bash 写 `domain/` 的 `bash-domain-boundary-write` 不变
+- `policy-dispatch.py`：`when` 加通用谓词 `file_exists`（true = 只管改已有文件，false = 只管新建），单测 1 例
+- `test_pre_tool_use.sh`：DDD 用例先在临时目录建出"已有"文件；原 `ask-domain-aggregate` 改为 `allow-domain-new-file`（总数仍 54）；Windows 路径用例改用相对路径
+- 文档同步：CLAUDE.md §9、engineering-practices §3、`policies/README.md` schema、`rule-inventory.md`、`AGENTS.backend.md`
+
 ### 2026-11-24 — G16：灰名单 `pom-major-deps` 匹配版本属性行
 
 #### Changed

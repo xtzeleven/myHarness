@@ -223,6 +223,12 @@ def matches_when(when: dict, *, cmd: str, file_path: str, file_basename: str, ne
         if not file_path or not re.search(pat, file_path):
             return False
 
+    # file_exists: 目标文件此刻是否已在磁盘上（true = 只管改已有文件；false = 只管新建）
+    fexists = when.get("file_exists")
+    if fexists is not None:
+        if not file_path or os.path.exists(file_path) != bool(fexists):
+            return False
+
     # new_content_imatches: case-insensitive ERE on edit content
     pat = when.get("new_content_imatches")
     if pat:
@@ -264,6 +270,7 @@ WHEN_KEYS = {
     "file_basename_not_in",
     "file_basename_matches",
     "file_path_matches",
+    "file_exists",
     "new_content_imatches",
     "new_content_present",
 }
