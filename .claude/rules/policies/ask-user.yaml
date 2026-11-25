@@ -56,7 +56,9 @@
   tool: [Edit, Write, MultiEdit]
   when:
     file_basename_in: ['pom.xml']
-    new_content_imatches: '<(artifactId|groupId)>(spring-boot|mybatis|hibernate|mysql-connector|mysql)\b'
+    # 两种写法都算：坐标行（<artifactId>mybatis-plus...）和版本属性行（G16：
+    # <mybatis-plus.version> 这种，改它就能升主 ORM，但改动里不带 <artifactId>）
+    new_content_imatches: '<(artifactId|groupId)>(spring-boot|mybatis|hibernate|mysql-connector|mysql)\b|<(spring-boot|mybatis|hibernate|mysql)[\w.-]*version>'
   reason: '主要依赖升级：pom.xml 涉及 spring-boot / MyBatis / Hibernate / MySQL 驱动'
 
 - id: pom-blank-rewrite

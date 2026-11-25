@@ -52,6 +52,11 @@ run_case() {
     ok=false
     reasons="$reasons kw_miss=\"$exp_kw\""
   fi
+  # ask 也是 exit 0：期望放行的用例必须同时没有 ask JSON，否则测不出"误问"
+  if [ "$exp_exit" = "0" ] && echo "$actual_output" | grep -qF '"permissionDecision": "ask"'; then
+    ok=false
+    reasons="$reasons unexpected-ask"
+  fi
 
   if $ok; then
     PASS=$((PASS + 1))
@@ -176,6 +181,11 @@ run_case "allow-application-handler" 0 "" \
   '{"tool_name":"Write","tool_input":{"file_path":"src/main/java/com/x/application/PlaceOrderHandler.java","content":"..."}}'
 run_ask "ask-pom-spring-boot" "依赖升级" \
   '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","new_string":"<artifactId>spring-boot-starter</artifactId>"}}'
+# G16：版本号写在 <properties> 里时改动不带 <artifactId>，要靠属性名认出主依赖
+run_ask "ask-pom-version-property" "依赖升级" \
+  '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","new_string":"<mybatis-plus.version>3.5.10</mybatis-plus.version>"}}'
+run_case "allow-pom-minor-version-property" 0 "" \
+  '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","new_string":"<archunit.version>1.4.0</archunit.version>"}}'
 run_ask "ask-pom-bare-rewrite" "整文件改写" \
   '{"tool_name":"Write","tool_input":{"file_path":"pom.xml","content":""}}'
 

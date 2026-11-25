@@ -11,6 +11,14 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-24 — G16：灰名单 `pom-major-deps` 匹配版本属性行
+
+#### Changed
+
+- 灰名单 `pom-major-deps`：除 `<artifactId>` / `<groupId>` 坐标行外，也匹配以 spring-boot / mybatis / hibernate / mysql 开头、以 `version` 结尾的属性行（如 `<mybatis-plus.version>`）。此前改属性升主 ORM 版本不触发确认（`bench/gate-check.py` T3-b）
+- `test_pre_tool_use.sh`：加正反 2 例（共 54，README 的用例数同步）；`run_case` 期望 exit 0 时同时断言输出里没有 ask JSON（ask 也是 exit 0，原来分不出"放行"和"误问"）
+- 剩余缺口登记为 backlog G17：只换版本号数字的 Edit、只改 `<parent>` 的 `<version>` 行、MultiEdit 仍认不出（实测）
+
 ### 2026-11-24 — 拦截能力自检 `bench/gate-check.py`
 
 #### Added
