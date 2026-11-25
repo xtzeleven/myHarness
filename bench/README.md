@@ -114,6 +114,32 @@ cp .claude/.audit.log "$OUT/audit.log" 2>/dev/null || true   # C0 没有
 | 门禁层拦下 | 写了，被 PreToolUse 拦截 / CI / ArchUnit 拦下      |
 | 漏进主干   | 最终 diff 里仍然存在                               |
 
+## 拦截能力自检（不调模型）
+
+对照实验回答"模型会不会犯"，[`gate-check.py`](gate-check.py) 回答另一半："真犯了，哪一层报警"。它在 `git archive HEAD` 的临时副本里把每个埋点的最小违规改动直接打上去，依次探 PreToolUse hook、ArchUnit、CI 脚本。要 JDK 17，约 1 分钟，不花模型费用：
+
+```bash
+JAVA_HOME=<jdk17 路径> python3 bench/gate-check.py          # 全部埋点；也可只给 T1-a T3-b
+```
+
+2026-11-24 在 `028e735` 上的结果（ask = 灰名单确认，hint = 只提示不拦）：
+
+| 埋点  | 违规改动                               | PreToolUse | ArchUnit                             | CI 脚本                  | 有没有硬拦                |
+| ----- | -------------------------------------- | ---------- | ------------------------------------ | ------------------------ | ------------------------- |
+| T1-a  | Entity 加 `setStatus`                  | ask        | `domain_no_setters`                  | —                        | 有                        |
+| T1-b  | Handler 里判状态，抛领域异常           | hint       | `application_no_business_rule_throw` | —                        | 有                        |
+| T1-b' | 同上，改抛 `IllegalStateException`     | hint       | —                                    | —                        | **没有**（ADR-0011 已知） |
+| T1-c  | Controller 直接注入 Repository         | 放行       | `interfaces_no_repository`           | —                        | 有                        |
+| T2-a  | 事务内同步 `@EventListener`            | hint       | —                                    | —                        | **没有**                  |
+| T2-b  | 监听器放进 domain 并 import Spring     | ask        | `domain_framework_free`              | `ddd-layer-purity`       | 有                        |
+| T3-a  | 改已入库的 V1 迁移                     | hint       | —                                    | `migration-immutability` | 有                        |
+| T3-b  | 改 `<mybatis-plus.version>` 属性升版本 | hint       | —                                    | —                        | **没有**（规则漏了）      |
+| T3-c  | 新建 `CustomerId` VO                   | ask        | —                                    | —                        | 只有 ask                  |
+
+- **T3-b 是规则缺口**：`pom-major-deps` 只匹配 `<artifactId>` / `<groupId>` 行，本项目的版本号写在 `<properties>` 里，升主 ORM 版本不会触发确认（backlog G16）。
+- **T2-a 没有任何硬机制**，只有 `PlaceOrderHandler` 里的一条警示注释（backlog C22）。集成测不在本脚本范围内。
+- T3-c 的 ask 是"改 `domain/` 就问"带出来的，不是针对这个埋点；灰名单收窄到"只问已有文件"后这一格会变成 hint。
+
 ## 产物
 
 - `runs/<日期>-<模型>-<任务>-<配置>-<序号>/`：单次运行（record.md + final.diff + mvn-verify.log + audit.log）

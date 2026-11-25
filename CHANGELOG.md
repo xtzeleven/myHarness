@@ -11,6 +11,12 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-24 — 拦截能力自检 `bench/gate-check.py`
+
+#### Added
+
+- `bench/gate-check.py`：不调模型，把 8 个埋点（加 T1-b 的一个变体）的最小违规改动打到临时副本上，看 PreToolUse / ArchUnit / CI 脚本哪一层报警。结果表在 `bench/README.md`：5 个埋点有硬拦；T2-a（事务内同步监听）没有任何硬机制；T3-b（改 `<mybatis-plus.version>` 属性）灰名单 `pom-major-deps` 漏了，登记为 backlog G16；T3-c 只有 ask
+
 ### 2026-11-23 — G3：首批对照实验报告 + 代际总表第一行
 
 #### Added
