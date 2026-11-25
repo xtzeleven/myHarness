@@ -9,7 +9,7 @@
   最终 diff 里还有                         → 漏进主干
   中途写进过文件（Write/Edit 内容）但最终没了 → 门禁层拦下（之前有 hook deny / ArchUnit 报错）否则 反馈层纠正
   从没写进过                               → 未触发；C2 里模型提到过对应规则 → 约束层避免（待复核）
-局限：模型用 Bash（sed / cat >）改文件时看不到中间内容；正则是代理指标，见各埋点 note。
+局限：Bash 改文件按"命令里提到的文件 + 整条命令正文"近似（见 bash_writes）；正则是代理指标，见各埋点 note。
 """
 from __future__ import annotations
 
@@ -71,6 +71,22 @@ def parse_diff(text):
     return files
 
 
+BASH_WRITE = re.compile(r"<<|>\s*[\w./\"'$]|\bsed\s+-i|\bperl\s+-\w*i|\btee\b|write_text|open\(|git apply|\bpatch\b")
+HEREDOC = re.compile(r">\s*(\S+)\s*<<-?\s*['\"]?(\w+)['\"]?[^\n]*\n(.*?)\n\s*\2\b", re.S)
+BASH_PATH = re.compile(r"[\w./-]+\.(?:java|sql|xml)\b")
+
+
+def bash_writes(cmd):
+    """Bash 改文件（heredoc / 重定向 / sed -i / python 替换）：命令里提到的每个源文件都算一次写入，正文 = 整条命令。
+    `cat > 文件 <<EOF … EOF` 能分清哪段正文进哪个文件，单独切出来；剩下的（sed / python 替换）宁多勿少：
+    正文会算到命令里每个文件头上，结论仍带"待复核"。cd 之后用相对路径的看不到。"""
+    out = [(m.group(1).strip("\"'"), m.group(3)) for m in HEREDOC.finditer(cmd)]
+    rest = HEREDOC.sub("", cmd)
+    if BASH_WRITE.search(rest):
+        out += [(p, rest) for p in sorted(set(BASH_PATH.findall(rest)))]
+    return out
+
+
 def load_transcript(path):
     writes, texts, results = [], [], []
     for line in open(path, encoding="utf-8", errors="replace"):
@@ -94,6 +110,8 @@ def load_transcript(path):
                         writes.append((len(results), fp, i.get("new_string") or ""))
                     elif c["name"] == "MultiEdit":
                         writes.append((len(results), fp, "\n".join(e.get("new_string", "") for e in i.get("edits") or [])))
+                    elif c["name"] == "Bash":
+                        writes.extend((len(results), fp, body) for fp, body in bash_writes(i.get("command") or ""))
         elif m.get("type") == "user":
             for c in content if isinstance(content, list) else []:
                 if isinstance(c, dict) and c.get("type") == "tool_result":
@@ -137,7 +155,8 @@ GITNEXUS = re.compile(r"\.gitnexus|npx[^|;&]*gitnexus|(^|[;&|(]\s*)gitnexus\s")
 
 def outside_paths(summary):
     """run-auto.sh 记下的可疑项分两类：路径（"Tool: /abs/path"）和含 gitnexus / myHarness 字样的命令。
-    返回 (允许, 作废, gitnexus 访问)。路径：/tmp、/var/folders（模型自己的临时日志）、~/.m2 允许。"""
+    返回 (允许, 作废, gitnexus 访问)。路径：/tmp、/private/tmp、/var/folders（模型自己的临时日志 / 后台任务输出）、
+    ~/.m2 与 Maven 安装目录的 conf/settings.xml 允许。"""
     allowed, flagged, gn = [], [], []
     for p in summary.get("paths_outside_run") or []:
         if HARD.search(p):
@@ -147,7 +166,7 @@ def outside_paths(summary):
         elif re.match(r"\w+: \{", p):  # 命令类，只因含 myHarness 字样被记下
             allowed.append(p)
         else:
-            (allowed if re.search(r": /tmp/|\.m2/|/var/folders/", p) else flagged).append(p)
+            (allowed if re.search(r": (/private)?/tmp(/|$)|\.m2/|/var/folders/|/conf/settings\.xml$", p) else flagged).append(p)
     return allowed, flagged, gn
 
 
