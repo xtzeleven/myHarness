@@ -19,6 +19,7 @@
 - `policy-dispatch.py`：`when` 加通用谓词 `file_exists`（true = 只管改已有文件，false = 只管新建），单测 1 例
 - `test_pre_tool_use.sh`：DDD 用例先在临时目录建出"已有"文件；原 `ask-domain-aggregate` 改为 `allow-domain-new-file`（总数仍 54）；Windows 路径用例改用相对路径
 - 文档同步：CLAUDE.md §9、engineering-practices §3、`policies/README.md` schema、`rule-inventory.md`、`AGENTS.backend.md`
+- `bench/README.md` 自检结果表在 `b0154c9` 上重跑：T2-b、T3-c 的 PreToolUse 由 ask 变为 hint；T3-c 从"只有 ask"变为没有硬拦，T2-b 仍被 ArchUnit 和 CI 拦下，其余 7 行不变
 
 ### 2026-11-24 — G16：灰名单 `pom-major-deps` 匹配版本属性行
 
