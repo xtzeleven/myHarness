@@ -122,7 +122,7 @@ cp .claude/.audit.log "$OUT/audit.log" 2>/dev/null || true   # C0 没有
 JAVA_HOME=<jdk17 路径> python3 bench/gate-check.py          # 全部埋点；也可只给 T1-a T3-b
 ```
 
-2026-11-25 在 `b0154c9` 上的结果（ask = 灰名单确认，hint = 只提示不拦）：
+2026-11-25 在 `6acb1ee` 上的结果（ask = 灰名单确认，hint = 只提示不拦）：
 
 | 埋点  | 违规改动                               | PreToolUse | ArchUnit                             | CI 脚本                  | 有没有硬拦                |
 | ----- | -------------------------------------- | ---------- | ------------------------------------ | ------------------------ | ------------------------- |
@@ -136,7 +136,7 @@ JAVA_HOME=<jdk17 路径> python3 bench/gate-check.py          # 全部埋点；�
 | T3-b  | 改 `<mybatis-plus.version>` 属性升版本 | ask        | —                                    | —                        | 只有 ask                  |
 | T3-c  | 新建 `CustomerId` VO                   | hint       | —                                    | —                        | **没有**                  |
 
-- **T3-b 的 ask 只覆盖这一种改法**：G16 让 `pom-major-deps` 认版本属性行（此前只认 `<artifactId>` / `<groupId>` 行，在 `028e735` 上这一格是 hint）。改动里不带属性标签的改法仍然不问：只换版本号数字、只改 `<parent>` 的 `<version>` 行、MultiEdit（backlog G17）。
+- **T3-b 只有 ask，没有第二层**：本脚本只探"改整行属性"这一种改法（G16 起问，在 `028e735` 上这一格是 hint）。只换版本号数字、只改 `<parent>` 的 `<version>` 行、MultiEdit 三种改法由 G17 的 `pom-version-lines` 补上，证据在 `test_pre_tool_use.sh` 的 `ask-pom-*` 用例，不在这张表里。ArchUnit 和 CI 都不检查依赖版本，用户在弹窗里点了同意就没有别的拦截。
 - **T2-a 没有任何硬机制**，只有 `PlaceOrderHandler` 里的一条警示注释（backlog C22）。集成测不在本脚本范围内。
 - **T3-c 没有任何硬机制**：灰名单 `ddd-aggregate-boundary` 收窄到"只问已有文件"后，新建 VO 不再问（在 `3451313` 上这一格是 ask，但那是"改 `domain/` 就问"带出来的，不是针对这个埋点）。"Customer BC 落地前用 String"是项目决策（C23），只写在文档里。T2-b 的 PreToolUse 同样由 ask 变为 hint，仍被 ArchUnit 和 CI 拦下。
 

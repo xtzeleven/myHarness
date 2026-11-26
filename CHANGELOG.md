@@ -20,6 +20,7 @@
 - `policy-dispatch.py`：`when` 加通用谓词 `changed_lines_imatches`（按 Edit / Write / MultiEdit 模拟改动后与原文做行级 diff），单测 5 例
 - `test_pre_tool_use.sh`：临时目录放一个最小 `pom.xml`，加正 3 反 1 共 4 例（共 58，README 的用例数同步）
 - 文档同步：`policies/README.md` schema、`rule-inventory.md`、backlog G17 → archive E69
+- `bench/README.md` 自检结果表在 `6acb1ee` 上重跑：9 行都不变（脚本只探 T3-b 的"改整行属性"一种改法，G17 补的三种改法由 hook 冒烟测试覆盖）；T3-b 的说明改写
 
 ### 2026-11-25 — 灰名单 `ddd-aggregate-boundary` 收窄到已有文件
 
