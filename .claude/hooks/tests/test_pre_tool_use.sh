@@ -184,6 +184,19 @@ run_ask "ask-domain-vo-plainname" "DDD 边界" \
   '{"tool_name":"Edit","tool_input":{"file_path":"src/main/java/com/x/domain/order/OrderId.java","new_string":"// vo"}}'
 run_case "allow-application-handler" 0 "" \
   '{"tool_name":"Write","tool_input":{"file_path":"src/main/java/com/x/application/PlaceOrderHandler.java","content":"..."}}'
+# G17：pom-version-lines 要对照磁盘上的原文才知道一次改动碰了哪些行，放一个最小的 pom.xml
+cat > pom.xml <<'EOF'
+<project>
+  <parent>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.3.5</version>
+  </parent>
+  <properties>
+    <mybatis-plus.version>3.5.9</mybatis-plus.version>
+    <archunit.version>1.3.0</archunit.version>
+  </properties>
+</project>
+EOF
 run_ask "ask-pom-spring-boot" "依赖升级" \
   '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","new_string":"<artifactId>spring-boot-starter</artifactId>"}}'
 # G16：版本号写在 <properties> 里时改动不带 <artifactId>，要靠属性名认出主依赖
@@ -193,6 +206,15 @@ run_case "allow-pom-minor-version-property" 0 "" \
   '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","new_string":"<archunit.version>1.4.0</archunit.version>"}}'
 run_ask "ask-pom-bare-rewrite" "整文件改写" \
   '{"tool_name":"Write","tool_input":{"file_path":"pom.xml","content":""}}'
+# G17：改动文本里不带主依赖字样的三种改法 —— 只换版本号数字、只改 <parent> 的 <version> 行、MultiEdit
+run_ask "ask-pom-digits-only" "版本行" \
+  '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","old_string":"3.5.9","new_string":"3.5.10"}}'
+run_ask "ask-pom-parent-version" "版本行" \
+  '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","old_string":"<version>3.3.5</version>","new_string":"<version>3.4.0</version>"}}'
+run_ask "ask-pom-multiedit" "版本行" \
+  '{"tool_name":"MultiEdit","tool_input":{"file_path":"pom.xml","edits":[{"old_string":"<mybatis-plus.version>3.5.9</mybatis-plus.version>","new_string":"<mybatis-plus.version>3.5.10</mybatis-plus.version>"}]}}'
+run_case "allow-pom-minor-digits-only" 0 "" \
+  '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","old_string":"1.3.0","new_string":"1.4.0"}}'
 
 # --- Windows path normalize（D9 回归）：Claude Code 在 Windows 下传反斜杠路径，
 #     dispatcher 必须 normalize 才能让 file_path_matches 正斜杠正则生效 ---

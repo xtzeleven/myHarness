@@ -29,6 +29,7 @@
     file_exists: true # Edit/Write: 目标文件是否已在磁盘上（true = 只管改已有文件；false = 只管新建）
     new_content_imatches: <ERE> # Edit/Write: tool_input.new_string / .content 大小写不敏感
     new_content_present: false # Edit/Write: 仅当 new_content 为空时触发（如 pom.xml 整文件改写）
+    changed_lines_imatches: <ERE> # Edit/Write/MultiEdit: 对照磁盘上的原文，匹配这次改动删掉或新增的整行，大小写不敏感
   reason: "<给主对话看的原因>"
 ```
 

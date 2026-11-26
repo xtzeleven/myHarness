@@ -21,6 +21,7 @@ Hint 去重：通过 .claude/.session.hints（per-session）。
 from __future__ import annotations
 
 import datetime
+import difflib
 import fnmatch
 import json
 import os
@@ -171,7 +172,32 @@ def _as_list(v: Any) -> list[str]:
     return list(v)
 
 
-def matches_when(when: dict, *, cmd: str, file_path: str, file_basename: str, new_content: str) -> bool:
+def changed_lines(tool_input: dict, file_path: str) -> str:
+    """模拟这次 Edit / Write / MultiEdit，返回文件里会被删掉或新增的行（换行拼接）。
+
+    只看 new_string 认不出"只换版本号数字"这类改动（G17）：改动文本里没有标签，
+    要对照磁盘上的原文才知道碰的是哪一行。
+    """
+    try:
+        with open(file_path, encoding="utf-8", errors="replace") as f:
+            before = f.read()
+    except OSError:  # 新建文件
+        before = ""
+    if "content" in tool_input:  # Write
+        after = str(tool_input.get("content") or "")
+    else:  # Edit / MultiEdit（edits[] 按顺序应用）
+        after = before
+        for e in tool_input.get("edits") or [tool_input]:
+            old, new = str(e.get("old_string") or ""), str(e.get("new_string") or "")
+            after = after.replace(old, new) if e.get("replace_all") else after.replace(old, new, 1)
+    # [2:] 去掉 ---/+++ 两行文件头；@@ 行不以 +/- 开头
+    diff = list(difflib.unified_diff(before.splitlines(), after.splitlines(), n=0, lineterm=""))[2:]
+    return "\n".join(line[1:] for line in diff if line[:1] in ("+", "-"))
+
+
+def matches_when(
+    when: dict, *, cmd: str, file_path: str, file_basename: str, new_content: str, tool_input: dict | None = None
+) -> bool:
     """All conditions AND. Missing condition => True."""
     if not isinstance(when, dict):
         return False
@@ -244,6 +270,13 @@ def matches_when(when: dict, *, cmd: str, file_path: str, file_basename: str, ne
         if not new_content:
             return False
 
+    # changed_lines_imatches: case-insensitive ERE on the lines this edit adds or removes
+    # （要读磁盘上的文件，放最后：前面的条件都过了才读）
+    pat = when.get("changed_lines_imatches")
+    if pat:
+        if not file_path or not re.search(pat, changed_lines(tool_input or {}, file_path), re.IGNORECASE):
+            return False
+
     return True
 
 
@@ -273,6 +306,7 @@ WHEN_KEYS = {
     "file_exists",
     "new_content_imatches",
     "new_content_present",
+    "changed_lines_imatches",
 }
 
 
@@ -410,7 +444,9 @@ def main() -> int:
             )
         return 0
 
-    eval_kwargs = dict(cmd=cmd, file_path=file_path, file_basename=file_basename, new_content=new_content)
+    eval_kwargs = dict(
+        cmd=cmd, file_path=file_path, file_basename=file_basename, new_content=new_content, tool_input=tool_input
+    )
 
     # 1) deny — 加载失败即 fail-closed（D1-A）
     deny_rules, deny_err = load_rules("deny.yaml")

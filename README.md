@@ -97,7 +97,7 @@
 >
 > ```bash
 > bash .claude/scripts/verify-setup.sh             # 环境预检（先跑这个）
-> bash .claude/hooks/tests/test_pre_tool_use.sh   # 54 case
+> bash .claude/hooks/tests/test_pre_tool_use.sh   # 58 case
 > bash .claude/hooks/tests/test_subagent_stop.sh  # 6 case
 > python .claude/scripts/policy-dispatch.py --validate
 > ```

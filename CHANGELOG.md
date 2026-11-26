@@ -11,6 +11,16 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-25 — G17：灰名单补 `pom-version-lines`，对照原文看改动行
+
+#### Changed
+
+- 灰名单新增 `pom-version-lines`：对照磁盘上的 `pom.xml` 算出这次改动删掉和新增的行，动了 `<version>` 行、或主要依赖（spring-boot / MyBatis / Hibernate / MySQL 驱动）的坐标行 / 版本属性行就请用户确认。补上 `pom-major-deps` 认不出的三种改法：Edit 只换版本号数字（`3.5.9` → `3.5.10`）、只改 `<parent>` 的 `<version>` 行、MultiEdit。`pom-major-deps` 本身不变
+- 代价：`<version>` 行本身看不出是谁的版本，所以项目自己的 `<version>`、给非主依赖写内联版本号也会问；`<archunit.version>` / `<java.version>` 这类属性行仍然不问
+- `policy-dispatch.py`：`when` 加通用谓词 `changed_lines_imatches`（按 Edit / Write / MultiEdit 模拟改动后与原文做行级 diff），单测 5 例
+- `test_pre_tool_use.sh`：临时目录放一个最小 `pom.xml`，加正 3 反 1 共 4 例（共 58，README 的用例数同步）
+- 文档同步：`policies/README.md` schema、`rule-inventory.md`、backlog G17 → archive E69
+
 ### 2026-11-25 — 灰名单 `ddd-aggregate-boundary` 收窄到已有文件
 
 #### Changed
