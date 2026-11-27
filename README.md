@@ -34,7 +34,7 @@
   - **10 个 Sub-agents**：`requirement-decomposer`（需求拆解+AC）、`event-storm`（事件风暴+服务边界）、`tdd-cycle-driver`（TDD 红绿重构）、`code-reviewer`（通用评审）、`ddd-architect`（DDD 战略战术，opus）、`spring-boot-reviewer`（Spring 反模式）、`maven-build-doctor`（构建诊断）、`schema-analyst`（schema/SQL 分析，走 MySQL MCP）、`migration-author`（Flyway/Liquibase）、`docs-keeper`（文档漂移检测）
   - **9 个 Slash commands**：`/audit-practices`（15 维度自检）、`/audit-context`（token 注入审计）、`/commit`（标准化提交）、`/onboard`（新人 5 分钟上手）、`/sync-docs`（文档同步检查）、`/cross-stage-check`（跨阶段一致性）、`/review`（评审编排）、`/doctor`（健康看板）、`/verify-setup`（环境预检）
   - **2 个自建 Skills**：`audit-practices` / `cross-stage-check`（判据真源，主 Claude 可按自然语言自主加载；对应 command 为显式入口）
-  - **gitnexus skills**：探索 / 调试 / 影响面 / 重构 / PR 评审 / 索引 七件套（外部环境提供）
+  - **gitnexus skills**：探索 / 调试 / 影响面 / 重构 / 索引等（外部环境提供，路由见 CLAUDE.md §8）
 
 - **Layer 3：质量门禁层（Quality Gates）**
   在 LLM **不可绕过**的位置兜底，让"绕过了也合不进 main"。
@@ -63,7 +63,7 @@
 | **M7**    | Tools 治理 + Policy 机制化（版本锁 + 降级链 + bypass + audit log）       | ✅ 完成                        |
 | **M8-T0** | 产研全链路前置阶段（需求拆解+AC / 事件风暴+服务划分 / 跨阶段一致性检查） | ✅ 完成                        |
 | **M8**    | 实例化 Java DDD 骨架（六维度回归测试场）                                 | ⏳ 进行中（见下方「M8 实况」） |
-| **M9**    | 从"框架就位"到"证明有效"：门禁止血 → 对照实验 → 按成分收敛 → 分层        | ⏳ P0 进行中（见 roadmap M9）  |
+| **M9**    | 从"框架就位"到"证明有效"：门禁止血 → 对照实验 → 按成分收敛 → 分层        | ⏳ P1 进行中（见 roadmap M9）  |
 
 > **进度真源**：M8 的细粒度进度只在下方「M8 实况」维护一处。README 其他位置、badge、CHANGELOG **不重述 Phase 级状态**，避免多处漂移（此前 badge/正文/CHANGELOG 三处各说各话已是教训）。
 
@@ -156,7 +156,7 @@ CHANGELOG.md                         发布变更记录
                                     / cross-stage-check / review / doctor
                                     / verify-setup
   skills/                            自建 2：audit-practices / cross-stage-check
-                                    （+ gitnexus 外部七件套）
+                                    （+ gitnexus 外部 skills）
   output-styles/                     harness-traceable（可选，非默认）
   scripts/
     audit-context-cost.py            token 注入审计

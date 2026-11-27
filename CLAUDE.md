@@ -88,7 +88,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ├── CLAUDE.md                  # 行为准则（每会话注入）
 ├── AGENTS.md                  # agent 索引
 ├── README.md                  # 项目简介与路线
-├── pom.xml                    # Maven 主构建（未实例化）
+├── pom.xml                    # Maven 主构建
 ├── src/
 │   └── main/java/<base>/
 │       ├── interfaces/        # ① 用户接口层：Controller / DTO / Assembler
@@ -98,7 +98,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ├── src/test/                  # 单测 / 集成测
 ├── docs/
 │   ├── AGENTS.backend.md      # 后端 agent 索引
-│   └── ddd-conventions.md     # DDD 约定（按需建）
+│   └── ddd-conventions.md     # DDD 约定（尚未创建，按需建）
 └── .claude/                   # Harness 配置（hooks / agents / commands / rules）
 ```
 
@@ -121,7 +121,7 @@ DDD 依赖方向 **严格单向**：interfaces → application → domain ← in
 > 注：M8 主线 Phase 2（第一个 BC `order`）全链路已落地（域建模 → Repository → Handler → Controller → Migration + 单测/集成测）。`mvn verify` 由 CI（`lint.yml` 的 `java-build` job）不可绕过地执行；`domain/` 层纯净度（无框架 import / 无 `@Transactional`）由 `ddd-layer-purity` job 硬门禁；§5 依赖方向与 §6 前 5 条 DDD 禁忌由 ArchUnit `DddArchitectureTest` 在 `mvn verify` 中机制化（§6-3 只覆盖可判定的代理部分，见 [ADR-0011](docs/adr/0011-archunit-ddd-rules.md)）。**本机前置**：JDK 17（`.tool-versions` 锁 `java temurin-17.0.13+11`）；Testcontainers 集成测需本机 Docker。
 
 ```bash
-# Java / Maven（M4 后启用）
+# Java / Maven
 mvn clean compile              # 编译
 mvn test                       # 单测
 mvn verify                     # 单测 + 集成测 + 静态检查
@@ -154,7 +154,7 @@ git status --porcelain
 | 调试报错、追溯异常源头           | `gitnexus-debugging`       |
 | 改名 / 拆分 / 移动前的影响面分析 | `gitnexus-impact-analysis` |
 | 重构动手                         | `gitnexus-refactoring`     |
-| review PR / 评估合并风险         | `gitnexus-pr-review`       |
+| review PR / 评估合并风险         | 命令 `/review`             |
 | 不知道怎么用 / 看可用工具        | `gitnexus-guide`           |
 | 索引 / 重建 / 清理仓库           | `gitnexus-cli`             |
 
@@ -175,7 +175,7 @@ git status --porcelain
 ## 10. 子目录指引
 
 - 后端 agent 设计：`docs/AGENTS.backend.md`
-- DDD 约定（实例化后）：`docs/ddd-conventions.md`
+- DDD 约定：`docs/ddd-conventions.md`（尚未创建，按需建）
 - 工程化规则：`.claude/rules/engineering-practices.md`
 - 路线图：`docs/roadmap.md`（M4-M8 六维度计划 + M9）
 - 对照实验：`bench/README.md`（任务集 / 运行记录 / 代际总表）

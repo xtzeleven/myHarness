@@ -130,7 +130,7 @@
 | `/verify-setup` `/doctor`                                                        | ④ ⑤  | 信号（手动跑脚本） | 保留                            | —                                |
 | `/audit-practices` `/audit-context` `/cross-stage-check` `/sync-docs` `/onboard` | ②    | 文档（手动触发）   | 冻结                            | P4 并入一页总览 / 文档预算后重审 |
 | skill `audit-practices` · `cross-stage-check`                                    | ②    | 文档               | 冻结，与同名 command 同去留     | 同对应 command                   |
-| skill `gitnexus`（外部七件套）                                                   | ②    | 文档               | 冻结，与 CLAUDE.md §8 同去留    | 同 CLAUDE.md §8                  |
+| skill `gitnexus`（外部提供）                                                     | ②    | 文档               | 冻结，与 CLAUDE.md §8 同去留    | 同 CLAUDE.md §8                  |
 
 ## 10. CI（`lint.yml` / `scheduled.yml`）
 

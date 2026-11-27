@@ -74,11 +74,11 @@ _C17 / C18 / C21 已完成。详见 §E（C17→E18 / C18→E19 / C21→E20）�
 
 > 两个后端 agent 独立审 order BC，7/8 审查点直接通过、无阻塞项。以下 3 条为真实发现，严重度均不高，作为债务留痕。**两 agent 独立命中同一处（C22）**是最强信号。
 
-| #   | 维度        | 项                                                                                                                                                                     | 状态                                                                                                                        |
-| --- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| C22 | 事件 / 事务 | `PlaceOrderHandler` 在 `@Transactional` 内同步 `publishEvent`：当前 OrderPlaced 无消费者故无活跃 bug；引入首个监听器前须改 `@TransactionalEventListener(AFTER_COMMIT)` | ✅ 已埋警示注释（`PlaceOrderHandler.java:39` publishEvent 上方，含修法 + 双 agent 依据）；引入 listener 时落地 AFTER_COMMIT |
-| C23 | DDD 建模    | `Order` 用裸 `String customerId` 引用 Customer 聚合，与 `OrderId` 自身的 typed-id 主张自相矛盾                                                                         | ⏳ Customer BC 落地时引入 `CustomerId` VO；现无 Customer BC，用 String 合理                                                 |
-| C24 | 性能（低）  | `OrderPersistenceAdapter.save` 新建路径必然 `selectById==null`，热路径多一次无用 SELECT                                                                                | ⏳ 效率项非 bug；可用 MyBatis-Plus `insertOrUpdate` 或上层显式表达 new/update 意图                                          |
+| #   | 维度        | 项                                                                                                                                                                     | 状态                                                                                                           |
+| --- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| C22 | 事件 / 事务 | `PlaceOrderHandler` 在 `@Transactional` 内同步 `publishEvent`：当前 OrderPlaced 无消费者故无活跃 bug；引入首个监听器前须改 `@TransactionalEventListener(AFTER_COMMIT)` | ⏳ 原提醒注释已在 `04767ea` 删除（bench T2-a 防答案泄漏），代码里不再有提醒；引入 listener 时落地 AFTER_COMMIT |
+| C23 | DDD 建模    | `Order` 用裸 `String customerId` 引用 Customer 聚合，与 `OrderId` 自身的 typed-id 主张自相矛盾                                                                         | ⏳ Customer BC 落地时引入 `CustomerId` VO；现无 Customer BC，用 String 合理                                    |
+| C24 | 性能（低）  | `OrderPersistenceAdapter.save` 新建路径必然 `selectById==null`，热路径多一次无用 SELECT                                                                                | ⏳ 效率项非 bug；可用 MyBatis-Plus `insertOrUpdate` 或上层显式表达 new/update 意图                             |
 
 > 另有 d-architect 提出的"事件产生逻辑下沉到聚合根"完整方案：会改 `Order` 聚合根（触发 DDD 灰名单），当前单入口收益不明确，判为过早抽象，暂不做；待第二个创建 Order 的入口（批量导入 / 后台补单）出现时重估。
 
