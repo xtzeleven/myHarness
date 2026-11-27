@@ -65,7 +65,7 @@ cat > "$OUT/approver.mcp.json" <<J
 {"mcpServers":{"approver":{"command":"python3","args":["$APPROVER"],"env":{"G1_APPROVER_LOG":"$OUT/approvals.log"}}}}
 J
 log "start $(date -u +%FT%TZ) base=$B model=${BENCH_MODEL:-sonnet}"
-start=$(date +%s)
+start=$(date +%s); started_at=$(date -u +%FT%TZ)
 CLAUDE_CONFIG_DIR="$CFG" "${CLAUDE_BIN:-claude}" -p "$PROMPT" --model "${BENCH_MODEL:-sonnet}" --permission-mode default \
   --strict-mcp-config --mcp-config .mcp.json "$OUT/approver.mcp.json" \
   --permission-prompts host --permission-prompt-tool mcp__approver__approve \
@@ -74,7 +74,8 @@ CLAUDE_CONFIG_DIR="$CFG" "${CLAUDE_BIN:-claude}" -p "$PROMPT" --model "${BENCH_M
 pid=$!; i=0
 while kill -0 $pid 2>/dev/null && [ $i -lt "${BENCH_TIMEOUT:-3600}" ]; do sleep 5; i=$((i+5)); done
 timed_out=0; if kill -0 $pid 2>/dev/null; then timed_out=1; kill $pid; sleep 2; kill -9 $pid 2>/dev/null; fi
-log "end $(date -u +%FT%TZ) elapsed=$(( $(date +%s) - start ))s timed_out=$timed_out"
+elapsed=$(( $(date +%s) - start ))
+log "end $(date -u +%FT%TZ) elapsed=${elapsed}s timed_out=$timed_out"
 
 # 7. 收集（写到副本外的 $OUT）
 B0=$(git rev-list --max-parents=0 HEAD)
@@ -82,15 +83,24 @@ B0=$(git rev-list --max-parents=0 HEAD)
 bash .github/scripts/check-migration-immutability.sh "$B0" > "$OUT/ci-local.log" 2>&1; echo "exit=$?" >> "$OUT/ci-local.log"
 git add -A && git diff --cached "$B0" > "$OUT/final.diff"
 cp .claude/.audit.log "$OUT/audit.log" 2>/dev/null || true
+# meta：一次运行"在什么条件下跑的"，写进 summary.json，入库后不靠 runner.log 也能判有效性（口径见 README「统计口径」）
+#   base_commit 存完整 SHA；task_set 从基线 commit 的 README 读（和提示词同源）；runner_commit 是本脚本所在仓库的 HEAD
+export BENCH_META_BASE="$(git -C "$SRC" rev-parse --verify -q "$B^{commit}" || echo "$B")"
+export BENCH_META_TASK_SET="$(git -C "$SRC" show "$B:bench/README.md" | sed -n 's/^\*\*当前版本：\(v[0-9][0-9]*\)\*\*.*/\1/p' | head -1)"
+export BENCH_META_RUNNER_COMMIT="$(git -C "$SRC" rev-parse -q --short HEAD)"
+export BENCH_META_TASK="$TASK" BENCH_META_CONF="$CONF" BENCH_META_SEQ="$SEQ" BENCH_META_DAY="$DAY"
+export BENCH_META_TIMEOUT="${BENCH_TIMEOUT:-3600}" BENCH_META_ELAPSED="$elapsed" BENCH_META_TIMED_OUT="$timed_out"
+export BENCH_META_STARTED="$started_at" BENCH_META_MODEL_ARG="${BENCH_MODEL:-sonnet}"
+export BENCH_META_CLI_VERSION="$("${CLAUDE_BIN:-claude}" --version 2>/dev/null | head -1)"
 python3 - "$OUT" "$RUN" "$CFG" <<'PY' > "$OUT/summary.json"
 import json, sys, re, os
 out, run, cfg = sys.argv[1], sys.argv[2], sys.argv[3]
 own = (run, os.path.realpath(run), os.path.join(cfg, "projects"))  # 副本 + Claude Code 自己的大输出落盘
-tools, outside, result, usage, model, is_error = {}, [], None, None, None, None
+tools, outside, result, usage, model, is_error, cc_version = {}, [], None, None, None, None, None
 for line in open(f"{out}/transcript.jsonl", encoding="utf-8", errors="replace"):
     try: m = json.loads(line)
     except Exception: continue
-    if m.get("type") == "system" and m.get("subtype") == "init": model = m.get("model")
+    if m.get("type") == "system" and m.get("subtype") == "init": model, cc_version = m.get("model"), m.get("claude_code_version")
     if m.get("type") == "assistant":
         for c in (m.get("message") or {}).get("content") or []:
             if c.get("type") == "tool_use":
@@ -109,7 +119,22 @@ for l in audit:
     except Exception: continue
     acts[a] = acts.get(a, 0) + 1
 mvn = open(f"{out}/mvn-verify.log", errors="replace").read()
+E = lambda k: os.environ.get("BENCH_META_" + k) or None
+num = lambda k: int(E(k)) if (E(k) or "").isdigit() else None
+selfcheck = f"{out}/selfcheck.txt"
+meta = {
+    "schema": 1, "task_set": E("TASK_SET"), "task": E("TASK"), "conf": E("CONF"), "seq": num("SEQ"), "day": E("DAY"),
+    "base_commit": E("BASE"), "runner_commit": E("RUNNER_COMMIT"),
+    "exec_mode": "headless-auto-approve",  # 确认请求一律同意，人工介入记 0
+    "model_arg": E("MODEL_ARG"),           # --model 传的原值（别名）；真实模型 ID 在上一层的 model
+    "claude_code_version": cc_version or E("CLI_VERSION"),  # 优先取会话 init 消息里的，取不到用 claude --version
+    "timeout_limit_s": num("TIMEOUT"), "elapsed_s": num("ELAPSED"),  # elapsed 含 5 秒轮询粒度和超时后的终止等待
+    "timed_out": {"0": False, "1": True}.get(E("TIMED_OUT")),
+    "started_at": E("STARTED"),
+    "selfcheck_clean": (os.path.getsize(selfcheck) == 0) if os.path.exists(selfcheck) else None,
+}
 print(json.dumps({
+    "meta": meta,
     "model": model, "result": result, "is_error": is_error, "usage": usage, "tool_calls": tools,
     "gitnexus_mcp_loaded": 'MCP server "gitnexus"' in dbg,
     "paths_outside_run": sorted(set(outside))[:30],
