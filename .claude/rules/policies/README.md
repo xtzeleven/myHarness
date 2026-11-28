@@ -26,8 +26,10 @@
     file_basename_not_in: [...] # Edit/Write: basename 排除（白名单豁免）
     file_basename_matches: <ERE> # Edit/Write: basename 正则
     file_path_matches: <ERE> # Edit/Write: 完整路径正则
+    file_exists: true # Edit/Write: 目标文件是否已在磁盘上（true = 只管改已有文件；false = 只管新建）
     new_content_imatches: <ERE> # Edit/Write: tool_input.new_string / .content 大小写不敏感
     new_content_present: false # Edit/Write: 仅当 new_content 为空时触发（如 pom.xml 整文件改写）
+    changed_lines_imatches: <ERE> # Edit/Write/MultiEdit: 对照磁盘上的原文，匹配这次改动删掉或新增的整行，大小写不敏感
   reason: "<给主对话看的原因>"
 ```
 
@@ -36,7 +38,7 @@
 ## 添加规则流程
 
 1. 在 `deny.yaml` / `ask-user.yaml` / `hints.yaml` 加一条
-2. 跑 `bash .claude/hooks/tests/test_pre_tool_use.sh` 确认现有 26 case 仍过
+2. 跑 `bash .claude/hooks/tests/test_pre_tool_use.sh` 确认现有 case 全过
 3. 在测试里加新规则的正反两 case（hit / no-hit）
 4. 提交时 commit 信息含 "policy:" 前缀方便追溯
 
@@ -59,4 +61,4 @@ Claude Code 调 tool
 Claude Code（0=继续 / 2=拦截）
 ```
 
-dispatcher 失败时**默认放行**（exit 0），避免 hook bug 拖死会话；同时把异常写到 `.claude/.audit.log` 便于排查。
+失败分两种（[ADR-0009](../../../docs/adr/0009-native-ask-and-fail-closed.md)）：`deny.yaml` 加载失败（缺 PyYAML / 解析失败）→ **fail-closed**，exit 2 拦下所有调用，只放行 PyYAML 安装命令；dispatcher 其他未捕获异常 → 放行（exit 0），避免 hook bug 拖死会话，异常写到 `.claude/.audit.log` 便于排查。

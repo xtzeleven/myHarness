@@ -1,0 +1,52 @@
+{
+  "model": "claude-fable-5-2",
+  "result": "success",
+  "usage": {
+    "input_tokens": 5655,
+    "cache_creation_input_tokens": 133979,
+    "cache_read_input_tokens": 562074,
+    "output_tokens": 7617,
+    "output_tokens_details": {
+      "thinking_tokens": 2688
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 133979,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 612,
+        "cache_read_input_tokens": 79088,
+        "cache_creation_input_tokens": 143,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 143
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "tool_calls": {
+    "Bash": 9,
+    "Write": 2,
+    "Edit": 1
+  },
+  "gitnexus_mcp_loaded": false,
+  "paths_outside_run": [],
+  "audit_actions": {
+    "executed": 3
+  },
+  "approvals": 9,
+  "mvn_verify_exit": "0",
+  "migration_check_exit": "0",
+  "api_errors": 0
+}

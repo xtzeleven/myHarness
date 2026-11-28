@@ -52,6 +52,11 @@ run_case() {
     ok=false
     reasons="$reasons kw_miss=\"$exp_kw\""
   fi
+  # ask 也是 exit 0：期望放行的用例必须同时没有 ask JSON，否则测不出"误问"
+  if [ "$exp_exit" = "0" ] && echo "$actual_output" | grep -qF '"permissionDecision": "ask"'; then
+    ok=false
+    reasons="$reasons unexpected-ask"
+  fi
 
   if $ok; then
     PASS=$((PASS + 1))
@@ -160,13 +165,18 @@ run_case "deny-write-id_rsa" 2 "SSH 密钥" \
 # --- DDD 边界 / 主依赖（灰名单 ask_user）---
 echo ""
 echo "## DDD / 主依赖灰名单"
-run_ask "ask-domain-aggregate" "DDD 边界" \
+# 规则只问"修改已有文件"：先在 tempdir 里建出这些文件，没建的 OrderAggregateRoot.java 当新建
+mkdir -p src/main/java/com/x/domain/order src/main/java/x/domain/order
+touch src/main/java/com/x/domain/order/{Order,OrderId,OrderRepository,OrderPlacedEvent}.java \
+  src/main/java/x/domain/order/OrderAggregate.java
+run_case "allow-domain-new-file" 0 "" \
   '{"tool_name":"Write","tool_input":{"file_path":"src/main/java/com/x/domain/order/OrderAggregateRoot.java","content":"package x;"}}'
 run_ask "ask-domain-repository" "DDD 边界" \
   '{"tool_name":"Edit","tool_input":{"file_path":"src/main/java/com/x/domain/order/OrderRepository.java","new_string":"// repo"}}'
+# Write 覆盖已有文件也算改，仍然问
 run_ask "ask-domain-event" "DDD 边界" \
   '{"tool_name":"Write","tool_input":{"file_path":"src/main/java/com/x/domain/order/OrderPlacedEvent.java","content":"..."}}'
-# 业务名聚合根（无 Aggregate 后缀）+ domain 下 VO —— 规则窄修后 domain 下任意 .java 都应触发。
+# 业务名聚合根（无 Aggregate 后缀）+ domain 下 VO —— domain 下已有的 .java 不看文件名都应触发。
 # 防回归：此前规则只认 (Aggregate|Repository|Event) 后缀，真实聚合根 Order.java 漏网（见 CHANGELOG）。
 run_ask "ask-domain-aggregate-plainname" "DDD 边界" \
   '{"tool_name":"Write","tool_input":{"file_path":"src/main/java/com/x/domain/order/Order.java","content":"package x;"}}'
@@ -174,17 +184,45 @@ run_ask "ask-domain-vo-plainname" "DDD 边界" \
   '{"tool_name":"Edit","tool_input":{"file_path":"src/main/java/com/x/domain/order/OrderId.java","new_string":"// vo"}}'
 run_case "allow-application-handler" 0 "" \
   '{"tool_name":"Write","tool_input":{"file_path":"src/main/java/com/x/application/PlaceOrderHandler.java","content":"..."}}'
+# G17：pom-version-lines 要对照磁盘上的原文才知道一次改动碰了哪些行，放一个最小的 pom.xml
+cat > pom.xml <<'EOF'
+<project>
+  <parent>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.3.5</version>
+  </parent>
+  <properties>
+    <mybatis-plus.version>3.5.9</mybatis-plus.version>
+    <archunit.version>1.3.0</archunit.version>
+  </properties>
+</project>
+EOF
 run_ask "ask-pom-spring-boot" "依赖升级" \
   '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","new_string":"<artifactId>spring-boot-starter</artifactId>"}}'
+# G16：版本号写在 <properties> 里时改动不带 <artifactId>，要靠属性名认出主依赖
+run_ask "ask-pom-version-property" "依赖升级" \
+  '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","new_string":"<mybatis-plus.version>3.5.10</mybatis-plus.version>"}}'
+run_case "allow-pom-minor-version-property" 0 "" \
+  '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","new_string":"<archunit.version>1.4.0</archunit.version>"}}'
 run_ask "ask-pom-bare-rewrite" "整文件改写" \
   '{"tool_name":"Write","tool_input":{"file_path":"pom.xml","content":""}}'
+# G17：改动文本里不带主依赖字样的三种改法 —— 只换版本号数字、只改 <parent> 的 <version> 行、MultiEdit
+run_ask "ask-pom-digits-only" "版本行" \
+  '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","old_string":"3.5.9","new_string":"3.5.10"}}'
+run_ask "ask-pom-parent-version" "版本行" \
+  '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","old_string":"<version>3.3.5</version>","new_string":"<version>3.4.0</version>"}}'
+run_ask "ask-pom-multiedit" "版本行" \
+  '{"tool_name":"MultiEdit","tool_input":{"file_path":"pom.xml","edits":[{"old_string":"<mybatis-plus.version>3.5.9</mybatis-plus.version>","new_string":"<mybatis-plus.version>3.5.10</mybatis-plus.version>"}]}}'
+run_case "allow-pom-minor-digits-only" 0 "" \
+  '{"tool_name":"Edit","tool_input":{"file_path":"pom.xml","old_string":"1.3.0","new_string":"1.4.0"}}'
 
 # --- Windows path normalize（D9 回归）：Claude Code 在 Windows 下传反斜杠路径，
 #     dispatcher 必须 normalize 才能让 file_path_matches 正斜杠正则生效 ---
 echo ""
 echo "## Windows path (D9)"
+# 用相对路径：规则只问已有文件，D:\... 在 CI（Linux）上不存在
 run_ask "ask-domain-aggregate-winpath" "DDD 边界" \
-  '{"tool_name":"Write","tool_input":{"file_path":"D:\\dev\\src\\main\\java\\com\\x\\domain\\order\\OrderAggregateRoot.java","content":"package x;"}}'
+  '{"tool_name":"Write","tool_input":{"file_path":"src\\main\\java\\com\\x\\domain\\order\\Order.java","content":"package x;"}}'
 run_case "allow-application-winpath" 0 "" \
   '{"tool_name":"Write","tool_input":{"file_path":"D:\\dev\\src\\main\\java\\com\\x\\application\\PlaceOrderHandler.java","content":"package x;"}}'
 

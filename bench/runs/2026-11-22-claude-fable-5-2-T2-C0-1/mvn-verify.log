@@ -1,0 +1,187 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< com.example.harness:harness >---------------------
+[INFO] Building myHarness 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ harness ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 2 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ harness ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ harness ---
+[INFO] Copying 1 resource from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ harness ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ harness ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.example.harness.architecture.DddRulesSelfTest
+23:50:17.171 [main] INFO com.tngtech.archunit.core.PluginLoader -- Detected Java version 17.0.13
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.312 s -- in com.example.harness.architecture.DddRulesSelfTest
+[INFO] Running com.example.harness.application.order.OrderPlacedNotificationListenerTest
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+23:50:17.926 [main] INFO com.example.harness.application.order.OrderPlacedNotificationListener -- [模拟通知] 下单成功通知已发送：customerId=CUST-001, orderId=fe96853f-789e-49ee-8757-86060d82590d
+23:50:17.930 [main] INFO com.example.harness.application.order.OrderPlacedNotificationListener -- [模拟通知] 下单成功通知已发送：customerId=CUST-002, orderId=180890df-4e77-43bd-8268-f208af2db495
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.457 s -- in com.example.harness.application.order.OrderPlacedNotificationListenerTest
+[INFO] Running com.example.harness.application.order.PlaceOrderHandlerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.095 s -- in com.example.harness.application.order.PlaceOrderHandlerTest
+[INFO] Running com.example.harness.HarnessApplicationTests
+23:50:18.037 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.harness.HarnessApplicationTests]: HarnessApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+23:50:18.059 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.harness.HarnessApplication for test class com.example.harness.HarnessApplicationTests
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+2026-11-22T23:50:18.175-08:00  INFO 44536 --- [harness-test] [           main] c.e.harness.HarnessApplicationTests      : Starting HarnessApplicationTests using Java 17.0.13 with PID 44536 (started by rw in /Users/rw/bench-runs/2026-11-22-T2-C0-1)
+2026-11-22T23:50:18.175-08:00 DEBUG 44536 --- [harness-test] [           main] c.e.harness.HarnessApplicationTests      : Running with Spring Boot v3.3.5, Spring v6.1.14
+2026-11-22T23:50:18.175-08:00  INFO 44536 --- [harness-test] [           main] c.e.harness.HarnessApplicationTests      : No active profile set, falling back to 1 default profile: "default"
+2026-11-22T23:50:18.598-08:00  INFO 44536 --- [harness-test] [           main] c.e.harness.HarnessApplicationTests      : Started HarnessApplicationTests in 0.51 seconds (process running for 1.683)
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.575 s -- in com.example.harness.HarnessApplicationTests
+[INFO] Running com.example.harness.domain.order.OrderIdTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.example.harness.domain.order.OrderIdTest
+[INFO] Running com.example.harness.domain.order.OrderItemTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in com.example.harness.domain.order.OrderItemTest
+[INFO] Running com.example.harness.domain.order.OrderTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.example.harness.domain.order.OrderTest
+[INFO] Running com.example.harness.interfaces.order.OrderControllerTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+2026-11-22T23:50:18.645-08:00  INFO 44536 --- [harness-test] [           main] c.e.h.i.order.OrderControllerTest        : Starting OrderControllerTest using Java 17.0.13 with PID 44536 (started by rw in /Users/rw/bench-runs/2026-11-22-T2-C0-1)
+2026-11-22T23:50:18.646-08:00 DEBUG 44536 --- [harness-test] [           main] c.e.h.i.order.OrderControllerTest        : Running with Spring Boot v3.3.5, Spring v6.1.14
+2026-11-22T23:50:18.646-08:00  INFO 44536 --- [harness-test] [           main] c.e.h.i.order.OrderControllerTest        : No active profile set, falling back to 1 default profile: "default"
+2026-11-22T23:50:18.773-08:00  INFO 44536 --- [harness-test] [           main] c.e.h.i.order.OrderControllerTest        : Started OrderControllerTest in 0.134 seconds (process running for 1.858)
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.270 s -- in com.example.harness.interfaces.order.OrderControllerTest
+[INFO] Running com.example.harness.architecture.DddArchitectureTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.262 s -- in com.example.harness.architecture.DddArchitectureTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 37, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ harness ---
+[INFO] 
+[INFO] --- spring-boot:3.3.5:repackage (repackage) @ harness ---
+[INFO] Replacing main artifact /Users/rw/bench-runs/2026-11-22-T2-C0-1/target/harness-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to /Users/rw/bench-runs/2026-11-22-T2-C0-1/target/harness-0.0.1-SNAPSHOT.jar.original
+[INFO] 
+[INFO] --- failsafe:3.2.5:integration-test (default) @ harness ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+23:50:19.588 [main] INFO org.testcontainers.DockerClientFactory -- Testcontainers version: 1.21.4
+23:50:19.657 [main] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Loaded org.testcontainers.dockerclient.UnixSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
+23:50:19.749 [main] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Found Docker environment with local Unix socket (unix:///var/run/docker.sock)
+23:50:19.750 [main] INFO org.testcontainers.DockerClientFactory -- Docker host IP address is localhost
+23:50:19.759 [main] INFO org.testcontainers.DockerClientFactory -- Connected to docker: 
+  Server Version: 29.8.2
+  API Version: 1.56
+  Operating System: OrbStack
+  Total Memory: 12016 MB
+23:50:19.763 [main] INFO org.testcontainers.images.PullPolicy -- Image pull policy will be performed by: DefaultPullPolicy()
+23:50:19.764 [main] INFO org.testcontainers.utility.ImageNameSubstitutor -- Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
+23:50:19.843 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Creating container for image: testcontainers/ryuk:0.12.0
+23:50:19.920 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 is starting: effb3857b9d2c6c4e2a897ad653567bc3932c6cb113f95e5658577e1a3b7e333
+23:50:20.048 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 started in PT0.20524S
+23:50:20.052 [main] INFO org.testcontainers.utility.RyukResourceReaper -- Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
+23:50:20.052 [main] INFO org.testcontainers.DockerClientFactory -- Checking the system...
+23:50:20.052 [main] INFO org.testcontainers.DockerClientFactory -- ✔︎ Docker server version should be at least 1.6.0
+[INFO] Running com.example.harness.infrastructure.order.persistence.OrderPersistenceAdapterIT
+23:50:20.129 [main] INFO tc.mysql:8.0 -- Creating container for image: mysql:8.0
+23:50:20.183 [main] INFO tc.mysql:8.0 -- Container mysql:8.0 is starting: d7d8d0ebef7b82adefe87f65db4e53f18a53aa17db55fbfc3b9225473b17e813
+23:50:20.256 [main] INFO tc.mysql:8.0 -- Waiting for database connection to become available at jdbc:mysql://localhost:32811/harness_test using query 'SELECT 1'
+23:50:26.764 [main] INFO tc.mysql:8.0 -- Container mysql:8.0 started in PT6.634736S
+23:50:26.764 [main] INFO tc.mysql:8.0 -- Container is started (JDBC URL: jdbc:mysql://localhost:32811/harness_test)
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+2026-11-22T23:50:26.860-08:00  INFO 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderPersistenceAdapterIT    : Starting OrderPersistenceAdapterIT using Java 17.0.13 with PID 44550 (started by rw in /Users/rw/bench-runs/2026-11-22-T2-C0-1)
+2026-11-22T23:50:26.860-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderPersistenceAdapterIT    : Running with Spring Boot v3.3.5, Spring v6.1.14
+2026-11-22T23:50:26.861-08:00  INFO 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderPersistenceAdapterIT    : No active profile set, falling back to 1 default profile: "default"
+2026-11-22T23:50:32.394-08:00  WARN 44550 --- [harness-test] [           main] c.b.mybatisplus.core.toolkit.Sequence    : Initialization Sequence Very Slow! Get datacenterId:2 workerId:30
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.9 
+2026-11-22T23:50:32.598-08:00  INFO 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderPersistenceAdapterIT    : Started OrderPersistenceAdapterIT in 5.822 seconds (process running for 13.207)
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-11-22T23:50:32.889-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : ==>  Preparing: SELECT id,customer_id,status,items_json FROM orders WHERE id=?
+2026-11-22T23:50:32.894-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : ==> Parameters: f21c74ba-aaef-4598-afe1-1b59e0c2ebef(String)
+2026-11-22T23:50:32.899-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : <==      Total: 0
+2026-11-22T23:50:32.910-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.insert           : ==>  Preparing: INSERT INTO orders ( id, customer_id, status, items_json ) VALUES ( ?, ?, ?, ? )
+2026-11-22T23:50:32.913-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.insert           : ==> Parameters: f21c74ba-aaef-4598-afe1-1b59e0c2ebef(String), CUST-IT-2(String), PENDING(String), [{"sku":"SKU-A","quantity":1,"unitPrice":1.00}](String)
+2026-11-22T23:50:32.921-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.insert           : <==    Updates: 1
+2026-11-22T23:50:32.922-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : ==>  Preparing: SELECT id,customer_id,status,items_json FROM orders WHERE id=?
+2026-11-22T23:50:32.922-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : ==> Parameters: 276c34f2-3ba9-4a77-a38a-0f9cdbc31272(String)
+2026-11-22T23:50:32.922-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : <==      Total: 0
+2026-11-22T23:50:32.923-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.insert           : ==>  Preparing: INSERT INTO orders ( id, customer_id, status, items_json ) VALUES ( ?, ?, ?, ? )
+2026-11-22T23:50:32.923-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.insert           : ==> Parameters: 276c34f2-3ba9-4a77-a38a-0f9cdbc31272(String), CUST-IT-2(String), PENDING(String), [{"sku":"SKU-B","quantity":1,"unitPrice":2.00}](String)
+2026-11-22T23:50:32.925-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.insert           : <==    Updates: 1
+2026-11-22T23:50:32.925-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : ==>  Preparing: SELECT id,customer_id,status,items_json FROM orders WHERE id=?
+2026-11-22T23:50:32.925-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : ==> Parameters: 85e5cbae-3a71-4079-b3fd-479c28a24bcc(String)
+2026-11-22T23:50:32.926-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : <==      Total: 0
+2026-11-22T23:50:32.926-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.insert           : ==>  Preparing: INSERT INTO orders ( id, customer_id, status, items_json ) VALUES ( ?, ?, ?, ? )
+2026-11-22T23:50:32.926-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.insert           : ==> Parameters: 85e5cbae-3a71-4079-b3fd-479c28a24bcc(String), CUST-IT-3(String), PENDING(String), [{"sku":"SKU-C","quantity":1,"unitPrice":3.00}](String)
+2026-11-22T23:50:32.928-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.insert           : <==    Updates: 1
+2026-11-22T23:50:32.936-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectList       : ==>  Preparing: SELECT id,customer_id,status,items_json FROM orders WHERE (customer_id = ? AND status = ?)
+2026-11-22T23:50:32.937-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectList       : ==> Parameters: CUST-IT-2(String), PENDING(String)
+2026-11-22T23:50:32.942-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectList       : <==      Total: 2
+2026-11-22T23:50:32.961-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : ==>  Preparing: SELECT id,customer_id,status,items_json FROM orders WHERE id=?
+2026-11-22T23:50:32.961-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : ==> Parameters: 1691d364-77c8-4c7e-8865-801577a7ec94(String)
+2026-11-22T23:50:32.962-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : <==      Total: 0
+2026-11-22T23:50:32.964-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : ==>  Preparing: SELECT id,customer_id,status,items_json FROM orders WHERE id=?
+2026-11-22T23:50:32.964-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : ==> Parameters: 61cf0a3b-0b6d-400e-b2ba-77f24c1ae998(String)
+2026-11-22T23:50:32.965-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : <==      Total: 0
+2026-11-22T23:50:32.965-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.insert           : ==>  Preparing: INSERT INTO orders ( id, customer_id, status, items_json ) VALUES ( ?, ?, ?, ? )
+2026-11-22T23:50:32.965-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.insert           : ==> Parameters: 61cf0a3b-0b6d-400e-b2ba-77f24c1ae998(String), CUST-IT-1(String), PENDING(String), [{"sku":"SKU-1","quantity":2,"unitPrice":9.90}](String)
+2026-11-22T23:50:32.969-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.insert           : <==    Updates: 1
+2026-11-22T23:50:32.969-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : ==>  Preparing: SELECT id,customer_id,status,items_json FROM orders WHERE id=?
+2026-11-22T23:50:32.969-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : ==> Parameters: 61cf0a3b-0b6d-400e-b2ba-77f24c1ae998(String)
+2026-11-22T23:50:32.970-08:00 DEBUG 44550 --- [harness-test] [           main] c.e.h.i.o.p.OrderMapper.selectById       : <==      Total: 1
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.09 s -- in com.example.harness.infrastructure.order.persistence.OrderPersistenceAdapterIT
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- failsafe:3.2.5:verify (default) @ harness ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  16.818 s
+[INFO] Finished at: 2026-11-22T23:50:33-08:00
+[INFO] ------------------------------------------------------------------------
+exit=0

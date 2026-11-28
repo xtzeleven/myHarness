@@ -56,7 +56,7 @@
 
 **灰名单（stdout 输出 `permissionDecision: "ask"` + exit 0，由 Claude Code 原生弹窗请用户确认）：**
 
-- 改 `domain/` 下任意 `.java`（DDD 边界：聚合根 / VO / Repository 接口 / 领域事件，`ddd-aggregate-boundary`）
+- 改 `domain/` 下已有 `.java`（DDD 边界：聚合根 / VO / Repository 接口 / 领域事件，`ddd-aggregate-boundary`；新建文件不问）
 - 改 `pom.xml` 中 `spring-boot` / 主 ORM（MyBatis/JPA）/ MySQL 驱动版本
 - 改写 git 历史（`rebase -i` / `filter-branch` / `filter-repo`）、批量 `git rm -r`
 - `git reset --hard`（丢弃未提交改动 / 删 commit；`--soft` / `--mixed` 不拦）

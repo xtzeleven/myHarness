@@ -11,6 +11,54 @@
 >
 > **三份记录类文档分工**（时间指针不重叠）：本文 = **已发生**的逐条变更（过去）；[roadmap](docs/roadmap.md) = **未来**里程碑规划；[improvement-backlog](docs/improvement-backlog.md) = **候选待办池**（已发现未做，完成后移入 [archive](docs/improvement-backlog-archive.md)）。
 
+### 2026-11-25 — G17：灰名单补 `pom-version-lines`，对照原文看改动行
+
+#### Changed
+
+- 灰名单新增 `pom-version-lines`：对照磁盘上的 `pom.xml` 算出这次改动删掉和新增的行，动了 `<version>` 行、或主要依赖（spring-boot / MyBatis / Hibernate / MySQL 驱动）的坐标行 / 版本属性行就请用户确认。补上 `pom-major-deps` 认不出的三种改法：Edit 只换版本号数字（`3.5.9` → `3.5.10`）、只改 `<parent>` 的 `<version>` 行、MultiEdit。`pom-major-deps` 本身不变
+- 代价：`<version>` 行本身看不出是谁的版本，所以项目自己的 `<version>`、给非主依赖写内联版本号也会问；`<archunit.version>` / `<java.version>` 这类属性行仍然不问
+- `policy-dispatch.py`：`when` 加通用谓词 `changed_lines_imatches`（按 Edit / Write / MultiEdit 模拟改动后与原文做行级 diff），单测 5 例
+- `test_pre_tool_use.sh`：临时目录放一个最小 `pom.xml`，加正 3 反 1 共 4 例（共 58，README 的用例数同步）
+- 文档同步：`policies/README.md` schema、`rule-inventory.md`、backlog G17 → archive E69
+- `bench/README.md` 自检结果表在 `5b05a7f` 上重跑：9 行都不变（脚本只探 T3-b 的"改整行属性"一种改法，G17 补的三种改法由 hook 冒烟测试覆盖）；T3-b 的说明改写
+
+### 2026-11-25 — 灰名单 `ddd-aggregate-boundary` 收窄到已有文件
+
+#### Changed
+
+- 灰名单 `ddd-aggregate-boundary`：只在修改 `domain/` 下已有 `.java` 时请用户确认，新建文件不再问（Write 覆盖已有文件仍然问）。依据：G3 首批 C2 有效运行里这条规则问了 14 次，没有一次拦下错误，其中 5 次是新建文件；新建文件的内容仍由 ArchUnit 和 `ddd-layer-purity` 把关。Bash 写 `domain/` 的 `bash-domain-boundary-write` 不变
+- `policy-dispatch.py`：`when` 加通用谓词 `file_exists`（true = 只管改已有文件，false = 只管新建），单测 1 例
+- `test_pre_tool_use.sh`：DDD 用例先在临时目录建出"已有"文件；原 `ask-domain-aggregate` 改为 `allow-domain-new-file`（总数仍 54）；Windows 路径用例改用相对路径
+- 文档同步：CLAUDE.md §9、engineering-practices §3、`policies/README.md` schema、`rule-inventory.md`、`AGENTS.backend.md`
+- `bench/README.md` 自检结果表在 `cb2fd3c` 上重跑：T2-b、T3-c 的 PreToolUse 由 ask 变为 hint；T3-c 从"只有 ask"变为没有硬拦，T2-b 仍被 ArchUnit 和 CI 拦下，其余 7 行不变
+
+### 2026-11-24 — G16：灰名单 `pom-major-deps` 匹配版本属性行
+
+#### Changed
+
+- 灰名单 `pom-major-deps`：除 `<artifactId>` / `<groupId>` 坐标行外，也匹配以 spring-boot / mybatis / hibernate / mysql 开头、以 `version` 结尾的属性行（如 `<mybatis-plus.version>`）。此前改属性升主 ORM 版本不触发确认（`bench/gate-check.py` T3-b）
+- `test_pre_tool_use.sh`：加正反 2 例（共 54，README 的用例数同步）；`run_case` 期望 exit 0 时同时断言输出里没有 ask JSON（ask 也是 exit 0，原来分不出"放行"和"误问"）
+- 剩余缺口登记为 backlog G17：只换版本号数字的 Edit、只改 `<parent>` 的 `<version>` 行、MultiEdit 仍认不出（实测）
+- `bench/README.md` 自检结果表在 `63889ab` 上重跑：T3-b 的 PreToolUse 由 hint 变为 ask，其余 8 行不变
+
+### 2026-11-24 — 拦截能力自检 `bench/gate-check.py`
+
+#### Added
+
+- `bench/gate-check.py`：不调模型，把 8 个埋点（加 T1-b 的一个变体）的最小违规改动打到临时副本上，看 PreToolUse / ArchUnit / CI 脚本哪一层报警。结果表在 `bench/README.md`：5 个埋点有硬拦；T2-a（事务内同步监听）没有任何硬机制；T3-b（改 `<mybatis-plus.version>` 属性）灰名单 `pom-major-deps` 漏了，登记为 backlog G16；T3-c 只有 ask
+
+### 2026-11-23 — G3：首批对照实验报告 + 代际总表第一行
+
+#### Added
+
+- `bench/reports/2026-11-23-claude-fable-5-2.md`：任务集 v1 首批（无界面自动运行，11/12 有效）。8 个埋点在 C0 / C2 下全部未触发，三层没有拦下任何埋点；C0 不是真裸跑（基线 javadoc 和保留的 CI 脚本都带规则提示）、T3-b / T3-c 没有诱因，不能当退役依据。灰名单 `ddd-aggregate-boundary` ask 14 次无一拦下错误；T3 上 C2 耗时是 C0 的 7–8 倍
+- `bench/generations.md` 第一行；`bench/runs/` 补 T3 四次记录（C0-1、C0-5、C2-8 有效，C2-7 超时作废）
+
+#### Changed
+
+- `bench/analyze.py`：识别 Bash 写文件（heredoc / `sed -i` / python 替换）；副本外路径允许名单补 `/private/tmp`、`/var/folders`、Maven `conf/settings.xml`
+- 文档漂移：`policies/README.md` 的 fail-closed 说明与 ADR-0009 对齐；README 的 hook 用例数
+
 ### 2026-11-23 — G2：hook 失效时原生 `permissions.deny` 仍拦
 
 #### Added

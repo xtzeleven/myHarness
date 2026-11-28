@@ -53,7 +53,7 @@ def repo(tmp_path: Path):
 
 def test_new_version_passes(repo):
     r, base = repo
-    _write(r, "V2__add_total_amount.sql", "ALTER TABLE orders ADD total_amount DECIMAL;\n")
+    _write(r, "V2__add_remark.sql", "ALTER TABLE orders ADD remark DECIMAL;\n")
     head = _commit(r, "add v2")
     res = _check(r, base, head)
     assert res.returncode == 0, res.stdout
@@ -64,7 +64,7 @@ def test_touching_existing_version_fails(repo, change):
     r, base = repo
     v1 = r / MIG / "V1__create_orders.sql"
     if change == "modify":
-        v1.write_text("CREATE TABLE orders (id BIGINT, total_amount DECIMAL);\n")
+        v1.write_text("CREATE TABLE orders (id BIGINT, remark DECIMAL);\n")
     elif change == "delete":
         v1.unlink()
     else:

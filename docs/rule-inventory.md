@@ -31,13 +31,14 @@
 
 ## 2. 灰名单（`ask-user.yaml` · 原生确认弹窗，ADR-0009；6 个 permission mode 实测都弹窗，G1）
 
-| 规则                                                                     | 成分 | 强制力 | 处置                                                                                                                                            | 退役条件                                                                                                         |
-| ------------------------------------------------------------------------ | ---- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `bash-mysql-ddl-dml` `bash-sql-file-pipe`                                | ⑤    | 机制   | 保留                                                                                                                                            | —                                                                                                                |
-| `bash-git-rewrite-history` `bash-git-rm-recursive` `bash-git-reset-hard` | ⑤    | 机制   | 保留                                                                                                                                            | —                                                                                                                |
-| `bash-mvn-deploy`                                                        | ⑤    | 机制   | 保留                                                                                                                                            | —                                                                                                                |
-| `pom-major-deps` `pom-blank-rewrite` `bash-pom-write`                    | ⑤    | 机制   | 保留（埋点 T3-b）                                                                                                                               | —                                                                                                                |
-| `ddd-aggregate-boundary` `bash-domain-boundary-write`                    | ⑤ ①  | 机制   | 保留，bench 记录误拦次数。⚠️ 实际匹配 `domain/` 下**全部** `.java`，CLAUDE.md §9 曾写成"聚合根 / Repository 接口 / DomainEvent"，已改指针（K3） | 只收窄不删：C2 运行记录误拦占比高，且 ArchUnit 已兜住 T1-a、T2-b → 收窄到聚合根 / Repository 接口 / 领域事件文件 |
+| 规则                                                                     | 成分 | 强制力 | 处置                                                                                                                                                   | 退役条件                                                                                                           |
+| ------------------------------------------------------------------------ | ---- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `bash-mysql-ddl-dml` `bash-sql-file-pipe`                                | ⑤    | 机制   | 保留                                                                                                                                                   | —                                                                                                                  |
+| `bash-git-rewrite-history` `bash-git-rm-recursive` `bash-git-reset-hard` | ⑤    | 机制   | 保留                                                                                                                                                   | —                                                                                                                  |
+| `bash-mvn-deploy`                                                        | ⑤    | 机制   | 保留                                                                                                                                                   | —                                                                                                                  |
+| `pom-major-deps` `pom-blank-rewrite` `bash-pom-write`                    | ⑤    | 机制   | 保留（埋点 T3-b）                                                                                                                                      | —                                                                                                                  |
+| `pom-version-lines`                                                      | ⑤    | 机制   | 保留（G17）：对照磁盘原文看改动行，动 `<version>` 行或主依赖的坐标 / 版本属性行就问（补只换数字、`<parent>` 版本行、MultiEdit）                        | —                                                                                                                  |
+| `ddd-aggregate-boundary` `bash-domain-boundary-write`                    | ⑤ ①  | 机制   | 保留，bench 记录误拦次数。2026-11-25 已收窄：`ddd-aggregate-boundary` 只问修改 `domain/` 下已有 `.java`，新建不问（首批 C2 的 14 次确认里 5 次是新建） | 只收窄不删：C2 运行记录误拦占比高，且 ArchUnit 已兜住 T1-a、T2-b → 再收窄到聚合根 / Repository 接口 / 领域事件文件 |
 
 ## 3. 提示（`hints.yaml` · stderr 提示 · 每会话去重）
 
@@ -129,7 +130,7 @@
 | `/verify-setup` `/doctor`                                                        | ④ ⑤  | 信号（手动跑脚本） | 保留                            | —                                |
 | `/audit-practices` `/audit-context` `/cross-stage-check` `/sync-docs` `/onboard` | ②    | 文档（手动触发）   | 冻结                            | P4 并入一页总览 / 文档预算后重审 |
 | skill `audit-practices` · `cross-stage-check`                                    | ②    | 文档               | 冻结，与同名 command 同去留     | 同对应 command                   |
-| skill `gitnexus`（外部七件套）                                                   | ②    | 文档               | 冻结，与 CLAUDE.md §8 同去留    | 同 CLAUDE.md §8                  |
+| skill `gitnexus`（外部提供）                                                     | ②    | 文档               | 冻结，与 CLAUDE.md §8 同去留    | 同 CLAUDE.md §8                  |
 
 ## 10. CI（`lint.yml` / `scheduled.yml`）
 

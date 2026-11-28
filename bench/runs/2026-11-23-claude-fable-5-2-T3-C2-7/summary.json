@@ -1,0 +1,40 @@
+{
+  "model": "claude-fable-5-2",
+  "result": null,
+  "is_error": null,
+  "usage": null,
+  "tool_calls": {
+    "Bash": 45,
+    "Read": 104,
+    "mcp__mysql-readonly__mysql_query": 1,
+    "Write": 3,
+    "Edit": 18,
+    "Agent": 3
+  },
+  "gitnexus_mcp_loaded": false,
+  "paths_outside_run": [
+    "Agent: {\"description\": \"DDD 分层准入审查\", \"subagent_type\": \"ddd-architect\", \"run_in_background\": false, \"prompt\": \"请审查一个**未提交**的工作区改动是否符合本项目的 DDD 分层准入，以及 Order 聚合是否仍然站得住。这是",
+    "Agent: {\"description\": \"实现与测试质量审查\", \"subagent_type\": \"code-reviewer\", \"run_in_background\": false, \"prompt\": \"请审查一个**未提交**的工作区改动的实现质量和测试质量。这是一次独立审查：我要的是你自己找到的问题，不是确认。\\n",
+    "Bash: /tmp",
+    "Bash: /tmp/Order.java.ungated-snapshot",
+    "Bash: /tmp/t3c27-green1.log",
+    "Bash: /tmp/t3c27-it-green.log",
+    "Bash: /tmp/t3c27-it-red.log",
+    "Bash: /tmp/t3c27-red1.log",
+    "Bash: {\"command\": \"(docker info --format 'docker server: {{.ServerVersion}}' 2>&1 | head -3); echo \\\"--- java ---\\\"; java -version 2>&1 | head -2; echo \\\"--- mvn ---\\",
+    "Bash: {\"command\": \"(npx --no-install gitnexus --version 2>&1 | head -5); echo \\\"exit=$?\\\"; echo \\\"--- npx cache ---\\\"; ls ~/.npm/_npx 2>/dev/null | head -5; echo \\\"--",
+    "Bash: {\"command\": \"S=.claude/scripts/session-state.py && python $S set-task \\\"订单总金额上限 100000 + orders.total_amount 列 + 测试\\\" && python $S add-step \\\"domain: Order.plac",
+    "Read: {\"file_path\": \"/Users/rw/bench-runs/2026-11-23-T3-C2-7/.claude/skills/gitnexus/gitnexus-cli/SKILL.md\"}",
+    "Read: {\"file_path\": \"/Users/rw/bench-runs/2026-11-23-T3-C2-7/.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md\"}"
+  ],
+  "audit_actions": {
+    "ask_user": 3,
+    "executed": 22,
+    "mcp_call": 1,
+    "degrade": 2
+  },
+  "approvals": 52,
+  "mvn_verify_exit": "0",
+  "migration_check_exit": "0",
+  "api_errors": 13
+}

@@ -85,7 +85,7 @@
 
 agent 在尝试以下动作时会被 [pre-tool-use.sh](../.claude/hooks/pre-tool-use.sh) 拦下，需用户授权：
 
-- 改 `domain/` 下聚合根 / Repository 接口 / DomainEvent
+- 改 `domain/` 下已有 `.java`（新建文件不问）
 - 改 `pom.xml` 中 spring-boot / 主 ORM / mysql 驱动版本
 - `mvn deploy` / `mvn release:*`
 - 含 INSERT/UPDATE/DELETE/DROP/ALTER 的 mysql 命令

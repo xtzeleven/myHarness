@@ -1,0 +1,549 @@
+diff --git a/src/main/java/com/example/harness/application/order/CancelOrderCommand.java b/src/main/java/com/example/harness/application/order/CancelOrderCommand.java
+new file mode 100644
+index 0000000..e191a35
+--- /dev/null
++++ b/src/main/java/com/example/harness/application/order/CancelOrderCommand.java
+@@ -0,0 +1,15 @@
++package com.example.harness.application.order;
++
++import java.util.Objects;
++
++import com.example.harness.domain.order.OrderId;
++
++/**
++ * 取消订单用例输入。
++ */
++public record CancelOrderCommand(OrderId orderId) {
++
++    public CancelOrderCommand {
++        Objects.requireNonNull(orderId, "orderId must not be null");
++    }
++}
+diff --git a/src/main/java/com/example/harness/application/order/CancelOrderHandler.java b/src/main/java/com/example/harness/application/order/CancelOrderHandler.java
+new file mode 100644
+index 0000000..67d5e27
+--- /dev/null
++++ b/src/main/java/com/example/harness/application/order/CancelOrderHandler.java
+@@ -0,0 +1,37 @@
++package com.example.harness.application.order;
++
++import org.springframework.context.ApplicationEventPublisher;
++import org.springframework.stereotype.Service;
++import org.springframework.transaction.annotation.Transactional;
++
++import com.example.harness.domain.order.Order;
++import com.example.harness.domain.order.event.OrderCancelled;
++import com.example.harness.domain.order.repository.OrderRepository;
++
++/**
++ * 取消订单用例编排器。
++ *
++ * 与 {@link PlaceOrderHandler} 同约定：事务边界在本层，`handle` 只编排
++ * （加载聚合 → 调 domain → 调 repo → 发事件）。"仅 PENDING 可取消" 的规则在 `Order.cancel` 内表达，
++ * 违例时 `OrderNotCancellableException` 直接冒泡，由 interfaces 层翻译为 HTTP。
++ */
++@Service
++public class CancelOrderHandler {
++
++    private final OrderRepository repository;
++    private final ApplicationEventPublisher publisher;
++
++    public CancelOrderHandler(OrderRepository repository, ApplicationEventPublisher publisher) {
++        this.repository = repository;
++        this.publisher = publisher;
++    }
++
++    @Transactional
++    public void handle(CancelOrderCommand cmd) {
++        Order order = repository.findById(cmd.orderId())
++                .orElseThrow(() -> new OrderNotFoundException(cmd.orderId()));
++        order.cancel();
++        Order saved = repository.save(order);
++        publisher.publishEvent(OrderCancelled.of(saved.id(), saved.customerId()));
++    }
++}
+diff --git a/src/main/java/com/example/harness/application/order/OrderNotFoundException.java b/src/main/java/com/example/harness/application/order/OrderNotFoundException.java
+new file mode 100644
+index 0000000..a58a11e
+--- /dev/null
++++ b/src/main/java/com/example/harness/application/order/OrderNotFoundException.java
+@@ -0,0 +1,16 @@
++package com.example.harness.application.order;
++
++import com.example.harness.domain.order.OrderId;
++
++/**
++ * 用例按 ID 找不到订单时抛出。
++ *
++ * 放在 application 层而非 domain：「查不到」是用例编排的加载失败，不是聚合内的业务规则违例
++ * （ArchUnit 规则亦禁止 application 自己构造 domain 异常）。interfaces 层翻译为 HTTP 404。
++ */
++public class OrderNotFoundException extends RuntimeException {
++
++    public OrderNotFoundException(OrderId id) {
++        super("订单 " + id.getValue() + " 不存在");
++    }
++}
+diff --git a/src/main/java/com/example/harness/domain/order/Order.java b/src/main/java/com/example/harness/domain/order/Order.java
+index c970c2d..5817f8d 100644
+--- a/src/main/java/com/example/harness/domain/order/Order.java
++++ b/src/main/java/com/example/harness/domain/order/Order.java
+@@ -61,6 +61,18 @@ public class Order {
+         return new Order(id, customerId, items == null ? List.of() : List.copyOf(items), status);
+     }
+ 
++    /**
++     * 取消订单：仅 PENDING 可取消，转入 CANCELLED。
++     *
++     * @throws OrderNotCancellableException 当前状态不是 PENDING（含已取消的重复取消）
++     */
++    public void cancel() {
++        if (status != OrderStatus.PENDING) {
++            throw new OrderNotCancellableException(id, status);
++        }
++        this.status = OrderStatus.CANCELLED;
++    }
++
+     public OrderId id() {
+         return id;
+     }
+diff --git a/src/main/java/com/example/harness/domain/order/OrderNotCancellableException.java b/src/main/java/com/example/harness/domain/order/OrderNotCancellableException.java
+new file mode 100644
+index 0000000..6305789
+--- /dev/null
++++ b/src/main/java/com/example/harness/domain/order/OrderNotCancellableException.java
+@@ -0,0 +1,14 @@
++package com.example.harness.domain.order;
++
++/**
++ * 对非 PENDING 状态的订单执行取消时触发的 domain 异常。
++ *
++ * 按 engineering-practices §13 "domain 层抛 domain exception"：
++ * interfaces 层负责翻译为 HTTP 4xx，本类不直接暴露给外部协议。
++ */
++public class OrderNotCancellableException extends RuntimeException {
++
++    public OrderNotCancellableException(OrderId id, OrderStatus status) {
++        super("订单 " + id.getValue() + " 当前状态为 " + status + "，仅 PENDING 状态可取消");
++    }
++}
+diff --git a/src/main/java/com/example/harness/domain/order/OrderStatus.java b/src/main/java/com/example/harness/domain/order/OrderStatus.java
+index 50984fb..9ec2f8d 100644
+--- a/src/main/java/com/example/harness/domain/order/OrderStatus.java
++++ b/src/main/java/com/example/harness/domain/order/OrderStatus.java
+@@ -10,5 +10,7 @@ public enum OrderStatus {
+     PENDING,
+     CONFIRMED,
+     REJECTED,
+-    EXPIRED;
++    EXPIRED,
++    /** 用户主动取消；仅 PENDING 可转入（见 {@link Order#cancel()}）。 */
++    CANCELLED;
+ }
+diff --git a/src/main/java/com/example/harness/domain/order/event/OrderCancelled.java b/src/main/java/com/example/harness/domain/order/event/OrderCancelled.java
+new file mode 100644
+index 0000000..ac0c328
+--- /dev/null
++++ b/src/main/java/com/example/harness/domain/order/event/OrderCancelled.java
+@@ -0,0 +1,24 @@
++package com.example.harness.domain.order.event;
++
++import java.time.Instant;
++import java.util.Objects;
++
++import com.example.harness.domain.order.OrderId;
++
++/**
++ * 订单已取消领域事件。
++ *
++ * 与 {@link OrderPlaced} 同约定：不可变 record、事件名过去式、domain 层纯净。
++ */
++public record OrderCancelled(OrderId orderId, String customerId, Instant occurredAt) {
++
++    public OrderCancelled {
++        Objects.requireNonNull(orderId, "orderId must not be null");
++        Objects.requireNonNull(customerId, "customerId must not be null");
++        Objects.requireNonNull(occurredAt, "occurredAt must not be null");
++    }
++
++    public static OrderCancelled of(OrderId orderId, String customerId) {
++        return new OrderCancelled(orderId, customerId, Instant.now());
++    }
++}
+diff --git a/src/main/java/com/example/harness/domain/order/repository/OrderRepository.java b/src/main/java/com/example/harness/domain/order/repository/OrderRepository.java
+index 14e73a7..8105cb0 100644
+--- a/src/main/java/com/example/harness/domain/order/repository/OrderRepository.java
++++ b/src/main/java/com/example/harness/domain/order/repository/OrderRepository.java
+@@ -33,7 +33,7 @@ public interface OrderRepository {
+      * 查询某 customer 当前处于"活跃"状态的订单。
+      *
+      * <p>"active" 当前定义为 {@code status == PENDING}（订单已下单但未进入终态）。
+-     * 终态（CONFIRMED / REJECTED / EXPIRED）不在此列。后续若引入更细分的过程状态，
++     * 终态（CONFIRMED / REJECTED / EXPIRED / CANCELLED）不在此列。后续若引入更细分的过程状态，
+      * 此处语义需同步更新（且需评估是否拆出 {@code findByCustomerAndStatus}）。
+      */
+     List<Order> findActiveByCustomer(String customerId);
+diff --git a/src/main/java/com/example/harness/interfaces/order/GlobalExceptionHandler.java b/src/main/java/com/example/harness/interfaces/order/GlobalExceptionHandler.java
+index ba52cc4..7bda6c6 100644
+--- a/src/main/java/com/example/harness/interfaces/order/GlobalExceptionHandler.java
++++ b/src/main/java/com/example/harness/interfaces/order/GlobalExceptionHandler.java
+@@ -11,7 +11,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
+ import org.springframework.web.bind.annotation.ExceptionHandler;
+ import org.springframework.web.bind.annotation.RestControllerAdvice;
+ 
++import com.example.harness.application.order.OrderNotFoundException;
+ import com.example.harness.domain.order.EmptyOrderException;
++import com.example.harness.domain.order.OrderNotCancellableException;
+ 
+ /**
+  * Order BC 边界的异常翻译器。
+@@ -19,7 +21,7 @@ import com.example.harness.domain.order.EmptyOrderException;
+  * 按 engineering-practices §13："domain 层抛 domain exception，interfaces 层翻译为 HTTP"。
+  *
+  * 不暴露 stacktrace（满足 P2.5 AC#3）；错误体含字段名 + 简要原因。
+- * 当前仅注册 Order BC 涉及的两类异常；其他 BC 出现时各自补 advice，不堆在本类。
++ * 当前仅注册 Order BC 涉及的异常；其他 BC 出现时各自补 advice，不堆在本类。
+  */
+ @RestControllerAdvice(basePackageClasses = OrderController.class)
+ public class GlobalExceptionHandler {
+@@ -31,6 +33,20 @@ public class GlobalExceptionHandler {
+                 .body(errorBody("EMPTY_ORDER", ex.getMessage(), List.of()));
+     }
+ 
++    @ExceptionHandler(OrderNotFoundException.class)
++    public ResponseEntity<Map<String, Object>> handleOrderNotFound(OrderNotFoundException ex) {
++        return ResponseEntity
++                .status(HttpStatus.NOT_FOUND)
++                .body(errorBody("ORDER_NOT_FOUND", ex.getMessage(), List.of()));
++    }
++
++    @ExceptionHandler(OrderNotCancellableException.class)
++    public ResponseEntity<Map<String, Object>> handleOrderNotCancellable(OrderNotCancellableException ex) {
++        return ResponseEntity
++                .status(HttpStatus.CONFLICT)
++                .body(errorBody("ORDER_NOT_CANCELLABLE", ex.getMessage(), List.of()));
++    }
++
+     @ExceptionHandler(MethodArgumentNotValidException.class)
+     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
+         List<Map<String, String>> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+diff --git a/src/main/java/com/example/harness/interfaces/order/OrderController.java b/src/main/java/com/example/harness/interfaces/order/OrderController.java
+index 6315390..b4df95d 100644
+--- a/src/main/java/com/example/harness/interfaces/order/OrderController.java
++++ b/src/main/java/com/example/harness/interfaces/order/OrderController.java
+@@ -1,14 +1,18 @@
+ package com.example.harness.interfaces.order;
+ 
+ import java.net.URI;
++import java.util.UUID;
+ 
+ import org.springframework.http.ResponseEntity;
++import org.springframework.web.bind.annotation.PathVariable;
+ import org.springframework.web.bind.annotation.PostMapping;
+ import org.springframework.web.bind.annotation.RequestBody;
+ import org.springframework.web.bind.annotation.RequestMapping;
+ import org.springframework.web.bind.annotation.RestController;
+ import org.springframework.web.util.UriComponentsBuilder;
+ 
++import com.example.harness.application.order.CancelOrderCommand;
++import com.example.harness.application.order.CancelOrderHandler;
+ import com.example.harness.application.order.PlaceOrderHandler;
+ import com.example.harness.domain.order.OrderId;
+ import com.example.harness.interfaces.order.dto.PlaceOrderRequest;
+@@ -19,7 +23,7 @@ import jakarta.validation.Valid;
+  * Order BC 的 HTTP 入口。
+  *
+  * 按 engineering-practices §12：
+- * - 不直 import Repository（仅依赖 application 层的 PlaceOrderHandler）
++ * - 不直 import Repository（仅依赖 application 层的 Handler）
+  * - 不写业务规则；DTO → Command → Handler 三步直达
+  * - 异常由 GlobalExceptionHandler 统一翻译，本类不 try/catch
+  */
+@@ -28,9 +32,11 @@ import jakarta.validation.Valid;
+ public class OrderController {
+ 
+     private final PlaceOrderHandler placeOrderHandler;
++    private final CancelOrderHandler cancelOrderHandler;
+ 
+-    public OrderController(PlaceOrderHandler placeOrderHandler) {
++    public OrderController(PlaceOrderHandler placeOrderHandler, CancelOrderHandler cancelOrderHandler) {
+         this.placeOrderHandler = placeOrderHandler;
++        this.cancelOrderHandler = cancelOrderHandler;
+     }
+ 
+     @PostMapping
+@@ -41,4 +47,10 @@ public class OrderController {
+                 .toUri();
+         return ResponseEntity.created(location).build();
+     }
++
++    @PostMapping("/{id}/cancel")
++    public ResponseEntity<Void> cancelOrder(@PathVariable UUID id) {
++        cancelOrderHandler.handle(new CancelOrderCommand(new OrderId(id)));
++        return ResponseEntity.noContent().build();
++    }
+ }
+diff --git a/src/test/java/com/example/harness/application/order/CancelOrderHandlerTest.java b/src/test/java/com/example/harness/application/order/CancelOrderHandlerTest.java
+new file mode 100644
+index 0000000..aeb802f
+--- /dev/null
++++ b/src/test/java/com/example/harness/application/order/CancelOrderHandlerTest.java
+@@ -0,0 +1,98 @@
++package com.example.harness.application.order;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++import static org.mockito.ArgumentMatchers.any;
++import static org.mockito.Mockito.never;
++import static org.mockito.Mockito.verify;
++import static org.mockito.Mockito.when;
++
++import java.math.BigDecimal;
++import java.util.List;
++import java.util.Optional;
++
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.mockito.ArgumentCaptor;
++import org.springframework.context.ApplicationEventPublisher;
++
++import com.example.harness.domain.order.Order;
++import com.example.harness.domain.order.OrderId;
++import com.example.harness.domain.order.OrderItem;
++import com.example.harness.domain.order.OrderNotCancellableException;
++import com.example.harness.domain.order.OrderStatus;
++import com.example.harness.domain.order.event.OrderCancelled;
++import com.example.harness.domain.order.repository.OrderRepository;
++
++/**
++ * CancelOrderHandler 单测。
++ *
++ * 正常路径 → 聚合转 CANCELLED 后 repo.save + 发 OrderCancelled 各一次
++ * 失败路径（订单不存在 / 非 PENDING）→ 异常冒泡，repo.save / publisher 均**不**被调
++ */
++class CancelOrderHandlerTest {
++
++    private OrderRepository repository;
++    private ApplicationEventPublisher publisher;
++    private CancelOrderHandler handler;
++
++    @BeforeEach
++    void setUp() {
++        repository = org.mockito.Mockito.mock(OrderRepository.class);
++        publisher = org.mockito.Mockito.mock(ApplicationEventPublisher.class);
++        handler = new CancelOrderHandler(repository, publisher);
++    }
++
++    private static Order orderIn(OrderStatus status) {
++        return Order.reconstitute(
++                OrderId.generate(),
++                "CUST-001",
++                List.of(new OrderItem("SKU-1", 1, new BigDecimal("1.00"))),
++                status);
++    }
++
++    @Test
++    void handle_pendingOrder_savesCancelledOrderAndPublishesEvent() {
++        Order order = orderIn(OrderStatus.PENDING);
++        when(repository.findById(order.id())).thenReturn(Optional.of(order));
++        when(repository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
++
++        handler.handle(new CancelOrderCommand(order.id()));
++
++        ArgumentCaptor<Order> savedCaptor = ArgumentCaptor.forClass(Order.class);
++        verify(repository).save(savedCaptor.capture());
++        assertThat(savedCaptor.getValue().id()).isEqualTo(order.id());
++        assertThat(savedCaptor.getValue().status()).isEqualTo(OrderStatus.CANCELLED);
++
++        ArgumentCaptor<OrderCancelled> eventCaptor = ArgumentCaptor.forClass(OrderCancelled.class);
++        verify(publisher).publishEvent(eventCaptor.capture());
++        assertThat(eventCaptor.getValue().orderId()).isEqualTo(order.id());
++        assertThat(eventCaptor.getValue().customerId()).isEqualTo("CUST-001");
++        assertThat(eventCaptor.getValue().occurredAt()).isNotNull();
++    }
++
++    @Test
++    void handle_nonPendingOrder_propagatesAndDoesNotSave() {
++        Order order = orderIn(OrderStatus.CONFIRMED);
++        when(repository.findById(order.id())).thenReturn(Optional.of(order));
++
++        assertThatThrownBy(() -> handler.handle(new CancelOrderCommand(order.id())))
++                .isInstanceOf(OrderNotCancellableException.class);
++
++        verify(repository, never()).save(any());
++        verify(publisher, never()).publishEvent(any());
++    }
++
++    @Test
++    void handle_unknownOrder_throwsOrderNotFound() {
++        OrderId id = OrderId.generate();
++        when(repository.findById(id)).thenReturn(Optional.empty());
++
++        assertThatThrownBy(() -> handler.handle(new CancelOrderCommand(id)))
++                .isInstanceOf(OrderNotFoundException.class)
++                .hasMessageContaining(id.getValue().toString());
++
++        verify(repository, never()).save(any());
++        verify(publisher, never()).publishEvent(any());
++    }
++}
+diff --git a/src/test/java/com/example/harness/domain/order/OrderTest.java b/src/test/java/com/example/harness/domain/order/OrderTest.java
+index d98377e..2894b3c 100644
+--- a/src/test/java/com/example/harness/domain/order/OrderTest.java
++++ b/src/test/java/com/example/harness/domain/order/OrderTest.java
+@@ -9,6 +9,8 @@ import java.util.Collections;
+ import java.util.List;
+ 
+ import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.EnumSource;
+ 
+ class OrderTest {
+ 
+@@ -70,4 +72,27 @@ class OrderTest {
+         // 同 id → 即便 customer/items 字段不同也相等（用 self 比 self 验证）
+         assertThat(a).isEqualTo(a);
+     }
++
++    @Test
++    void cancel_pendingOrder_becomesCancelled() {
++        Order order = Order.place("CUST-001", List.of(item("SKU-1", 1, "1.00")));
++
++        order.cancel();
++
++        assertThat(order.status()).isEqualTo(OrderStatus.CANCELLED);
++    }
++
++    /** 非 PENDING（含已 CANCELLED 的重复取消）一律拒绝，状态保持不变。 */
++    @ParameterizedTest
++    @EnumSource(value = OrderStatus.class, names = "PENDING", mode = EnumSource.Mode.EXCLUDE)
++    void cancel_nonPendingOrder_throwsAndKeepsStatus(OrderStatus status) {
++        Order order = Order.reconstitute(
++                OrderId.generate(), "CUST-001", List.of(item("SKU-1", 1, "1.00")), status);
++
++        assertThatThrownBy(order::cancel)
++                .isInstanceOf(OrderNotCancellableException.class)
++                .hasMessageContaining(status.name());
++
++        assertThat(order.status()).isEqualTo(status);
++    }
+ }
+diff --git a/src/test/java/com/example/harness/infrastructure/order/persistence/OrderPersistenceAdapterIT.java b/src/test/java/com/example/harness/infrastructure/order/persistence/OrderPersistenceAdapterIT.java
+index 1de67f4..9f8e26d 100644
+--- a/src/test/java/com/example/harness/infrastructure/order/persistence/OrderPersistenceAdapterIT.java
++++ b/src/test/java/com/example/harness/infrastructure/order/persistence/OrderPersistenceAdapterIT.java
+@@ -20,6 +20,7 @@ import com.example.harness.HarnessApplication;
+ import com.example.harness.domain.order.Order;
+ import com.example.harness.domain.order.OrderId;
+ import com.example.harness.domain.order.OrderItem;
++import com.example.harness.domain.order.OrderStatus;
+ import com.example.harness.domain.order.repository.OrderRepository;
+ 
+ /**
+@@ -102,6 +103,22 @@ class OrderPersistenceAdapterIT {
+         assertThat(active).extracting(Order::id).containsExactlyInAnyOrder(a1.id(), a2.id());
+     }
+ 
++    /** 取消走 save 的 update 分支：状态落库为 CANCELLED，且不再算"活跃"订单。 */
++    @Test
++    void save_cancelledOrder_persistsStatusAndLeavesActiveList() {
++        Order order = Order.place(
++                "CUST-IT-4",
++                List.of(new OrderItem("SKU-D", 1, new BigDecimal("4.00"))));
++        repository.save(order);
++
++        order.cancel();
++        repository.save(order);
++
++        assertThat(repository.findById(order.id()))
++                .get().extracting(Order::status).isEqualTo(OrderStatus.CANCELLED);
++        assertThat(repository.findActiveByCustomer("CUST-IT-4")).isEmpty();
++    }
++
+     @Test
+     void findById_unknownId_returnsEmpty() {
+         Optional<Order> loaded = repository.findById(OrderId.generate());
+diff --git a/src/test/java/com/example/harness/interfaces/order/OrderControllerTest.java b/src/test/java/com/example/harness/interfaces/order/OrderControllerTest.java
+index 0c0e4d7..198042e 100644
+--- a/src/test/java/com/example/harness/interfaces/order/OrderControllerTest.java
++++ b/src/test/java/com/example/harness/interfaces/order/OrderControllerTest.java
+@@ -2,6 +2,7 @@ package com.example.harness.interfaces.order;
+ 
+ import static org.hamcrest.Matchers.containsString;
+ import static org.mockito.ArgumentMatchers.any;
++import static org.mockito.Mockito.doThrow;
+ import static org.mockito.Mockito.never;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+@@ -19,10 +20,15 @@ import org.springframework.boot.test.mock.mockito.MockBean;
+ import org.springframework.http.MediaType;
+ import org.springframework.test.web.servlet.MockMvc;
+ 
++import com.example.harness.application.order.CancelOrderCommand;
++import com.example.harness.application.order.CancelOrderHandler;
++import com.example.harness.application.order.OrderNotFoundException;
+ import com.example.harness.application.order.PlaceOrderCommand;
+ import com.example.harness.application.order.PlaceOrderHandler;
+ import com.example.harness.domain.order.EmptyOrderException;
+ import com.example.harness.domain.order.OrderId;
++import com.example.harness.domain.order.OrderNotCancellableException;
++import com.example.harness.domain.order.OrderStatus;
+ 
+ /**
+  * OrderController WebMvc 单测。
+@@ -38,6 +44,7 @@ class OrderControllerTest {
+     @Autowired private MockMvc mvc;
+ 
+     @MockBean private PlaceOrderHandler placeOrderHandler;
++    @MockBean private CancelOrderHandler cancelOrderHandler;
+ 
+     @Test
+     void placeOrder_returns201AndLocation() throws Exception {
+@@ -115,4 +122,47 @@ class OrderControllerTest {
+                 .andExpect(status().isBadRequest())
+                 .andExpect(jsonPath("$.code").value("EMPTY_ORDER"));
+     }
++
++    @Test
++    void cancelOrder_returns204() throws Exception {
++        UUID id = UUID.fromString("22222222-2222-2222-2222-222222222222");
++
++        mvc.perform(post("/orders/{id}/cancel", id))
++                .andExpect(status().isNoContent());
++
++        verify(cancelOrderHandler).handle(new CancelOrderCommand(new OrderId(id)));
++    }
++
++    /** 非 PENDING 订单 → 409 + ORDER_NOT_CANCELLABLE。 */
++    @Test
++    void cancelOrder_notCancellable_returns409() throws Exception {
++        OrderId orderId = OrderId.generate();
++        doThrow(new OrderNotCancellableException(orderId, OrderStatus.CONFIRMED))
++                .when(cancelOrderHandler).handle(any(CancelOrderCommand.class));
++
++        mvc.perform(post("/orders/{id}/cancel", orderId.getValue()))
++                .andExpect(status().isConflict())
++                .andExpect(jsonPath("$.code").value("ORDER_NOT_CANCELLABLE"))
++                .andExpect(jsonPath("$.message").value(containsString("CONFIRMED")));
++    }
++
++    @Test
++    void cancelOrder_unknownOrder_returns404() throws Exception {
++        OrderId orderId = OrderId.generate();
++        doThrow(new OrderNotFoundException(orderId))
++                .when(cancelOrderHandler).handle(any(CancelOrderCommand.class));
++
++        mvc.perform(post("/orders/{id}/cancel", orderId.getValue()))
++                .andExpect(status().isNotFound())
++                .andExpect(jsonPath("$.code").value("ORDER_NOT_FOUND"));
++    }
++
++    /** 非 UUID 的 id → 400，不触达 handler。 */
++    @Test
++    void cancelOrder_malformedId_returns400() throws Exception {
++        mvc.perform(post("/orders/{id}/cancel", "not-a-uuid"))
++                .andExpect(status().isBadRequest());
++
++        verify(cancelOrderHandler, never()).handle(any());
++    }
+ }

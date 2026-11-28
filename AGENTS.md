@@ -4,28 +4,28 @@
 
 ## 路由速查（"我该用哪个"）
 
-| 你想做的事                              | 优先用                                                         |
-| --------------------------------------- | -------------------------------------------------------------- |
-| 探索陌生代码 / 画依赖图 / 查调用链      | skill `gitnexus-exploring`                                     |
-| 调试报错 / 追溯异常                     | skill `gitnexus-debugging`                                     |
-| 重命名 / 拆分前的影响面分析             | skill `gitnexus-impact-analysis`                               |
-| 重构动手                                | skill `gitnexus-refactoring`                                   |
-| review PR / 评估合并风险                | 命令 `/review`（编排三 reviewer）或 skill `gitnexus-pr-review` |
-| 索引 / 重建仓库索引                     | skill `gitnexus-cli`                                           |
-| 拆需求 / 列子任务 / 写 Gherkin AC       | agent `requirement-decomposer`                                 |
-| 事件风暴 / 业务事件流 / 服务边界候选    | agent `event-storm`                                            |
-| 实现新功能 / 修 bug（带测试）           | agent `tdd-cycle-driver`                                       |
-| DDD 边界 / 聚合 / 领域事件设计          | agent `ddd-architect`                                          |
-| Spring 反模式审查 / @Transactional 问题 | agent `spring-boot-reviewer`                                   |
-| Maven 编译 / 依赖冲突 / 打包失败        | agent `maven-build-doctor`                                     |
-| 表结构 / 索引 / SQL 性能                | agent `schema-analyst`                                         |
-| 写数据库 migration                      | agent `migration-author`                                       |
-| 检查代码与文档是否漂移                  | agent `docs-keeper`（或命令 `/sync-docs`）                     |
-| 检查产研全链路文档间漂移                | 命令 `/cross-stage-check`                                      |
-| 新人 5 分钟上手                         | 命令 `/onboard`                                                |
-| 检查本机环境是否配齐（hook/构建前置）   | 命令 `/verify-setup`                                           |
-| 工程化自检                              | 命令 `/audit-practices`                                        |
-| 标准化提交                              | 命令 `/commit`                                                 |
+| 你想做的事                              | 优先用                                     |
+| --------------------------------------- | ------------------------------------------ |
+| 探索陌生代码 / 画依赖图 / 查调用链      | skill `gitnexus-exploring`                 |
+| 调试报错 / 追溯异常                     | skill `gitnexus-debugging`                 |
+| 重命名 / 拆分前的影响面分析             | skill `gitnexus-impact-analysis`           |
+| 重构动手                                | skill `gitnexus-refactoring`               |
+| review PR / 评估合并风险                | 命令 `/review`（编排三 reviewer）          |
+| 索引 / 重建仓库索引                     | skill `gitnexus-cli`                       |
+| 拆需求 / 列子任务 / 写 Gherkin AC       | agent `requirement-decomposer`             |
+| 事件风暴 / 业务事件流 / 服务边界候选    | agent `event-storm`                        |
+| 实现新功能 / 修 bug（带测试）           | agent `tdd-cycle-driver`                   |
+| DDD 边界 / 聚合 / 领域事件设计          | agent `ddd-architect`                      |
+| Spring 反模式审查 / @Transactional 问题 | agent `spring-boot-reviewer`               |
+| Maven 编译 / 依赖冲突 / 打包失败        | agent `maven-build-doctor`                 |
+| 表结构 / 索引 / SQL 性能                | agent `schema-analyst`                     |
+| 写数据库 migration                      | agent `migration-author`                   |
+| 检查代码与文档是否漂移                  | agent `docs-keeper`（或命令 `/sync-docs`） |
+| 检查产研全链路文档间漂移                | 命令 `/cross-stage-check`                  |
+| 新人 5 分钟上手                         | 命令 `/onboard`                            |
+| 检查本机环境是否配齐（hook/构建前置）   | 命令 `/verify-setup`                       |
+| 工程化自检                              | 命令 `/audit-practices`                    |
+| 标准化提交                              | 命令 `/commit`                             |
 
 ## 自定义 Agents
 
@@ -55,7 +55,7 @@
 
 gitnexus 系列 skill 由本机 Claude Code 环境直接提供，**不在 `.claude/agents/` 目录下**。详见 CLAUDE.md 第 8 节"gitnexus 路由"：
 
-- `gitnexus-cli` / `gitnexus-exploring` / `gitnexus-debugging` / `gitnexus-impact-analysis` / `gitnexus-refactoring` / `gitnexus-pr-review` / `gitnexus-guide`
+- `gitnexus-cli` / `gitnexus-exploring` / `gitnexus-debugging` / `gitnexus-impact-analysis` / `gitnexus-refactoring` / `gitnexus-guide`
 
 ## 相关文档（按主题）
 

@@ -88,7 +88,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ├── CLAUDE.md                  # 行为准则（每会话注入）
 ├── AGENTS.md                  # agent 索引
 ├── README.md                  # 项目简介与路线
-├── pom.xml                    # Maven 主构建（未实例化）
+├── pom.xml                    # Maven 主构建
 ├── src/
 │   └── main/java/<base>/
 │       ├── interfaces/        # ① 用户接口层：Controller / DTO / Assembler
@@ -98,7 +98,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ├── src/test/                  # 单测 / 集成测
 ├── docs/
 │   ├── AGENTS.backend.md      # 后端 agent 索引
-│   └── ddd-conventions.md     # DDD 约定（按需建）
+│   └── ddd-conventions.md     # DDD 约定（尚未创建，按需建）
 └── .claude/                   # Harness 配置（hooks / agents / commands / rules）
 ```
 
@@ -121,7 +121,7 @@ DDD 依赖方向 **严格单向**：interfaces → application → domain ← in
 > 注：M8 主线 Phase 2（第一个 BC `order`）全链路已落地（域建模 → Repository → Handler → Controller → Migration + 单测/集成测）。`mvn verify` 由 CI（`lint.yml` 的 `java-build` job）不可绕过地执行；`domain/` 层纯净度（无框架 import / 无 `@Transactional`）由 `ddd-layer-purity` job 硬门禁；§5 依赖方向与 §6 前 5 条 DDD 禁忌由 ArchUnit `DddArchitectureTest` 在 `mvn verify` 中机制化（§6-3 只覆盖可判定的代理部分，见 [ADR-0011](docs/adr/0011-archunit-ddd-rules.md)）。**本机前置**：JDK 17（`.tool-versions` 锁 `java temurin-17.0.13+11`）；Testcontainers 集成测需本机 Docker。
 
 ```bash
-# Java / Maven（M4 后启用）
+# Java / Maven
 mvn clean compile              # 编译
 mvn test                       # 单测
 mvn verify                     # 单测 + 集成测 + 静态检查
@@ -154,7 +154,7 @@ git status --porcelain
 | 调试报错、追溯异常源头           | `gitnexus-debugging`       |
 | 改名 / 拆分 / 移动前的影响面分析 | `gitnexus-impact-analysis` |
 | 重构动手                         | `gitnexus-refactoring`     |
-| review PR / 评估合并风险         | `gitnexus-pr-review`       |
+| review PR / 评估合并风险         | 命令 `/review`             |
 | 不知道怎么用 / 看可用工具        | `gitnexus-guide`           |
 | 索引 / 重建 / 清理仓库           | `gitnexus-cli`             |
 
@@ -165,7 +165,7 @@ git status --porcelain
 **规则以 [`.claude/rules/policies/`](.claude/rules/policies/) 为准，本节不抄清单**：手抄的表容易和实际规则漂移。每条规则的 `reason` 字段写明拦什么。
 
 - **黑名单** `deny.yaml` → 直接拒绝。大类：破坏性删除（根 / 家目录 / `.git`）、强推保护分支、`chmod 777`、`curl | sh`、写密钥与凭据文件
-- **灰名单** `ask-user.yaml` → hook 返回 `permissionDecision: ask`，由 Claude Code **原生弹窗请用户确认**（[ADR-0009](docs/adr/0009-native-ask-and-fail-closed.md)）。大类：数据库写操作、改写 git 历史、发布、改 `domain/` 下任意 `.java`、改 `pom.xml` 主要依赖
+- **灰名单** `ask-user.yaml` → hook 返回 `permissionDecision: ask`，由 Claude Code **原生弹窗请用户确认**（[ADR-0009](docs/adr/0009-native-ask-and-fail-closed.md)）。大类：数据库写操作、改写 git 历史、发布、改 `domain/` 下已有 `.java`、改 `pom.xml` 主要依赖
 - **原生兜底** `settings.json` 的 `permissions.deny`：hook 失效时仍生效的硬边界
 
 灰名单以弹窗里用户的同意 / 拒绝为准，不可绕过。黑名单规则加载失败（如缺 PyYAML）时 hook **fail-closed**：拦下所有 Bash / 写操作，按提示装好 PyYAML 即恢复。
@@ -175,7 +175,7 @@ git status --porcelain
 ## 10. 子目录指引
 
 - 后端 agent 设计：`docs/AGENTS.backend.md`
-- DDD 约定（实例化后）：`docs/ddd-conventions.md`
+- DDD 约定：`docs/ddd-conventions.md`（尚未创建，按需建）
 - 工程化规则：`.claude/rules/engineering-practices.md`
 - 路线图：`docs/roadmap.md`（M4-M8 六维度计划 + M9）
 - 对照实验：`bench/README.md`（任务集 / 运行记录 / 代际总表）

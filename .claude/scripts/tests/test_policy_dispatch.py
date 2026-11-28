@@ -121,6 +121,19 @@ def test_file_path_matches(policy_dispatch):
     )
 
 
+def test_file_exists_distinguishes_edit_from_create(policy_dispatch, tmp_path):
+    # true 只管已有文件，false 只管新建；没有路径（如 Bash）一律不命中
+    existing = tmp_path / "Order.java"
+    existing.write_text("class Order {}", encoding="utf-8")
+    missing = tmp_path / "CustomerId.java"
+    kw = dict(cmd="", file_basename="x.java", new_content="")
+    assert policy_dispatch.matches_when({"file_exists": True}, file_path=str(existing), **kw)
+    assert not policy_dispatch.matches_when({"file_exists": True}, file_path=str(missing), **kw)
+    assert policy_dispatch.matches_when({"file_exists": False}, file_path=str(missing), **kw)
+    assert not policy_dispatch.matches_when({"file_exists": False}, file_path=str(existing), **kw)
+    assert not policy_dispatch.matches_when({"file_exists": False}, file_path="", **kw)
+
+
 def test_new_content_present_false_triggers_on_empty(policy_dispatch):
     # new_content_present: false —— 仅当内容为空触发（整文件改写场景）
     when = {"new_content_present": False}
@@ -140,6 +153,64 @@ def test_new_content_imatches(policy_dispatch):
         file_path="pom.xml",
         file_basename="pom.xml",
         new_content="<artifactId>SPRING-BOOT-starter</artifactId>",
+    )
+
+
+# ---------- changed_lines（G17）----------
+
+POM = "<parent>\n  <version>3.3.5</version>\n</parent>\n<mybatis-plus.version>3.5.9</mybatis-plus.version>\n"
+
+
+def test_changed_lines_edit_returns_whole_lines(policy_dispatch, tmp_path):
+    # 只换数字时改动文本里没有标签，要拿到被改的整行（旧行 + 新行）
+    pom = tmp_path / "pom.xml"
+    pom.write_text(POM, encoding="utf-8")
+    out = policy_dispatch.changed_lines({"old_string": "3.5.9", "new_string": "3.5.10"}, str(pom))
+    assert out.splitlines() == [
+        "<mybatis-plus.version>3.5.9</mybatis-plus.version>",
+        "<mybatis-plus.version>3.5.10</mybatis-plus.version>",
+    ]
+
+
+def test_changed_lines_multiedit_applies_edits_in_order(policy_dispatch, tmp_path):
+    pom = tmp_path / "pom.xml"
+    pom.write_text(POM, encoding="utf-8")
+    edits = [
+        {"old_string": "3.3.5", "new_string": "3.4.0"},
+        {"old_string": "3.4.0", "new_string": "3.4.1"},
+    ]
+    out = policy_dispatch.changed_lines({"edits": edits}, str(pom))
+    assert out.splitlines() == ["  <version>3.3.5</version>", "  <version>3.4.1</version>"]
+
+
+def test_changed_lines_write_diffs_against_disk(policy_dispatch, tmp_path):
+    # 覆盖已有文件只报不一样的行；新建文件（磁盘上没有）每一行都算新增
+    pom = tmp_path / "pom.xml"
+    pom.write_text(POM, encoding="utf-8")
+    out = policy_dispatch.changed_lines({"content": POM.replace("3.5.9", "3.5.10")}, str(pom))
+    assert "3.3.5" not in out and "3.5.10" in out
+    new = policy_dispatch.changed_lines({"content": "<a/>\n<b/>\n"}, str(tmp_path / "new.xml"))
+    assert new.splitlines() == ["<a/>", "<b/>"]
+
+
+def test_changed_lines_empty_when_nothing_changes(policy_dispatch, tmp_path):
+    # old_string 不在文件里（真实的 Edit 也会失败）→ 没有改动行
+    pom = tmp_path / "pom.xml"
+    pom.write_text(POM, encoding="utf-8")
+    assert policy_dispatch.changed_lines({"old_string": "9.9.9", "new_string": "1.0.0"}, str(pom)) == ""
+
+
+def test_changed_lines_imatches(policy_dispatch, tmp_path):
+    pom = tmp_path / "pom.xml"
+    pom.write_text(POM, encoding="utf-8")
+    when = {"changed_lines_imatches": "<VERSION>"}
+    kw = dict(cmd="", file_path=str(pom), file_basename="pom.xml", new_content="")
+    assert policy_dispatch.matches_when(when, tool_input={"old_string": "3.3.5", "new_string": "3.4.0"}, **kw)
+    # 改的是 <mybatis-plus.version> 行，不是 <version> 行
+    assert not policy_dispatch.matches_when(when, tool_input={"old_string": "3.5.9", "new_string": "3.5.10"}, **kw)
+    # 没有路径（如 Bash）一律不命中
+    assert not policy_dispatch.matches_when(
+        when, tool_input={"command": "ls"}, cmd="ls", file_path="", file_basename="", new_content=""
     )
 
 

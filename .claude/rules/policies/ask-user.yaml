@@ -44,19 +44,23 @@
 - id: ddd-aggregate-boundary
   tool: [Edit, Write, MultiEdit]
   when:
-    # domain 层下所有 .java 改动都要人工授权。
+    # 修改 domain 层已有 .java 要人工授权；新建文件不问。
     # 早期用 basename 后缀（Aggregate|Repository|Event）匹配，但本项目聚合根按
     # DDD 地道风格用业务名直接命名（Order.java 而非 OrderAggregateRoot.java），
     # 后缀正则漏掉了最核心的聚合根本身 → 改为 domain/ 下全 .java 拦。
-    # domain 层本就不该频繁改，多问一次授权符合"边界慎改"初衷。
+    # 2026-11-25 收窄到已有文件：G3 首批 C2 共问了 14 次，没有一次拦下错误，
+    # 其中 5 次是新建文件；新建的内容仍由 ArchUnit / ddd-layer-purity 把关。
     file_path_matches: 'src/main/java/.*/domain/.*\.java$'
-  reason: 'DDD 边界改动：domain 层 .java（聚合根 / VO / Repository 接口 / 领域事件）'
+    file_exists: true
+  reason: 'DDD 边界改动：修改 domain 层已有 .java（聚合根 / VO / Repository 接口 / 领域事件）'
 
 - id: pom-major-deps
   tool: [Edit, Write, MultiEdit]
   when:
     file_basename_in: ['pom.xml']
-    new_content_imatches: '<(artifactId|groupId)>(spring-boot|mybatis|hibernate|mysql-connector|mysql)\b'
+    # 两种写法都算：坐标行（<artifactId>mybatis-plus...）和版本属性行（G16：
+    # <mybatis-plus.version> 这种，改它就能升主 ORM，但改动里不带 <artifactId>）
+    new_content_imatches: '<(artifactId|groupId)>(spring-boot|mybatis|hibernate|mysql-connector|mysql)\b|<(spring-boot|mybatis|hibernate|mysql)[\w.-]*version>'
   reason: '主要依赖升级：pom.xml 涉及 spring-boot / MyBatis / Hibernate / MySQL 驱动'
 
 - id: pom-blank-rewrite
@@ -65,6 +69,17 @@
     file_basename_in: ['pom.xml']
     new_content_present: false
   reason: 'pom.xml 整文件改写（请确认未变更主要依赖版本）'
+
+# G17：pom-major-deps 只看改动的新内容，三种改法认不出 —— 只换版本号数字
+# （3.5.9 → 3.5.10）、只改 <parent> 的 <version> 行、MultiEdit（改动在 edits[] 里）。
+# 这条对照磁盘上的原文看哪些行变了。<version> 行本身看不出是谁的版本，所以动了就问；
+# 后两支与 pom-major-deps 相同，让 MultiEdit 和只换数字的改法也按主依赖认。
+- id: pom-version-lines
+  tool: [Edit, Write, MultiEdit]
+  when:
+    file_basename_in: ['pom.xml']
+    changed_lines_imatches: '<version>|<(artifactId|groupId)>(spring-boot|mybatis|hibernate|mysql-connector|mysql)\b|<(spring-boot|mybatis|hibernate|mysql)[\w.-]*version>'
+  reason: 'pom.xml 版本行改动：动了 <version> 行或主要依赖（spring-boot / MyBatis / Hibernate / MySQL 驱动）的坐标 / 版本属性行'
 
 # --- D8 follow-up（M8-T1 实测盲点修复）：Bash 写敏感文件 ---
 # pom-major-deps / ddd-aggregate-boundary 仅 match Edit/Write/MultiEdit；

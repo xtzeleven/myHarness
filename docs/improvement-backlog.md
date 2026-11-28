@@ -74,11 +74,11 @@ _C17 / C18 / C21 已完成。详见 §E（C17→E18 / C18→E19 / C21→E20）�
 
 > 两个后端 agent 独立审 order BC，7/8 审查点直接通过、无阻塞项。以下 3 条为真实发现，严重度均不高，作为债务留痕。**两 agent 独立命中同一处（C22）**是最强信号。
 
-| #   | 维度        | 项                                                                                                                                                                     | 状态                                                                                                                        |
-| --- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| C22 | 事件 / 事务 | `PlaceOrderHandler` 在 `@Transactional` 内同步 `publishEvent`：当前 OrderPlaced 无消费者故无活跃 bug；引入首个监听器前须改 `@TransactionalEventListener(AFTER_COMMIT)` | ✅ 已埋警示注释（`PlaceOrderHandler.java:39` publishEvent 上方，含修法 + 双 agent 依据）；引入 listener 时落地 AFTER_COMMIT |
-| C23 | DDD 建模    | `Order` 用裸 `String customerId` 引用 Customer 聚合，与 `OrderId` 自身的 typed-id 主张自相矛盾                                                                         | ⏳ Customer BC 落地时引入 `CustomerId` VO；现无 Customer BC，用 String 合理                                                 |
-| C24 | 性能（低）  | `OrderPersistenceAdapter.save` 新建路径必然 `selectById==null`，热路径多一次无用 SELECT                                                                                | ⏳ 效率项非 bug；可用 MyBatis-Plus `insertOrUpdate` 或上层显式表达 new/update 意图                                          |
+| #   | 维度        | 项                                                                                                                                                                     | 状态                                                                                                           |
+| --- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| C22 | 事件 / 事务 | `PlaceOrderHandler` 在 `@Transactional` 内同步 `publishEvent`：当前 OrderPlaced 无消费者故无活跃 bug；引入首个监听器前须改 `@TransactionalEventListener(AFTER_COMMIT)` | ⏳ 原提醒注释已在 `04767ea` 删除（bench T2-a 防答案泄漏），代码里不再有提醒；引入 listener 时落地 AFTER_COMMIT |
+| C23 | DDD 建模    | `Order` 用裸 `String customerId` 引用 Customer 聚合，与 `OrderId` 自身的 typed-id 主张自相矛盾                                                                         | ⏳ Customer BC 落地时引入 `CustomerId` VO；现无 Customer BC，用 String 合理                                    |
+| C24 | 性能（低）  | `OrderPersistenceAdapter.save` 新建路径必然 `selectById==null`，热路径多一次无用 SELECT                                                                                | ⏳ 效率项非 bug；可用 MyBatis-Plus `insertOrUpdate` 或上层显式表达 new/update 意图                             |
 
 > 另有 d-architect 提出的"事件产生逻辑下沉到聚合根"完整方案：会改 `Order` 聚合根（触发 DDD 灰名单），当前单入口收益不明确，判为过早抽象，暂不做；待第二个创建 Order 的入口（批量导入 / 后台补单）出现时重估。
 
@@ -104,14 +104,14 @@ _F1 / F2 同批落地，详见 §E（F1→E33 / F2→E34）。_
 
 > 阶段与状态见 [roadmap M9](roadmap.md)。P0 已落地项记在 CHANGELOG 2026-11-21，这里只列**没做完的**。
 
-| #   | 优先级 | 内容                                                                                                          | 来源        |
-| --- | ------ | ------------------------------------------------------------------------------------------------------------- | ----------- |
-| G3  | 🟡 P1  | 首批对照实验：3 任务 × C0/C2 × 2 次，手工跑（D3），出首份报告 + 代际总表第一行                                | P1 / bench/ |
-| G7  | 🟢 P2  | ① 类规则 P1 显示"裸跑已不犯"→ 按退役条件拆，拆后用同一任务集复跑确认不退化                                    | P2          |
-| G8  | ⚪ P3  | `policies/` 拆 `core/` + `java-ddd/`，`.claude/harness.yaml` 声明 profiles；engineering-practices §12–14 下沉 | P3          |
-| G9  | ⚪ P3  | 一页总览 + `harness-methodology.md` 增"五种成分与演化终局"+ docs 预算（≤ 3 万 token）                         | P4          |
+| #   | 优先级 | 内容                                                                                                                                                                                                                                                   | 来源        |
+| --- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
+| G3  | 🟡 P1  | ~~首批对照实验：3 任务 × C0/C2 × 2 次，出首份报告 + 代际总表第一行~~ ✅ 2026-11-23（无界面自动跑，11/12 有效，T3-C2 缺 1 次）：[报告](../bench/reports/2026-11-23-claude-fable-5-2.md)。8 个埋点全部未触发 → 后续是任务集 v2（见报告“给下一步的建议”） | P1 / bench/ |
+| G7  | 🟢 P2  | ① 类规则 P1 显示"裸跑已不犯"→ 按退役条件拆，拆后用同一任务集复跑确认不退化                                                                                                                                                                             | P2          |
+| G8  | ⚪ P3  | `policies/` 拆 `core/` + `java-ddd/`，`.claude/harness.yaml` 声明 profiles；engineering-practices §12–14 下沉                                                                                                                                          | P3          |
+| G9  | ⚪ P3  | 一页总览 + `harness-methodology.md` 增"五种成分与演化终局"+ docs 预算（≤ 3 万 token）                                                                                                                                                                  | P4          |
 
-规则清单（G5）已建：[rule-inventory.md](rule-inventory.md)，盘点发现的缺口登记为 G10–G13（G10 → E57、G11 → E59、G12 → E60、G13 → E61 已完成；后续发现的 G14 → E63、G15 → E64 已完成）。按退役条件拆规则是 G7，等 G3 出数据。
+规则清单（G5）已建：[rule-inventory.md](rule-inventory.md)，盘点发现的缺口登记为 G10–G13（G10 → E57、G11 → E59、G12 → E60、G13 → E61 已完成；后续发现的 G14 → E63、G15 → E64、G16 → E67、G17 → E69 已完成）。按退役条件拆规则是 G7：G3 首批没有给出可用的退役证据（埋点全部未触发，C0 不是真裸跑），等任务集 v2。
 
 ---
 

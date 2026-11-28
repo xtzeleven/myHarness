@@ -1,0 +1,50 @@
+{
+  "model": "claude-fable-5-2",
+  "result": "success",
+  "usage": {
+    "input_tokens": 3005,
+    "cache_creation_input_tokens": 95709,
+    "cache_read_input_tokens": 642378,
+    "output_tokens": 15455,
+    "output_tokens_details": {
+      "thinking_tokens": 3927
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 95709,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 957,
+        "cache_read_input_tokens": 94683,
+        "cache_creation_input_tokens": 1026,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1026
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "tool_calls": {
+    "Bash": 9,
+    "Read": 3,
+    "Write": 1
+  },
+  "gitnexus_mcp_loaded": false,
+  "paths_outside_run": ["Bash: /tmp/cancel-verify.log"],
+  "audit_actions": {},
+  "approvals": 8,
+  "mvn_verify_exit": "0",
+  "migration_check_exit": "0",
+  "api_errors": 0
+}
