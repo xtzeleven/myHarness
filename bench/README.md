@@ -188,6 +188,21 @@ cp .claude/.audit.log "$OUT/audit.log" 2>/dev/null || true   # C0 没有
 
 取不到的字段写 `null`，不填默认值。
 
+## 尝试记录（`attempt-start.json` / `attempt-end.json`）
+
+2026-11-27 起，`run-auto.sh` 每次尝试另写两个小文件到 `.out` 目录，都只写一次、不覆盖（[`attempt-record.py`](attempt-record.py)）。它们记的是**脚本怎么跑的**，不是样本有没有效；有效性仍由 `analyze.py` 按「统计口径」判，`analyze.py` 不读这两个文件。
+
+- `attempt-start.json`：占到目录后立刻写。任务、配置、序号、任务集版本、基线完整 SHA、`--model` 传值、超时上限、所属批次。脚本之后被强杀、没有任何收尾时，靠它知道这次尝试是在什么条件下开始的。
+- `attempt-end.json`：脚本结束时写。`script_status` 取 `completed`（跑完）、`failed`（中止，`stage` 是停在哪一步）、`interrupted`（收到 INT / TERM）；另记脚本退出码、会话进程退出码 `model_exit`、是否超时。没有这个文件 = 脚本被强杀或机器掉电。
+- `stage` 的取值按顺序是：`base`、`prompt`、`claim`、`start-record`、`export`、`strip`、`git-init`、`selfcheck`、`model`、`collect`、`summary`、`done`。
+- **基线只解析一次**：传给 `run-auto.sh` 的可以是 `HEAD`、分支名或短 SHA，脚本一开始就解析成完整 commit SHA，之后读提示词、读任务集版本、导出副本、写记录都用它；运行途中引用被移动不影响本次尝试。`all` 模式由父脚本解析一次再传给子脚本。`base_arg` 记原始输入，`base_commit` 记解析结果。解析不出来就报错退出，不占目录。
+- **收集出错不发布结果**：`git add` / `git diff` 失败时，结束记录是 `failed`、`stage` 为 `collect`，不留 `final.diff`，也不写 `summary.json`，这次尝试在 `analyze.py` 里算"未完成"。`mvn verify` 或 CI 脚本失败不属于这种情况，那是样本自己的结果，照常记录。
+- **脚本跑完不等于样本有效**：超时、API 错误的运行，脚本照样是 `completed`。反过来，`failed` / `interrupted` / 没有结束记录的尝试没有 `summary.json`，`analyze.py` 记为"未完成"。
+- `all` 模式在 `~/bench-runs/.batches/<批次>/` 下留 `plan.txt`、每个子运行的结束记录和汇总 `batch.json`，结束时打印"跑完 / 失败 / 被信号中断 / 没有结束记录"各几个。有子脚本不是跑完，整体以非零退出。
+- 记录写不出来（目标已存在、目录不可写）时不覆盖已有内容，本来以 0 结束的运行改为非零退出。
+
+v2 的实验方案草案见 [`v2-plan.md`](v2-plan.md)（未定稿，当前版本仍是 v1）。
+
 ## 拦截能力自检（不调模型）
 
 对照实验回答"模型会不会犯"，[`gate-check.py`](gate-check.py) 回答另一半："真犯了，哪一层报警"。它在 `git archive HEAD` 的临时副本里把每个埋点的最小违规改动直接打上去，依次探 PreToolUse hook、ArchUnit、CI 脚本。要 JDK 17，约 1 分钟，不花模型费用：

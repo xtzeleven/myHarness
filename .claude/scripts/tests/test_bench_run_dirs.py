@@ -133,7 +133,7 @@ def sandbox(tmp_path: Path):
         pytest.skip("需要 git")
     src = tmp_path / "repo"
     (src / "bench").mkdir(parents=True)
-    for name in ("run-auto.sh", "claim-run-dirs.sh"):
+    for name in ("run-auto.sh", "claim-run-dirs.sh", "attempt-record.py"):
         shutil.copy(REPO / "bench" / name, src / "bench" / name)
     (src / "bench" / "README.md").write_text(
         "**当前版本：v1**（合成）\n\n- **T1**：`合成任务一`\n- **T2**：`合成任务二`\n- **T3**：`合成任务三`\n",
@@ -209,5 +209,9 @@ def test_all_mode_propagates_child_failures(sandbox):
     assert r.returncode != 0  # 改前这里固定是 0
     assert r.stderr.count("已存在，不覆盖") == 12
     assert "FAILED: all 模式有子运行没跑起来或中止" in r.stderr
-    assert _tree(root) == before
+    # 已有结果一个不少、一字不改；all 模式新建的批次目录（2026-11-27 起）是唯一多出来的东西
+    assert [e for e in _tree(root) if not e[0].startswith(".batches")] == before
+    batches = list((root / ".batches").iterdir())
+    assert len(batches) == 1 and (batches[0] / "batch.json").exists()
+    assert len(list(batches[0].glob("T?-C?-?.json"))) == 12  # 12 个子脚本各留一条"停在占用目录"的记录
     assert not marker.exists()
