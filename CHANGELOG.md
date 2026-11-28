@@ -20,7 +20,7 @@
 - `policy-dispatch.py`：`when` 加通用谓词 `changed_lines_imatches`（按 Edit / Write / MultiEdit 模拟改动后与原文做行级 diff），单测 5 例
 - `test_pre_tool_use.sh`：临时目录放一个最小 `pom.xml`，加正 3 反 1 共 4 例（共 58，README 的用例数同步）
 - 文档同步：`policies/README.md` schema、`rule-inventory.md`、backlog G17 → archive E69
-- `bench/README.md` 自检结果表在 `6acb1ee` 上重跑：9 行都不变（脚本只探 T3-b 的"改整行属性"一种改法，G17 补的三种改法由 hook 冒烟测试覆盖）；T3-b 的说明改写
+- `bench/README.md` 自检结果表在 `5b05a7f` 上重跑：9 行都不变（脚本只探 T3-b 的"改整行属性"一种改法，G17 补的三种改法由 hook 冒烟测试覆盖）；T3-b 的说明改写
 
 ### 2026-11-25 — 灰名单 `ddd-aggregate-boundary` 收窄到已有文件
 
@@ -30,7 +30,7 @@
 - `policy-dispatch.py`：`when` 加通用谓词 `file_exists`（true = 只管改已有文件，false = 只管新建），单测 1 例
 - `test_pre_tool_use.sh`：DDD 用例先在临时目录建出"已有"文件；原 `ask-domain-aggregate` 改为 `allow-domain-new-file`（总数仍 54）；Windows 路径用例改用相对路径
 - 文档同步：CLAUDE.md §9、engineering-practices §3、`policies/README.md` schema、`rule-inventory.md`、`AGENTS.backend.md`
-- `bench/README.md` 自检结果表在 `b0154c9` 上重跑：T2-b、T3-c 的 PreToolUse 由 ask 变为 hint；T3-c 从"只有 ask"变为没有硬拦，T2-b 仍被 ArchUnit 和 CI 拦下，其余 7 行不变
+- `bench/README.md` 自检结果表在 `cb2fd3c` 上重跑：T2-b、T3-c 的 PreToolUse 由 ask 变为 hint；T3-c 从"只有 ask"变为没有硬拦，T2-b 仍被 ArchUnit 和 CI 拦下，其余 7 行不变
 
 ### 2026-11-24 — G16：灰名单 `pom-major-deps` 匹配版本属性行
 
@@ -39,7 +39,7 @@
 - 灰名单 `pom-major-deps`：除 `<artifactId>` / `<groupId>` 坐标行外，也匹配以 spring-boot / mybatis / hibernate / mysql 开头、以 `version` 结尾的属性行（如 `<mybatis-plus.version>`）。此前改属性升主 ORM 版本不触发确认（`bench/gate-check.py` T3-b）
 - `test_pre_tool_use.sh`：加正反 2 例（共 54，README 的用例数同步）；`run_case` 期望 exit 0 时同时断言输出里没有 ask JSON（ask 也是 exit 0，原来分不出"放行"和"误问"）
 - 剩余缺口登记为 backlog G17：只换版本号数字的 Edit、只改 `<parent>` 的 `<version>` 行、MultiEdit 仍认不出（实测）
-- `bench/README.md` 自检结果表在 `3451313` 上重跑：T3-b 的 PreToolUse 由 hint 变为 ask，其余 8 行不变
+- `bench/README.md` 自检结果表在 `63889ab` 上重跑：T3-b 的 PreToolUse 由 hint 变为 ask，其余 8 行不变
 
 ### 2026-11-24 — 拦截能力自检 `bench/gate-check.py`
 

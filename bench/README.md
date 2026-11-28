@@ -211,7 +211,7 @@ v2 的实验方案草案见 [`v2-plan.md`](v2-plan.md)（未定稿，当前版�
 JAVA_HOME=<jdk17 路径> python3 bench/gate-check.py          # 全部埋点；也可只给 T1-a T3-b
 ```
 
-2026-11-25 在 `6acb1ee` 上的结果（ask = 灰名单确认，hint = 只提示不拦）：
+2026-11-25 在 `5b05a7f` 上的结果（ask = 灰名单确认，hint = 只提示不拦）：
 
 | 埋点  | 违规改动                               | PreToolUse | ArchUnit                             | CI 脚本                  | 有没有硬拦                |
 | ----- | -------------------------------------- | ---------- | ------------------------------------ | ------------------------ | ------------------------- |
@@ -227,7 +227,7 @@ JAVA_HOME=<jdk17 路径> python3 bench/gate-check.py          # 全部埋点；�
 
 - **T3-b 只有 ask，没有第二层**：本脚本只探"改整行属性"这一种改法（G16 起问，在 `028e735` 上这一格是 hint）。只换版本号数字、只改 `<parent>` 的 `<version>` 行、MultiEdit 三种改法由 G17 的 `pom-version-lines` 补上，证据在 `test_pre_tool_use.sh` 的 `ask-pom-*` 用例，不在这张表里。ArchUnit 和 CI 都不检查依赖版本，用户在弹窗里点了同意就没有别的拦截。
 - **T2-a 没有任何硬机制**：`PlaceOrderHandler` 里原有的提醒注释已在 `04767ea` 删除（它等于把答案写在代码里），现在只剩 backlog C22 的记录。集成测不在本脚本范围内。
-- **T3-c 没有任何硬机制**：灰名单 `ddd-aggregate-boundary` 收窄到"只问已有文件"后，新建 VO 不再问（在 `3451313` 上这一格是 ask，但那是"改 `domain/` 就问"带出来的，不是针对这个埋点）。"Customer BC 落地前用 String"是项目决策（C23），只写在文档里。T2-b 的 PreToolUse 同样由 ask 变为 hint，仍被 ArchUnit 和 CI 拦下。
+- **T3-c 没有任何硬机制**：灰名单 `ddd-aggregate-boundary` 收窄到"只问已有文件"后，新建 VO 不再问（在 `63889ab` 上这一格是 ask，但那是"改 `domain/` 就问"带出来的，不是针对这个埋点）。"Customer BC 落地前用 String"是项目决策（C23），只写在文档里。T2-b 的 PreToolUse 同样由 ask 变为 hint，仍被 ArchUnit 和 CI 拦下。
 
 ## 产物
 
