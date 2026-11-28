@@ -100,7 +100,9 @@ class Sandbox:
             "BENCH_POLL": "1", "LC_ALL": "C.UTF-8", "GIT_CONFIG_NOSYSTEM": "1",
         }  # fmt: skip
         git = ["git", "-C", str(s), "-c", "user.name=t", "-c", "user.email=t@localhost"]
-        for args in (["init", "-q", "-b", "main"], ["add", "-A"], ["commit", "-q", "-m", "synthetic"]):
+        # gc.auto / maintenance.auto：不让提交之后的后台维护进程和测试里的并发 git 操作抢锁
+        for args in (["init", "-q", "-b", "main"], ["config", "gc.auto", "0"], ["config", "maintenance.auto", "false"],
+                     ["add", "-A"], ["commit", "-q", "-m", "synthetic"]):  # fmt: skip
             subprocess.run([*git, *args], check=True, env=self.env, capture_output=True)
         self.head = subprocess.run([*git, "rev-parse", "HEAD"], check=True, env=self.env, capture_output=True, text=True).stdout.strip()
 
@@ -373,13 +375,22 @@ def test_all_mode_reports_script_status_separately_from_sample_validity(sandbox,
 # ---------- 基线只解析一次：运行途中引用被移动 ----------
 
 MOVE_REF_WRAPPER = r"""#!/bin/sh
-# 测试用：在"读完提示词之后、导出副本之前"给合成仓库加一个提交（HEAD 移动），然后照常占用目录
+# 测试用：在"读完提示词之后、导出副本之前"给合成仓库加一个提交（HEAD 移动），然后照常占用目录。
+# 用自己的临时 index 和 commit-tree / update-ref 造提交，不碰仓库共用的 index：all 模式下别的子脚本
+# 同时在读这个仓库，CI 上出现过 git add 拿不到 index.lock 的情况。
 d=$(cd "$(dirname "$0")/.." && pwd)
 if mkdir "$d/.ref-moved" 2>/dev/null; then
-  echo late > "$d/added-after-start.txt"
-  sed -i.bak 's/v9/v10/; s/合成任务/换过的任务/' "$d/bench/README.md" && rm -f "$d/bench/README.md.bak"
-  git -C "$d" add added-after-start.txt bench/README.md &&
-    git -C "$d" -c user.name=t -c user.email=t@localhost commit -qm "moved after start" || exit 97
+  (
+    GIT_INDEX_FILE="$d/.git/ref-move.index"; export GIT_INDEX_FILE
+    git -C "$d" read-tree HEAD &&
+      readme=$(git -C "$d" show HEAD:bench/README.md | sed 's/v9/v10/; s/合成任务/换过的任务/' | git -C "$d" hash-object -w --stdin) &&
+      late=$(echo late | git -C "$d" hash-object -w --stdin) &&
+      git -C "$d" update-index --add --cacheinfo "100644,$readme,bench/README.md" \
+        --cacheinfo "100644,$late,added-after-start.txt" &&
+      tree=$(git -C "$d" write-tree) &&
+      new=$(git -C "$d" -c user.name=t -c user.email=t@localhost commit-tree "$tree" -p HEAD -m "moved after start") &&
+      git -C "$d" update-ref HEAD "$new"
+  ) || exit 97
 fi
 exec bash "$d/bench/claim-run-dirs.real.sh" "$@"
 """
