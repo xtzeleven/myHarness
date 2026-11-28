@@ -8,6 +8,8 @@
 # 隔离（2026-11-23 首批作废后加）：用户级 skills / hooks / MCP / 记忆会在 C0、C2 都加载（首批里 gitnexus skill
 #   把模型引出副本）。所以 claude 用独立的 CLAUDE_CONFIG_DIR，只从 ~/.claude/settings.json 复制 env 与 model
 #   （不打印，权限 600）；并要求 gitnexus 注册表里没有 myHarness（先 gitnexus remove，跑完再 analyze）。
+# 输出目录不覆盖（2026-11-26）：$RUN / $RUN.out 由 claim-run-dirs.sh 原子占用，任一个已存在就报错退出、原样保留；
+#   同日同任务同配置重跑要换序号（作废的也占号）。all 模式下有子运行没跑起来时，整体以非零退出。
 # 环境变量：CLAUDE_BIN（默认 claude）、BENCH_MODEL（默认 sonnet）、BENCH_TIMEOUT（秒，默认 3600）、
 #           BENCH_JOBS（默认 3）、BENCH_ROOT（默认 ~/bench-runs）、JAVA_HOME（mvnw 用，模型会话里也可用）
 set -u
@@ -29,17 +31,21 @@ fi
 if [ "${2:-}" = all ]; then
   for t in T1 T2 T3; do for c in C0 C2; do for s in 1 2; do echo "$B $t $c $s"; done; done; done |
     xargs -P "${BENCH_JOBS:-3}" -L 1 bash "$0"
-  exit 0
+  rc=$?  # 子运行以 1 退出（ABORT）时 xargs 继续跑其余的，最后返回非零（GNU 123 / BSD 1）
+  [ "$rc" -eq 0 ] || echo "FAILED: all 模式有子运行没跑起来或中止（xargs exit=${rc}），见上面各自的 ABORT 行" >&2  # 变量后紧跟全角字符时必须加花括号
+  exit "$rc"
 fi
 
 TASK=$2; CONF=$3; SEQ=$4
 RUN="$ROOT/$DAY-$TASK-$CONF-$SEQ"; OUT="$RUN.out"
-rm -rf "$RUN" "$OUT"; mkdir -p "$RUN" "$OUT"
-log() { echo "[$TASK-$CONF-$SEQ] $*" | tee -a "$OUT/runner.log"; }
 
-# 任务提示词：从基线 commit 的 README 原样取
+# 任务提示词：从基线 commit 的 README 原样取。放在占用目录之前：任务名写错不该占掉一个序号
 PROMPT=$(git -C "$SRC" show "$B:bench/README.md" | sed -n "s/^- \*\*$TASK\*\*：\`\(.*\)\`$/\1/p")
-[ -n "$PROMPT" ] || { log "ABORT: README 里找不到 $TASK 的提示词"; exit 1; }
+[ -n "$PROMPT" ] || { echo "[$TASK-$CONF-$SEQ] ABORT: README 里找不到 $TASK 的提示词" >&2; exit 1; }
+
+# 占用 $RUN / $OUT：已存在就退出，不覆盖、不删除（规则见 claim-run-dirs.sh）
+bash "$SRC/bench/claim-run-dirs.sh" "$RUN" "$OUT" || exit 1
+log() { echo "[$TASK-$CONF-$SEQ] $*" | tee -a "$OUT/runner.log"; }
 
 # 1. 导出不带历史的副本
 git -C "$SRC" archive "$B" | tar -x -C "$RUN" && cd "$RUN" || exit 1
